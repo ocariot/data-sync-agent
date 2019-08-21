@@ -18,7 +18,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
     private fitbit_client: any
 
     constructor(
-        @inject(Identifier.FITBIT_AUTH_DATA_REPO_MODEL) readonly _fitbitAuthDataRepoModel: any,
+        @inject(Identifier.OAUTH_DATA_REPO_MODEL) readonly _fitbitAuthDataRepoModel: any,
         @inject(Identifier.FITBIT_AUTH_DATA_ENTITY_MAPPER)
         readonly _fitbitAuthDataEntityMapper: IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>,
         @inject(Identifier.LOGGER) readonly _logger: ILogger
@@ -69,6 +69,37 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                 .then(res => resolve(!!res))
                 .catch(err => {
                     console.log('error at revoke token', JSON.stringify(err))
+                    return reject(new Error(err.message))
+                })
+        })
+    }
+
+    public refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData> {
+        return new Promise<FitbitAuthData>(async (resolve, reject) => {
+            this.fitbit_client.refreshAccessToken(accessToken, refreshToken, expiresIn)
+                .then(async tokenData => {
+                    if (!tokenData) return resolve(undefined)
+                    const savedAccessToken: FitbitAuthData = await this.findAuthDataFromUser(userId)
+                    const newAccessToken: FitbitAuthData = new FitbitAuthData().fromJSON({ ...tokenData, user_id: userId })
+                    newAccessToken.id = savedAccessToken.id
+                    return resolve(this.update(newAccessToken))
+                })
+                .catch(err => {
+                    console.log('error at refresh token', JSON.stringify(err))
+                    return reject(new Error(err.message))
+                })
+        })
+    }
+
+    public getDataFromUser(path: string, accessToken: string): Promise<any> {
+        return new Promise<any>((resolve, reject) => {
+            this.fitbit_client.get(path, accessToken)
+                .then(data => {
+                    if (!data) return resolve(undefined)
+                    return resolve(data)
+                })
+                .catch(err => {
+                    console.log('error at get data', JSON.stringify(err))
                     return reject(new Error(err.message))
                 })
         })

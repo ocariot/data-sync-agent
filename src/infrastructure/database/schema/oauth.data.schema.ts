@@ -1,14 +1,15 @@
 import Mongoose from 'mongoose'
 
-interface IFitbitAuthDataModel extends Mongoose.Document {
+interface IOAuthDataModel extends Mongoose.Document {
 }
 
-const fitbitAuthDataSchema = new Mongoose.Schema({
-        access_token: { type: String },
+const oauthDataSchema = new Mongoose.Schema({
+        type: { type: String },
+        user_id: { type: Mongoose.Schema.Types.ObjectId },
+        access_token: { type: String }, // OAuth parameters
         expires_in: { type: Number },
         refresh_token: { type: String },
         scope: { type: String },
-        user_id: { type: Mongoose.Schema.Types.ObjectId },
         token_type: { type: String }
     },
     {
@@ -25,6 +26,4 @@ const fitbitAuthDataSchema = new Mongoose.Schema({
     }
 )
 
-export const FitbitAuthDataRepoModel = Mongoose.model<IFitbitAuthDataModel>(
-    'FitbitAuthData', fitbitAuthDataSchema
-)
+export const OAuthDataRepoModel = Mongoose.model<IOAuthDataModel>('OAuthData', oauthDataSchema)

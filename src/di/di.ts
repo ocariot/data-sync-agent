@@ -19,7 +19,7 @@ import { IntegrationEventRepository } from '../infrastructure/repository/integra
 import { IIntegrationEventRepository } from '../application/port/integration.event.repository.interface'
 import { UserFitbitAuthController } from '../ui/controllers/user.fitbit.auth.controller'
 import { UserFitbitSyncController } from '../ui/controllers/user.fitbit.sync.controller'
-import { FitbitAuthDataRepoModel } from '../infrastructure/database/schema/fitbit.auth.data.schema'
+import { OAuthDataRepoModel } from '../infrastructure/database/schema/oauth.data.schema'
 import { FitbitAuthData } from '../application/domain/model/fitbit.auth.data'
 import { FitbitAuthDataEntity } from '../infrastructure/entity/fitbit.auth.data.entity'
 import { FitbitAuthDataEntityMapper } from '../infrastructure/entity/mapper/fitbit.auth.data.entity.mapper'
@@ -29,6 +29,8 @@ import { IFitbitAuthDataRepository } from '../application/port/fitbit.auth.data.
 import { IFitbitAuthDataService } from '../application/port/fitbit.auth.data.service.interface'
 import { FitbitAuthDataService } from '../application/service/fitbit.auth.data.service'
 import { CallbackController } from '../ui/controllers/callback.controller'
+import { PublishEventBusTask } from '../background/task/publish.event.bus.task'
+import { IBackgroundTask } from '../application/port/background.task.interface'
 
 class IoC {
     private readonly _container: Container
@@ -83,7 +85,7 @@ class IoC {
 
         // Models
         this._container.bind(Identifier.INTEGRATION_EVENT_REPO_MODEL).toConstantValue(IntegrationEventRepoModel)
-        this._container.bind(Identifier.FITBIT_AUTH_DATA_REPO_MODEL).toConstantValue(FitbitAuthDataRepoModel)
+        this._container.bind(Identifier.OAUTH_DATA_REPO_MODEL).toConstantValue(OAuthDataRepoModel)
 
         // Mappers
         this.container
@@ -111,6 +113,10 @@ class IoC {
             .to(BackgroundService).inSingletonScope()
 
         // Tasks
+        this._container
+            .bind<IBackgroundTask>(Identifier.PUBLISH_EVENT_BUS_TASK)
+            .to(PublishEventBusTask).inSingletonScope()
+
         // Log
         this._container.bind<ILogger>(Identifier.LOGGER).to(CustomLogger).inSingletonScope()
     }

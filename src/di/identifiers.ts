@@ -21,7 +21,7 @@ export abstract class Identifier {
 
     // Models
     public static readonly INTEGRATION_EVENT_REPO_MODEL: any = Symbol.for('IntegrationEventRepoModel')
-    public static readonly FITBIT_AUTH_DATA_REPO_MODEL: any = Symbol.for('FitbitAuthDataRepoModel')
+    public static readonly OAUTH_DATA_REPO_MODEL: any = Symbol.for('OAuthDataRepoModel')
 
     // Mappers
     public static readonly FITBIT_AUTH_DATA_ENTITY_MAPPER: any = Symbol.for('FitbitAuthDataEntityMapper')
@@ -34,6 +34,7 @@ export abstract class Identifier {
     public static readonly BACKGROUND_SERVICE: any = Symbol.for('BackgroundService')
 
     // Tasks
+    public static readonly PUBLISH_EVENT_BUS_TASK: any = Symbol.for('PublishEventBusTask')
 
     // Log
     public static readonly LOGGER: any = Symbol.for('CustomLogger')

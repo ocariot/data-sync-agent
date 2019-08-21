@@ -1,9 +1,5 @@
-export class FitbitAuthDataEntity {
-    public id?: string
-    public access_token?: string
-    public expires_in?: number
-    public refresh_token?: string
-    public scope?: string
+import { OauthDataEntity } from './oauth.data.entity'
+
+export class FitbitAuthDataEntity extends OauthDataEntity {
     public user_id?: string
-    public token_type?: string
 }
