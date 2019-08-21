@@ -6,13 +6,12 @@ export class CreateFitbitAuthDataValidator {
     public static validate(item: FitbitAuthData): void | ValidationException {
         const fields: Array<string> = []
 
-        if (!item.child_id) fields.push('child_id')
-        else ObjectIdValidator.validate(item.child_id)
         if (!item.access_token) fields.push('access_token')
         if (!item.expires_in) fields.push('expires_in')
         if (!item.refresh_token) fields.push('refresh_token')
         if (!item.scope) fields.push('scope')
         if (!item.user_id) fields.push('user_id')
+        else ObjectIdValidator.validate(item.user_id)
         if (!item.token_type) fields.push('token_type')
 
         if (fields.length) {

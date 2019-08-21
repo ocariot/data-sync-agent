@@ -4,16 +4,16 @@ import { Request, Response } from 'express'
 import { ApiExceptionManager } from '../exception/api.exception.manager'
 
 /**
- * Controller that implements Children Fitbit Sync feature operations.
+ * Controller that implements User Fitbit Sync feature operations.
  * @remarks
  * To define paths, we use library inversify-express-utils.
  *
  * @see {@link https://github.com/inversify/inversify-express-utils} for further information.
  */
-@controller('/v1/children/:child_id/fitbit/sync')
-export class ChildrenFitbitSyncController {
+@controller('/v1/users/:user_id/fitbit/sync')
+export class UserFitbitSyncController {
     /**
-     * Request the data sync from child.
+     * Request the data sync from user.
      *
      * @returns Promise<Response>
      */

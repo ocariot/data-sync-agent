@@ -4,12 +4,11 @@ interface IFitbitAuthDataModel extends Mongoose.Document {
 }
 
 const fitbitAuthDataSchema = new Mongoose.Schema({
-        child_id: { type: Mongoose.Schema.Types.ObjectId },
         access_token: { type: String },
         expires_in: { type: Number },
         refresh_token: { type: String },
         scope: { type: String },
-        user_id: { type: String },
+        user_id: { type: Mongoose.Schema.Types.ObjectId },
         token_type: { type: String }
     },
     {

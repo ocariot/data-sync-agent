@@ -23,7 +23,6 @@ export class FitbitAuthDataEntityMapper implements IEntityMapper<FitbitAuthData,
         const result: FitbitAuthDataEntity = new FitbitAuthDataEntity()
 
         if (item.id !== undefined) result.id = item.id
-        if (item.child_id !== undefined) result.child_id = item.child_id
         if (item.access_token !== undefined) result.access_token = item.access_token
         if (item.expires_in !== undefined) result.expires_in = item.expires_in
         if (item.refresh_token !== undefined) result.refresh_token = item.refresh_token
@@ -57,7 +56,6 @@ export class FitbitAuthDataEntityMapper implements IEntityMapper<FitbitAuthData,
 
         if (!json) return result
         if (json.id !== undefined) result.id = json.id
-        if (json.child_id !== undefined) result.child_id = json.child_id
         if (json.access_token !== undefined) result.access_token = json.access_token
         if (json.expires_in !== undefined) result.expires_in = json.expires_in
         if (json.refresh_token !== undefined) result.refresh_token = json.refresh_token

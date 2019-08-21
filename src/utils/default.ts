@@ -35,6 +35,6 @@ export abstract class Default {
     public static readonly SSL_CERT_PATH: string = '.certs/server.crt'
     public static readonly HOST_WHITELIST: Array<string> = ['*']
 
-    // Dashboard Host
-    public static readonly DASHBOARD_HOST: string = 'https://localhost:443'
+    // Fitbit App Callback Path
+    public static readonly HOST_API: string = 'https://localhost:3001'
 }

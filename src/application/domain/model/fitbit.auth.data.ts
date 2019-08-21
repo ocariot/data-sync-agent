@@ -4,21 +4,12 @@ import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 
 export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDeserializable<FitbitAuthData> {
-    private _child_id?: string
     private _access_token?: string
     private _expires_in?: number
     private _refresh_token?: string
     private _scope?: string
     private _user_id?: string
     private _token_type?: string
-
-    get child_id(): string | undefined {
-        return this._child_id
-    }
-
-    set child_id(value: string | undefined) {
-        this._child_id = value
-    }
 
     get access_token(): string | undefined {
         return this._access_token
@@ -79,7 +70,6 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         }
 
         if (json.id !== undefined) super.id = json.id
-        if (json.child_id !== undefined) this.child_id = json.child_id
         if (json.access_token !== undefined) this.access_token = json.access_token
         if (json.expires_in !== undefined) this.expires_in = json.expires_in
         if (json.refresh_token !== undefined) this.refresh_token = json.refresh_token
@@ -92,7 +82,6 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
 
     public toJSON(): any {
         return {
-            child_id: this.child_id,
             access_token: this.access_token,
             expires_in: this.expires_in,
             refresh_token: this.refresh_token,

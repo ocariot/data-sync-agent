@@ -8,10 +8,9 @@ export abstract class Identifier {
 
     // Controllers
     public static readonly HOME_CONTROLLER: any = Symbol.for('HomeController')
-    public static readonly CHILDREN_FITBIT_AUTH_CONTROLLER_CONTROLLER: any =
-        Symbol.for('ChildrenFitbitAuthController')
-    public static readonly CHILDREN_FITBIT_SYNC_CONTROLLER_CONTROLLER: any =
-        Symbol.for('ChildrenFitbitSyncController')
+    public static readonly CALLBACK_CONTROLLER: any = Symbol.for('CallbackController')
+    public static readonly USER_FITBIT_AUTH_CONTROLLER: any = Symbol.for('UserFitbitAuthController')
+    public static readonly USER_FITBIT_SYNC_CONTROLLER: any = Symbol.for('UserFitbitSyncController')
 
     // Services
     public static readonly FITBIT_AUTH_DATA_SERVICE: any = Symbol.for('FitbitAuthDataService')
