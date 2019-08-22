@@ -31,6 +31,7 @@ import { FitbitAuthDataService } from '../application/service/fitbit.auth.data.s
 import { CallbackController } from '../ui/controllers/callback.controller'
 import { PublishEventBusTask } from '../background/task/publish.event.bus.task'
 import { IBackgroundTask } from '../application/port/background.task.interface'
+import { CollectFitbitUserDataTask } from '../background/task/collect.fitbit.user.data.task'
 
 class IoC {
     private readonly _container: Container
@@ -116,6 +117,9 @@ class IoC {
         this._container
             .bind<IBackgroundTask>(Identifier.PUBLISH_EVENT_BUS_TASK)
             .to(PublishEventBusTask).inSingletonScope()
+        this._container
+            .bind<IBackgroundTask>(Identifier.COLLECT_FITBIT_USER_DATA_TASK)
+            .to(CollectFitbitUserDataTask).inSingletonScope()
 
         // Log
         this._container.bind<ILogger>(Identifier.LOGGER).to(CustomLogger).inSingletonScope()

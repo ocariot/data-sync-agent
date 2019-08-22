@@ -35,6 +35,7 @@ export abstract class Identifier {
 
     // Tasks
     public static readonly PUBLISH_EVENT_BUS_TASK: any = Symbol.for('PublishEventBusTask')
+    public static readonly COLLECT_FITBIT_USER_DATA_TASK: any = Symbol.for('CollectFitbitUserDataTask')
 
     // Log
     public static readonly LOGGER: any = Symbol.for('CustomLogger')
