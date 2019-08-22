@@ -19,7 +19,7 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
     constructor(
         @inject(Identifier.MONGODB_CONNECTION) private readonly _mongodb: IConnectionDB,
         @inject(Identifier.FITBIT_AUTH_DATA_REPOSITORY) private readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository,
-        @inject(Identifier.LOGGER) readonly _logger: ILogger
+        @inject(Identifier.LOGGER) /*private*/ readonly _logger: ILogger
     ) {
     }
 
@@ -40,58 +40,64 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
         }
     }
 
-    private async getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void> {
-        try {
-            const weights: Array<any> =
-                await this.getUserBodyData(
-                    data.access_token!,
-                    MeasurementType.WEIGHT,
-                    data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                        moment().format('YYYY-MM-DD'), '1y')
-            const bodyFats: Array<any> =
-                await this.getUserBodyData(
-                    data.access_token!,
-                    'fat',
-                    data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                        moment().format('YYYY-MM-DD'), '1y')
-            const activities: Array<any> =
-                await this.getUserActivities(
-                    data.access_token!,
-                    100,
-                    data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                        moment().subtract(1, 'year').format('YYYY-MM-DD'))
-            const sleep: Array<any> =
-                await this.getUserSleep(
-                    data.access_token!,
-                    100,
-                    data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                        moment().subtract(1, 'year').format('YYYY-MM-DD'))
+    private getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void> {
+        return new Promise<void>(async (resolve, reject) => {
+            try {
+                const weights: Array<any> =
+                    await this.getUserBodyData(
+                        data.access_token!,
+                        MeasurementType.WEIGHT,
+                        data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
+                            moment().format('YYYY-MM-DD'), '1y')
+                const bodyFats: Array<any> =
+                    await this.getUserBodyData(
+                        data.access_token!,
+                        'fat',
+                        data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
+                            moment().format('YYYY-MM-DD'), '1y')
+                const activities: Array<any> =
+                    await this.getUserActivities(
+                        data.access_token!,
+                        100,
+                        data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
+                            moment().subtract(1, 'year').format('YYYY-MM-DD'))
+                const sleep: Array<any> =
+                    await this.getUserSleep(
+                        data.access_token!,
+                        100,
+                        data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
+                            moment().subtract(1, 'year').format('YYYY-MM-DD'))
 
-            const weightList: Array<Weight> = await this.parseWeight(weights, data.user_id!)
-            const bodyFatsList: Array<BodyFat> = await this.parseBodyFat(bodyFats, data.user_id!)
-            const activitiesList: Array<PhysicalActivity> = await this.parseActivity(activities, data.user_id!)
-            const sleepList: Array<Sleep> = await this.parseSleep(sleep, data.user_id!)
+                const weightList: Array<Weight> = await this.parseWeight(weights, data.user_id!)
+                const bodyFatsList: Array<BodyFat> = await this.parseBodyFat(bodyFats, data.user_id!)
+                const activitiesList: Array<PhysicalActivity> = await this.parseActivity(activities, data.user_id!)
+                const sleepList: Array<Sleep> = await this.parseSleep(sleep, data.user_id!)
 
-            weightList
-            bodyFatsList
-            activitiesList
-            sleepList
-        } catch (err) {
-            if (err.type) {
-                if (err.type === 'expired_token') {
-                    if (calls === 3) {
-                        return Promise.reject(new OAuthException('invalid_token', 'The token is not valid.'))
+                // These data should be posted on rabbitmq
+                weightList
+                bodyFatsList
+                activitiesList
+                sleepList
+            } catch (err) {
+                if (err.type) {
+                    if (err.type === 'expired_token') {
+                        if (calls === 3) {
+                            return reject(new OAuthException('invalid_token', `The token is not valid: ${data.access_token}`))
+                        }
+                        try {
+                            await this._fitbitAuthDataRepo.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
+                        } catch (err) {
+                            return reject(err)
+                        }
+                        setTimeout(() => this.getFitbitUserData(data, calls + 1), 1000)
+                    } else if (err.type === 'invalid_token') {
+                        return reject(new OAuthException('invalid_token', `The token is not valid: ${data.access_token}`))
                     }
-                    setTimeout(() => {
-                        console.log('calls', calls)
-                        this.getFitbitUserData(data, calls + 1)
-                    }, 1000)
-                } else if (err.type === 'invalid_token') {
-                    return Promise.reject(new OAuthException('invalid_token', 'The token is not valid.'))
+                    return reject(new OAuthException(err.type, err.message))
                 }
-                return Promise.reject(new OAuthException(err.type, err.message))
+                return reject(err)
             }
-        }
+        })
     }
 
     private async getUserBodyData(token: string, resource: string, date: string, period: string): Promise<any> {

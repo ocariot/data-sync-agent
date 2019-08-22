@@ -9,6 +9,7 @@ import { IFitbitAuthDataRepository } from '../../application/port/fitbit.auth.da
 import FitbitApiClient from 'fitbit-node'
 import { Default } from '../../utils/default'
 import { Query } from './query/query'
+import { OAuthException } from '../../application/domain/exception/oauth.exception'
 
 @injectable()
 export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, FitbitAuthDataEntity>
@@ -43,8 +44,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                             undefined,
                             `?user_id=${userId}&redirect_uri=${redirectUri}`))
             } catch (err) {
-                console.log('error at get url', JSON.stringify(err))
-                return reject(err)
+                return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
             }
         })
     }
@@ -57,8 +57,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                     return resolve(this.mapper.transform({ ...tokenData, user_id: userId }))
                 })
                 .catch(err => {
-                    console.log('error at get token', JSON.stringify(err))
-                    return reject(new Error(err.message))
+                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
                 })
         })
     }
@@ -68,8 +67,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
             this.fitbit_client.revokeAccessToken(accessToken)
                 .then(res => resolve(!!res))
                 .catch(err => {
-                    console.log('error at revoke token', JSON.stringify(err))
-                    return reject(new Error(err.message))
+                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
                 })
         })
     }
@@ -85,8 +83,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                     return resolve(this.update(newAccessToken))
                 })
                 .catch(err => {
-                    console.log('error at refresh token', JSON.stringify(err))
-                    return reject(new Error(err.message))
+                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
                 })
         })
     }
@@ -99,8 +96,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                     return resolve(data)
                 })
                 .catch(err => {
-                    console.log('error at get data', JSON.stringify(err))
-                    return reject(new Error(err.message))
+                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
                 })
         })
     }
