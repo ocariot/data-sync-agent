@@ -12,5 +12,7 @@ export interface IFitbitAuthDataRepository extends IRepository<FitbitAuthData> {
 
     refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData>
 
-    getDataFromUser(path: string, accessToken: string): Promise<any>
+    getDataFromPath(path: string, accessToken: string): Promise<any>
+
+    getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void>
 }
