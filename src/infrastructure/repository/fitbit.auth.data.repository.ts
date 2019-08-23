@@ -42,6 +42,11 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
         })
     }
 
+    public findAuthDataFromUser(userId: string): Promise<FitbitAuthData> {
+        return this.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
+    }
+
+    // Fitbit Client Methods
     public getAuthorizeUrl(userId: string, redirectUri: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             try {
@@ -110,12 +115,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
         })
     }
 
-    public findAuthDataFromUser(userId: string): Promise<FitbitAuthData> {
-        return this.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
-    }
-
     public getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void> {
-        console.log('Getting data from', data.user_id, calls)
         return new Promise<void>(async (resolve, reject) => {
             try {
                 const weights: Array<any> =
@@ -210,7 +210,6 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                     data.user_id!
                 )
 
-
                 // This data must be published to the message bus.
                 weightList
                 bodyFatsList
@@ -223,9 +222,17 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                 // await this._fitbitAuthDataRepo.update(data)
             } catch (err) {
                 if (err.type) {
+                    /*
+                    * If the token was expired, it will try refresh the token and make a new data request.
+                    * If the token or refresh token was invalid, the method reject an error for invalid token / refresh token.
+                    * Otherwise, the method will reject the respective error.
+                    */
                     if (err.type === 'expired_token') {
                         if (calls === this.max_calls_refresh_token) {
-                            return reject(new OAuthException('invalid_token', `The token is not valid: ${data.access_token}`))
+                            return reject(new OAuthException(
+                                'invalid_token',
+                                `The access token could not be refresh: ${data.access_token}`,
+                                'Probably, this access token or the refresh token was invalid. Please make a new request.'))
                         }
                         try {
                             await this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
@@ -234,7 +241,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         }
                         setTimeout(() => this.getFitbitUserData(data, calls + 1), 1000)
                     } else if (err.type === 'invalid_token') {
-                        return reject(new OAuthException('invalid_token', `The token is not valid: ${data.access_token}`))
+                        return reject(new OAuthException('invalid_token', `Access token invalid: ${data.access_token}`))
                     }
                     return reject(new OAuthException(err.type, err.message))
                 }

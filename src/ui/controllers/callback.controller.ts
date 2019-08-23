@@ -37,7 +37,7 @@ export class CallbackController {
                 const userId: string = stateQuery.filters.user_id
                 const redirectUri: string = stateQuery.filters.redirect_uri
                 await this._fitbitAuthDataService.getAccessToken(userId, code)
-                return res.status(HttpStatus.NO_CONTENT).redirect(redirectUri)
+                return res.status(HttpStatus.PERMANENT_REDIRECT).redirect(redirectUri.concat(`?user_id=${userId}`))
             }
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {

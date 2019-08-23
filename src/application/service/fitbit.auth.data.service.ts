@@ -6,6 +6,7 @@ import { IFitbitAuthDataRepository } from '../port/fitbit.auth.data.repository.i
 import { CreateFitbitAuthDataValidator } from '../domain/validator/create.fitbit.auth.data.validator'
 import { ObjectIdValidator } from '../domain/validator/object.id.validator'
 import { IFitbitAuthDataService } from '../port/fitbit.auth.data.service.interface'
+import { ValidationException } from '../domain/exception/validation.exception'
 
 @injectable()
 export class FitbitAuthDataService implements IFitbitAuthDataService<FitbitAuthData> {
@@ -47,6 +48,9 @@ export class FitbitAuthDataService implements IFitbitAuthDataService<FitbitAuthD
     public getAuthorizeUrl(userId: string, redirectUri: string): Promise<string> {
         try {
             ObjectIdValidator.validate(userId)
+            if (!redirectUri) {
+                throw new ValidationException('A redirect uri is required to manage this operation!')
+            }
         } catch (err) {
             return Promise.reject(err)
         }
