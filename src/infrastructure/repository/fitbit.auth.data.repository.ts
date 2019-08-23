@@ -10,14 +10,13 @@ import FitbitApiClient from 'fitbit-node'
 import { Default } from '../../utils/default'
 import { Query } from './query/query'
 import { OAuthException } from '../../application/domain/exception/oauth.exception'
-import { MeasurementType } from '../../application/domain/model/measurement'
 import moment from 'moment'
-import { Weight } from '../../application/domain/model/weight'
-import { BodyFat } from '../../application/domain/model/body.fat'
 import { PhysicalActivity } from '../../application/domain/model/physical.activity'
 import { Sleep } from '../../application/domain/model/sleep'
 import { Log } from '../../application/domain/model/log'
 import { UserLog } from '../../application/domain/model/user.log'
+import { MeasurementType } from '../../application/domain/model/measurement'
+import { Weight } from '../../application/domain/model/weight'
 
 @injectable()
 export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, FitbitAuthDataEntity>
@@ -118,18 +117,37 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
     public getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
-                const weights: Array<any> =
+                const weights: Array<any> = data.last_sync ?
                     await this.getUserBodyData(
                         data.access_token!,
-                        MeasurementType.WEIGHT,
-                        data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().format('YYYY-MM-DD'), '1y')
-                const bodyFats: Array<any> =
-                    await this.getUserBodyData(
-                        data.access_token!,
-                        'fat',
-                        data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().format('YYYY-MM-DD'), '1y')
+                        moment(data.last_sync).format('YYYY-MM-DD'),
+                        moment().format('YYYY-MM-DD'))
+                    : [
+                        ...await this.getUserBodyData(
+                            data.access_token!,
+                            moment().subtract(1, 'month').format('YYYY-MM-DD'),
+                            moment().format('YYYY-MM-DD')),
+                        ...await this.getUserBodyData(
+                            data.access_token!,
+                            moment().subtract(2, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(1, 'month').format('YYYY-MM-DD')),
+                        ...await this.getUserBodyData(
+                            data.access_token!,
+                            moment().subtract(3, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(2, 'month').format('YYYY-MM-DD')),
+                        ...await this.getUserBodyData(
+                            data.access_token!,
+                            moment().subtract(4, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(3, 'month').format('YYYY-MM-DD')),
+                        ...await this.getUserBodyData(
+                            data.access_token!,
+                            moment().subtract(5, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(4, 'month').format('YYYY-MM-DD')),
+                        ...await this.getUserBodyData(
+                            data.access_token!,
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(5, 'month').format('YYYY-MM-DD'))
+                    ]
                 const activities: Array<any> =
                     await this.getUserActivities(
                         data.access_token!,
@@ -198,7 +216,6 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                     )
 
                 const weightList: Array<Weight> = await this.parseWeight(weights, data.user_id!)
-                const bodyFatsList: Array<BodyFat> = await this.parseBodyFat(bodyFats, data.user_id!)
                 const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivity(activities, data.user_id!)
                 const sleepList: Array<Sleep> = await this.parseSleep(sleep, data.user_id!)
                 const userLog: UserLog = await this.parseActivityLogs(
@@ -212,7 +229,6 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
 
                 // This data must be published to the message bus.
                 weightList
-                bodyFatsList
                 activitiesList
                 sleepList
                 userLog
@@ -262,14 +278,14 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
         })
     }
 
-    private async getUserBodyData(token: string, resource: string, date: string, period: string): Promise<any> {
+    private async getUserBodyData(token: string, baseDate: string, endDate: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            this.getUserData(`/body/${resource}/date/${date}/${period}.json`, token)
+            this.getUserData(`/body/log/weight/date/${baseDate}/${endDate}.json`, token)
                 .then(result => {
                     if (!result.success && result.errors) {
                         return reject(new OAuthException(result.errors[0].errorType, result.errors[0].message))
                     }
-                    return resolve(result[resource === 'fat' ? 'body-fat' : 'body-weight'])
+                    return resolve(result.weight)
                 }).catch(err => reject(err))
         })
     }
@@ -324,27 +340,15 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
         }
     }
 
-    // Parsers
+    // // Parsers
     private parseWeight(weights: Array<any>, userId: string): Array<Weight> {
         if (!weights) return ([])
         return weights.map(item => new Weight().fromJSON({
-            instanceof: 'weight',
             type: MeasurementType.WEIGHT,
-            timestamp: new Date(item.dateTime).toISOString(),
+            timestamp: new Date(item.date).toISOString(),
             value: item.value,
             unit: 'kg',
-            child_id: userId
-        }))
-    }
-
-    private parseBodyFat(bodyFats: Array<any>, userId: string): Array<BodyFat> {
-        if (!bodyFats) return []
-        return bodyFats.map(item => new BodyFat().fromJSON({
-            instanceof: 'body_fat',
-            type: MeasurementType.BODY_FAT,
-            timestamp: new Date(item.dateTime).toISOString(),
-            value: item.value,
-            unit: '%',
+            body_fat: item.fat,
             child_id: userId
         }))
     }
@@ -352,7 +356,6 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
     private parsePhysicalActivity(activities: Array<any>, userId: string): Array<PhysicalActivity> {
         if (!activities) return ([])
         return activities.map(item => new PhysicalActivity().fromJSON({
-            instanceof: 'physical_activity',
             type: 'physical_activity',
             start_time: item.startTime,
             end_time: moment(item.startTime).add(item.duration, 'milliseconds').format(),
@@ -385,14 +388,13 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
     private parseSleep(sleep: Array<any>, userId: string): Array<Sleep> {
         if (!sleep) return ([])
         return sleep.map(item => new Sleep().fromJSON({
-            instanceof: 'sleep',
             start_time: item.startTime,
             end_time: moment(item.startTime).add(item.duration, 'milliseconds').format(),
             duration: item.duration,
             type: item.type,
             pattern: {
                 data_set: item.levels.data.map(value => {
-                    return { start_time: value.startTime, name: value.level, duration: value.seconds }
+                    return { start_time: value.startTime, name: value.level, duration: `${parseInt(value.seconds, 10) * 1000}` }
                 }),
                 summary: this.getSleepSummary(item.levels.summary)
             },
