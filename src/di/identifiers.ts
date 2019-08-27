@@ -8,7 +8,8 @@ export abstract class Identifier {
 
     // Controllers
     public static readonly HOME_CONTROLLER: any = Symbol.for('HomeController')
-    public static readonly CALLBACK_CONTROLLER: any = Symbol.for('CallbackController')
+    public static readonly FITBIT_CALLBACK_CONTROLLER: any = Symbol.for('FitbitCallbackController')
+    public static readonly FITBIT_WEBHOOK_CONTROLLER: any = Symbol.for('FitbitWebhookController')
     public static readonly USER_FITBIT_AUTH_CONTROLLER: any = Symbol.for('UserFitbitAuthController')
     public static readonly USER_FITBIT_SYNC_CONTROLLER: any = Symbol.for('UserFitbitSyncController')
 
@@ -17,7 +18,7 @@ export abstract class Identifier {
 
     // Repositories
     public static readonly INTEGRATION_EVENT_REPOSITORY: any = Symbol.for('IntegrationEventRepository')
-    public static readonly FITBIT_AUTH_DATA_REPOSITORY: any = Symbol.for('FitbitAuthDataRepository')
+    public static readonly FITBIT_DATA_REPOSITORY: any = Symbol.for('FitbitAuthDataRepository')
 
     // Models
     public static readonly INTEGRATION_EVENT_REPO_MODEL: any = Symbol.for('IntegrationEventRepoModel')

@@ -2,6 +2,7 @@ import HttpStatus from 'http-status-codes'
 import { controller, httpPost, request, response } from 'inversify-express-utils'
 import { Request, Response } from 'express'
 import { ApiExceptionManager } from '../exception/api.exception.manager'
+import moment from 'moment'
 
 /**
  * Controller that implements User Fitbit Sync feature operations.
@@ -20,7 +21,10 @@ export class UserFitbitSyncController {
     @httpPost('/')
     public async requestDataSync(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            return res.status(HttpStatus.NO_CONTENT).send()
+            return res.status(HttpStatus.ACCEPTED).send({
+                status: 'pending',
+                completion_estimate: moment().add('5', 'minute').toISOString()
+            })
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())

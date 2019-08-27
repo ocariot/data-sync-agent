@@ -11,22 +11,24 @@ import { ValidationException } from '../domain/exception/validation.exception'
 @injectable()
 export class FitbitAuthDataService implements IFitbitAuthDataService<FitbitAuthData> {
     constructor(
-        @inject(Identifier.FITBIT_AUTH_DATA_REPOSITORY) private readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository
+        @inject(Identifier.FITBIT_DATA_REPOSITORY) private readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository
     ) {
     }
 
     public async add(item: FitbitAuthData): Promise<FitbitAuthData> {
         try {
             CreateFitbitAuthDataValidator.validate(item)
+            const exists: FitbitAuthData = await this._fitbitAuthDataRepo.findAuthDataFromUser(item.user_id!)
+            if (exists) {
+                item.id = exists.id
+                const result: FitbitAuthData = await this._fitbitAuthDataRepo.update(item)
+                return Promise.resolve(result)
+            }
+            const authData: FitbitAuthData = await this._fitbitAuthDataRepo.create(item)
+            return Promise.resolve(authData)
         } catch (err) {
             return Promise.reject(err)
         }
-        const exists: FitbitAuthData = await this._fitbitAuthDataRepo.findAuthDataFromUser(item.user_id!)
-        if (exists) {
-            item.id = exists.id
-            return this._fitbitAuthDataRepo.update(item)
-        }
-        return this._fitbitAuthDataRepo.create(item)
     }
 
     public getAll(query: IQuery): Promise<Array<FitbitAuthData>> {
@@ -64,6 +66,9 @@ export class FitbitAuthDataService implements IFitbitAuthDataService<FitbitAuthD
             return Promise.reject(err)
         }
         const authData: FitbitAuthData = await this._fitbitAuthDataRepo.getAccessToken(userId, code)
+        await this._fitbitAuthDataRepo.subscribeUserWeightEvent(authData)
+        await this._fitbitAuthDataRepo.subscribeUserActivityEvent(authData)
+        await this._fitbitAuthDataRepo.subscribeUserSleepEvent(authData)
         return this.add(authData)
     }
 

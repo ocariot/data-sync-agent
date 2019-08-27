@@ -19,7 +19,7 @@ import { MeasurementType } from '../../application/domain/model/measurement'
 import { Weight } from '../../application/domain/model/weight'
 
 @injectable()
-export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, FitbitAuthDataEntity>
+export class FitbitDataRepository extends BaseRepository<FitbitAuthData, FitbitAuthDataEntity>
     implements IFitbitAuthDataRepository {
 
     private callback_url: string
@@ -65,13 +65,8 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
     public getAccessToken(userId: string, code: string): Promise<FitbitAuthData> {
         return new Promise<FitbitAuthData>((resolve, reject) => {
             this.fitbit_client.getAccessToken(code, this.callback_url)
-                .then(tokenData => {
-                    if (!tokenData) return resolve(undefined)
-                    return resolve(this.mapper.transform({ ...tokenData, user_id: userId }))
-                })
-                .catch(err => {
-                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
-                })
+                .then(tokenData => resolve(tokenData ? this.mapper.transform({ ...tokenData, user_id: userId }) : undefined))
+                .catch(err => reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)))
         })
     }
 
@@ -79,9 +74,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
         return new Promise<boolean>(async (resolve, reject) => {
             this.fitbit_client.revokeAccessToken(accessToken)
                 .then(res => resolve(!!res))
-                .catch(err => {
-                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
-                })
+                .catch(err => reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)))
         })
     }
 
@@ -104,14 +97,39 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
     public getDataFromPath(path: string, accessToken: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             this.fitbit_client.get(path, accessToken)
-                .then(data => {
-                    if (!data) return resolve(undefined)
-                    return resolve(data)
-                })
-                .catch(err => {
-                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
-                })
+                .then(data => resolve(data ? data : undefined))
+                .catch(err => reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)))
         })
+    }
+
+    public async subscribeUserWeightEvent(data: FitbitAuthData): Promise<void> {
+        try {
+            const r1 = await this.fitbit_client.post(`/body/apiSubscriptions/${data.user_id}.json`, data.access_token)
+            console.log(r1[0])
+            return Promise.resolve()
+        } catch (err) {
+            return Promise.reject(new OAuthException('subscribe_error', 'Error at subscribe on Fitbit client.'))
+        }
+    }
+
+    public async subscribeUserActivityEvent(data: FitbitAuthData): Promise<void> {
+        try {
+            const r2 = await this.fitbit_client.post(`/activities/apiSubscriptions/${data.user_id}.json`, data.access_token)
+            console.log(r2[0])
+            return Promise.resolve()
+        } catch (err) {
+            return Promise.reject(new OAuthException('subscribe_error', 'Error at subscribe on Fitbit client.'))
+        }
+    }
+
+    public async subscribeUserSleepEvent(data: FitbitAuthData): Promise<void> {
+        try {
+            const r3 = await this.fitbit_client.post(`/sleep/apiSubscriptions/${data.user_id}.json`, data.access_token)
+            console.log(r3[0])
+            return Promise.resolve()
+        } catch (err) {
+            return Promise.reject(new OAuthException('subscribe_error', 'Error at subscribe on Fitbit client.'))
+        }
     }
 
     public getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void> {
@@ -153,20 +171,20 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         data.access_token!,
                         100,
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'))
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'))
                 const sleep: Array<any> =
                     await this.getUserSleep(
                         data.access_token!,
                         100,
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'))
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'))
 
                 const stepsLogs: Array<any> =
                     await this.getUserActivityLogs(
                         data.access_token!,
                         'steps',
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'),
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
                         'today'
                     )
 
@@ -175,7 +193,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         data.access_token!,
                         'calories',
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'),
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
                         'today'
                     )
 
@@ -184,7 +202,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         data.access_token!,
                         'minutesSedentary',
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'),
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
                         'today'
                     )
 
@@ -193,7 +211,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         data.access_token!,
                         'minutesLightlyActive',
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'),
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
                         'today'
                     )
 
@@ -202,7 +220,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         data.access_token!,
                         'minutesFairlyActive',
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'),
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
                         'today'
                     )
 
@@ -211,7 +229,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                         data.access_token!,
                         'minutesVeryActive',
                         data.last_sync ? moment(data.last_sync).format('YYYY-MM-DD') :
-                            moment().subtract(1, 'year').format('YYYY-MM-DD'),
+                            moment().subtract(6, 'month').format('YYYY-MM-DD'),
                         'today'
                     )
 
@@ -236,6 +254,7 @@ export class FitbitAuthDataRepository extends BaseRepository<FitbitAuthData, Fit
                 // Finally, the last sync variable from user needs to be updated
                 data.last_sync = new Date().toISOString()
                 // await this._fitbitAuthDataRepo.update(data)
+                return resolve()
             } catch (err) {
                 if (err.type) {
                     /*

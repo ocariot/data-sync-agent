@@ -36,5 +36,5 @@ export abstract class Default {
     public static readonly HOST_WHITELIST: Array<string> = ['*']
 
     // Fitbit App Callback Path
-    public static readonly HOST_API: string = 'https://localhost:3001'
+    public static readonly HOST_API: string = 'https://localhost:5001'
 }

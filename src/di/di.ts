@@ -24,14 +24,15 @@ import { FitbitAuthData } from '../application/domain/model/fitbit.auth.data'
 import { FitbitAuthDataEntity } from '../infrastructure/entity/fitbit.auth.data.entity'
 import { FitbitAuthDataEntityMapper } from '../infrastructure/entity/mapper/fitbit.auth.data.entity.mapper'
 import { IEntityMapper } from '../infrastructure/port/entity.mapper.interface'
-import { FitbitAuthDataRepository } from '../infrastructure/repository/fitbit.auth.data.repository'
+import { FitbitDataRepository } from '../infrastructure/repository/fitbit.data.repository'
 import { IFitbitAuthDataRepository } from '../application/port/fitbit.auth.data.repository.interface'
 import { IFitbitAuthDataService } from '../application/port/fitbit.auth.data.service.interface'
 import { FitbitAuthDataService } from '../application/service/fitbit.auth.data.service'
-import { CallbackController } from '../ui/controllers/callback.controller'
+import { FitbitCallbackController } from '../ui/controllers/fitbit.callback.controller'
 import { PublishEventBusTask } from '../background/task/publish.event.bus.task'
 import { IBackgroundTask } from '../application/port/background.task.interface'
 import { CollectFitbitUserDataTask } from '../background/task/collect.fitbit.user.data.task'
+import { FitbitWebhookController } from '../ui/controllers/fitbit.webhook.controller'
 
 class IoC {
     private readonly _container: Container
@@ -66,7 +67,10 @@ class IoC {
 
         // Controllers
         this._container.bind<HomeController>(Identifier.HOME_CONTROLLER).to(HomeController).inSingletonScope()
-        this._container.bind<CallbackController>(Identifier.CALLBACK_CONTROLLER).to(CallbackController).inSingletonScope()
+        this._container.bind<FitbitCallbackController>(Identifier.FITBIT_CALLBACK_CONTROLLER)
+            .to(FitbitCallbackController).inSingletonScope()
+        this._container.bind<FitbitWebhookController>(Identifier.FITBIT_WEBHOOK_CONTROLLER)
+            .to(FitbitWebhookController).inSingletonScope()
         this._container.bind<UserFitbitAuthController>(Identifier.USER_FITBIT_AUTH_CONTROLLER)
             .to(UserFitbitAuthController).inSingletonScope()
         this._container.bind<UserFitbitSyncController>(Identifier.USER_FITBIT_SYNC_CONTROLLER)
@@ -81,8 +85,8 @@ class IoC {
             .bind<IIntegrationEventRepository>(Identifier.INTEGRATION_EVENT_REPOSITORY)
             .to(IntegrationEventRepository).inSingletonScope()
         this._container
-            .bind<IFitbitAuthDataRepository>(Identifier.FITBIT_AUTH_DATA_REPOSITORY)
-            .to(FitbitAuthDataRepository).inSingletonScope()
+            .bind<IFitbitAuthDataRepository>(Identifier.FITBIT_DATA_REPOSITORY)
+            .to(FitbitDataRepository).inSingletonScope()
 
         // Models
         this._container.bind(Identifier.INTEGRATION_EVENT_REPO_MODEL).toConstantValue(IntegrationEventRepoModel)

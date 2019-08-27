@@ -15,4 +15,10 @@ export interface IFitbitAuthDataRepository extends IRepository<FitbitAuthData> {
     getDataFromPath(path: string, accessToken: string): Promise<any>
 
     getFitbitUserData(data: FitbitAuthData, calls: number): Promise<void>
+
+    subscribeUserWeightEvent(data: FitbitAuthData): Promise<void>
+
+    subscribeUserActivityEvent(data: FitbitAuthData): Promise<void>
+
+    subscribeUserSleepEvent(data: FitbitAuthData): Promise<void>
 }
