@@ -1,6 +1,5 @@
 import { FitbitAuthData } from '../model/fitbit.auth.data'
 import { ValidationException } from '../exception/validation.exception'
-import { ObjectIdValidator } from './object.id.validator'
 
 export class CreateFitbitAuthDataValidator {
     public static validate(item: FitbitAuthData): void | ValidationException {
@@ -11,7 +10,6 @@ export class CreateFitbitAuthDataValidator {
         if (!item.refresh_token) fields.push('refresh_token')
         if (!item.scope) fields.push('scope')
         if (!item.user_id) fields.push('user_id')
-        else ObjectIdValidator.validate(item.user_id)
         if (!item.token_type) fields.push('token_type')
 
         if (fields.length) {

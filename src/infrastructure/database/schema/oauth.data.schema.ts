@@ -1,16 +1,23 @@
 import Mongoose from 'mongoose'
 
-interface IOAuthDataModel extends Mongoose.Document {
+interface IUserAuthModel extends Mongoose.Document {
 }
 
-const oauthDataSchema = new Mongoose.Schema({
-        type: { type: String },
+const oauthSchema: any = {
+    access_token: { type: String }, // OAuth parameters
+    expires_in: { type: Number },
+    refresh_token: { type: String },
+    scope: { type: String },
+    token_type: { type: String }
+}
+const userAuthSchema = new Mongoose.Schema({
         user_id: { type: Mongoose.Schema.Types.ObjectId },
-        access_token: { type: String }, // OAuth parameters
-        expires_in: { type: Number },
-        refresh_token: { type: String },
-        scope: { type: String },
-        token_type: { type: String }
+        last_sync: { type: Date },
+        fitbit: {// Fitbit UserAuthData
+            ...oauthSchema,
+            user_id: { type: String }
+        }
+
     },
     {
         strict: false,
@@ -26,4 +33,4 @@ const oauthDataSchema = new Mongoose.Schema({
     }
 )
 
-export const OAuthDataRepoModel = Mongoose.model<IOAuthDataModel>('OAuthData', oauthDataSchema)
+export const UserAuthRepoModel = Mongoose.model<IUserAuthModel>('UserAuth', userAuthSchema)

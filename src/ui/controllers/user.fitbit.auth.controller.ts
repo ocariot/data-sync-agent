@@ -1,10 +1,10 @@
 import HttpStatus from 'http-status-codes'
-import { controller, httpGet, httpPost, request, response } from 'inversify-express-utils'
+import { controller, httpPost, request, response } from 'inversify-express-utils'
 import { Request, Response } from 'express'
 import { ApiExceptionManager } from '../exception/api.exception.manager'
 import { inject } from 'inversify'
 import { Identifier } from '../../di/identifiers'
-import { IFitbitAuthDataService } from '../../application/port/fitbit.auth.data.service.interface'
+import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
 import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
 
 /**
@@ -18,7 +18,7 @@ import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
 export class UserFitbitAuthController {
     constructor(
         @inject(Identifier.FITBIT_AUTH_DATA_SERVICE)
-        private readonly _fitbitAuthDataService: IFitbitAuthDataService<FitbitAuthData>
+        private readonly _fitbitAuthDataService: IUserAuthDataService<FitbitAuthData>
     ) {
     }
 
@@ -30,25 +30,12 @@ export class UserFitbitAuthController {
     @httpPost('/')
     public async saveAuthData(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            await this._fitbitAuthDataService.add(new FitbitAuthData().fromJSON({ ...req.body, user_id: req.params.user_id }))
+            await this._fitbitAuthDataService.add(new FitbitAuthData().fromJSON({
+                user_id: req.params.user_id,
+                fitbit: { ...req.body },
+                last_sync: req.body.last_sync
+            }))
             return res.status(HttpStatus.NO_CONTENT).send()
-        } catch (err) {
-            const handlerError = ApiExceptionManager.build(err)
-            return res.status(handlerError.code).send(handlerError.toJson())
-        }
-    }
-
-    /**
-     * Get the user user data to sync informations from Fitbit Server.
-     *
-     * @returns Promise<Response>
-     */
-    @httpGet('/')
-    public async getAuthData(@request() req: Request, @response() res: Response): Promise<Response | void> {
-        try {
-            const url: string =
-                await this._fitbitAuthDataService.getAuthorizeUrl(req.params.user_id, req.query.filters.redirect_uri)
-            return res.status(HttpStatus.MOVED_PERMANENTLY).redirect(url)
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())
@@ -63,7 +50,7 @@ export class UserFitbitAuthController {
     @httpPost('/revoke')
     public async revokeAuthToken(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            await this._fitbitAuthDataService.revokeTokenFromUser(req.params.user_id)
+            await this._fitbitAuthDataService.revokeFitbitAccessToken(req.params.user_id)
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)

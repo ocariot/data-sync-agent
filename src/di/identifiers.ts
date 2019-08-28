@@ -8,23 +8,24 @@ export abstract class Identifier {
 
     // Controllers
     public static readonly HOME_CONTROLLER: any = Symbol.for('HomeController')
-    public static readonly FITBIT_CALLBACK_CONTROLLER: any = Symbol.for('FitbitCallbackController')
-    public static readonly FITBIT_WEBHOOK_CONTROLLER: any = Symbol.for('FitbitWebhookController')
+    public static readonly FITBIT_SUBSCRIBER_CONTROLLER: any = Symbol.for('FitbitSubscriberController')
     public static readonly USER_FITBIT_AUTH_CONTROLLER: any = Symbol.for('UserFitbitAuthController')
     public static readonly USER_FITBIT_SYNC_CONTROLLER: any = Symbol.for('UserFitbitSyncController')
 
     // Services
-    public static readonly FITBIT_AUTH_DATA_SERVICE: any = Symbol.for('FitbitAuthDataService')
+    public static readonly USER_AUTH_DATA_SERVICE: any = Symbol.for('UserAuthDataService')
 
     // Repositories
     public static readonly INTEGRATION_EVENT_REPOSITORY: any = Symbol.for('IntegrationEventRepository')
-    public static readonly FITBIT_DATA_REPOSITORY: any = Symbol.for('FitbitAuthDataRepository')
+    public static readonly USER_AUTH_DATA_REPOSITORY: any = Symbol.for('UserAuthDataRepository')
+    public static readonly FITBIT_AUTH_DATA_REPOSITORY: any = Symbol.for('FitbitAuthDataRepository')
 
     // Models
     public static readonly INTEGRATION_EVENT_REPO_MODEL: any = Symbol.for('IntegrationEventRepoModel')
-    public static readonly OAUTH_DATA_REPO_MODEL: any = Symbol.for('OAuthDataRepoModel')
+    public static readonly USER_AUTH_REPO_MODEL: any = Symbol.for('UserAuthRepoModel')
 
     // Mappers
+    public static readonly USER_AUTH_DATA_ENTITY_MAPPER: any = Symbol.for('UserAuthDataEntityMapper')
     public static readonly FITBIT_AUTH_DATA_ENTITY_MAPPER: any = Symbol.for('FitbitAuthDataEntityMapper')
     // Background Services
     public static readonly MONGODB_CONNECTION_FACTORY: any = Symbol.for('ConnectionFactoryMongodb')

@@ -11,7 +11,7 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
 
     constructor(
         @inject(Identifier.MONGODB_CONNECTION) private readonly _mongodb: IConnectionDB,
-        @inject(Identifier.FITBIT_DATA_REPOSITORY) /*private*/ readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository,
+        @inject(Identifier.FITBIT_AUTH_DATA_REPOSITORY) /*private*/ readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository,
         @inject(Identifier.LOGGER) /*private*/ readonly _logger: ILogger
     ) {
     }

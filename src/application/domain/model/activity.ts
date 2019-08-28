@@ -2,7 +2,7 @@ import { Entity } from './entity'
 import { IJSONSerializable } from '../utils/json.serializable.interface'
 import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
-import { DatetimeValidator } from '../validator/datetime.validator'
+import { DatetimeValidator } from '../validator/date.time.validator'
 
 /**
  * Implementation of the physicalactivity entity.

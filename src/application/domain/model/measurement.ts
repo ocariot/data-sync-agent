@@ -2,7 +2,7 @@ import { IJSONSerializable } from '../utils/json.serializable.interface'
 import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 import { Entity } from './entity'
-import { DatetimeValidator } from '../validator/datetime.validator'
+import { DatetimeValidator } from '../validator/date.time.validator'
 
 /**
  * Implementation of the measurement entity.
