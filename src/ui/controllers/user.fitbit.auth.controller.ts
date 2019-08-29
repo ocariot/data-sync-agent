@@ -5,7 +5,7 @@ import { ApiExceptionManager } from '../exception/api.exception.manager'
 import { inject } from 'inversify'
 import { Identifier } from '../../di/identifiers'
 import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
-import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
+import { UserAuthData } from '../../application/domain/model/user.auth.data'
 
 /**
  * Controller that implements User Fitbit Auth feature operations.
@@ -17,8 +17,7 @@ import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
 @controller('/v1/users/:user_id/fitbit/auth')
 export class UserFitbitAuthController {
     constructor(
-        @inject(Identifier.FITBIT_AUTH_DATA_SERVICE)
-        private readonly _fitbitAuthDataService: IUserAuthDataService<FitbitAuthData>
+        @inject(Identifier.USER_AUTH_DATA_SERVICE) private readonly _userAuthDataService: IUserAuthDataService
     ) {
     }
 
@@ -30,10 +29,9 @@ export class UserFitbitAuthController {
     @httpPost('/')
     public async saveAuthData(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            await this._fitbitAuthDataService.add(new FitbitAuthData().fromJSON({
+            await this._userAuthDataService.add(new UserAuthData().fromJSON({
                 user_id: req.params.user_id,
-                fitbit: { ...req.body },
-                last_sync: req.body.last_sync
+                fitbit: { ...req.body, last_sync: req.query.filters.last_sync ? req.query.filters.last_sync : undefined }
             }))
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
@@ -50,7 +48,7 @@ export class UserFitbitAuthController {
     @httpPost('/revoke')
     public async revokeAuthToken(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            await this._fitbitAuthDataService.revokeFitbitAccessToken(req.params.user_id)
+            await this._userAuthDataService.revokeFitbitAccessToken(req.params.user_id)
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)

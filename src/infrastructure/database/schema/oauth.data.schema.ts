@@ -12,10 +12,10 @@ const oauthSchema: any = {
 }
 const userAuthSchema = new Mongoose.Schema({
         user_id: { type: Mongoose.Schema.Types.ObjectId },
-        last_sync: { type: Date },
         fitbit: {// Fitbit UserAuthData
             ...oauthSchema,
-            user_id: { type: String }
+            user_id: { type: String },
+            last_sync: { type: Date }
         }
 
     },

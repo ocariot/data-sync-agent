@@ -3,7 +3,6 @@ import { Identifier } from '../../di/identifiers'
 import { ILogger } from '../../utils/custom.logger'
 import { IEntityMapper } from '../port/entity.mapper.interface'
 import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
-import FitbitApiClient from 'fitbit-node'
 import { OAuthException } from '../../application/domain/exception/oauth.exception'
 import moment from 'moment'
 import { PhysicalActivity } from '../../application/domain/model/physical.activity'
@@ -12,71 +11,58 @@ import { Log } from '../../application/domain/model/log'
 import { UserLog } from '../../application/domain/model/user.log'
 import { MeasurementType } from '../../application/domain/model/measurement'
 import { Weight } from '../../application/domain/model/weight'
-import { ResourceDataType } from '../../application/domain/utils/resource.data.type'
 import { IFitbitAuthDataRepository } from '../../application/port/fitbit.auth.data.repository.interface'
 import { FitbitAuthDataEntity } from '../entity/fitbit.auth.data.entity'
+import { IFitbitClientRepository } from '../../application/port/fitbit.client.repository.interface'
+import { ValidationException } from '../../application/domain/exception/validation.exception'
+import { ConflictException } from '../../application/domain/exception/conflict.exception'
+import { RepositoryException } from '../../application/domain/exception/repository.exception'
+import { ResourceDataType } from '../../application/domain/utils/resource.data.type'
 
 @injectable()
 export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
 
-    private fitbit_client: any
     private max_calls_refresh_token: number = 3 // Max calls to refresh a access token
 
     constructor(
         @inject(Identifier.USER_AUTH_REPO_MODEL) readonly _userAuthRepoModel: any,
         @inject(Identifier.FITBIT_AUTH_DATA_ENTITY_MAPPER)
         readonly _fitbitAuthEntityMapper: IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>,
-        @inject(Identifier.LOGGER) readonly _logger: ILogger
+        @inject(Identifier.LOGGER) readonly _logger: ILogger,
+        @inject(Identifier.FITBIT_CLIENT_REPOSITORY) private readonly _fitbitClientRepo: IFitbitClientRepository
     ) {
-        this.fitbit_client = new FitbitApiClient({
-            clientId: process.env.FITBIT_CLIENT_ID,
-            clientSecret: process.env.FITBIT_CLIENT_SECRET,
-            apiVersion: '1.2'
-        })
     }
 
-    // Fitbit Client Methods
     public revokeToken(accessToken: string): Promise<boolean> {
-        return new Promise<boolean>(async (resolve, reject) => {
-            this.fitbit_client.revokeAccessToken(accessToken)
-                .then(res => resolve(!!res))
-                .catch(err => reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)))
-        })
+        return this._fitbitClientRepo.revokeToken(accessToken)
     }
 
     public refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData> {
         return new Promise<FitbitAuthData>(async (resolve, reject) => {
-            this.fitbit_client.refreshAccessToken(accessToken, refreshToken, expiresIn)
+            this._fitbitClientRepo.refreshToken(accessToken, refreshToken, expiresIn)
                 .then(async tokenData => {
                     if (!tokenData) return resolve(undefined)
-                    return this._fitbitAuthEntityMapper.transform(tokenData)
-                })
-                .catch(err => {
-                    return reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message))
-                })
+                    return this.updateRefreshToken(userId, new FitbitAuthData().fromJSON(tokenData))
+                }).catch(err => reject(err))
         })
     }
 
-    public getDataFromPath(path: string, accessToken: string): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
-            this.fitbit_client.get(path, accessToken)
-                .then(data => resolve(data ? data : undefined))
-                .catch(err => reject(new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)))
+    private updateRefreshToken(userId: string, token: FitbitAuthData): Promise<FitbitAuthData> {
+        const itemUp: any = this._fitbitAuthEntityMapper.transform(token)
+        return new Promise<FitbitAuthData>((resolve, reject) => {
+            this._userAuthRepoModel.findOneAndUpdate({ user_id: userId }, itemUp, { new: true })
+                .then(res => {
+                    if (!res) return resolve(undefined)
+                    return resolve(this._fitbitAuthEntityMapper.transform(res))
+                }).catcj(err => this.mongoDBErrorListener(err))
         })
     }
 
     public async subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        try {
-            const subscription =
-                await this.fitbit_client.post(`/${resource}/apiSubscriptions/${subscriptionId}.json`, data.access_token)
-            if (subscription[0].errors) throw new Error()
-            return Promise.resolve()
-        } catch (err) {
-            return Promise.reject(new OAuthException('subscribe_error', `Error at subscribe in ${resource} resource`))
-        }
+        return this._fitbitClientRepo.subscribeUserEvent(data, resource, subscriptionId)
     }
 
-    public getFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void> {
+    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
                 const weights: Array<any> = lastSync ?
@@ -177,9 +163,9 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         'today'
                     )
 
-                const weightList: Array<Weight> = await this.parseWeight(weights, data.user_id!)
-                const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivity(activities, data.user_id!)
-                const sleepList: Array<Sleep> = await this.parseSleep(sleep, data.user_id!)
+                const weightList: Array<Weight> = await this.parseWeightList(weights, data.user_id!)
+                const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, data.user_id!)
+                const sleepList: Array<Sleep> = await this.parseSleepList(sleep, data.user_id!)
                 const userLog: UserLog = await this.parseActivityLogs(
                     stepsLogs,
                     caloriesLogs,
@@ -198,6 +184,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 // Finally, the last sync variable from user needs to be updated
                 lastSync = new Date().toISOString()
                 // await this._fitbitAuthDataRepo.update(data)
+                this._logger.info(`Data sync from ${data.user_id} at ${lastSync} successful!`)
                 return resolve()
             } catch (err) {
                 if (err.type) {
@@ -218,7 +205,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         } catch (err) {
                             return reject(err)
                         }
-                        setTimeout(() => this.getFitbitUserData(data, lastSync, calls + 1), 1000)
+                        setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1), 1000)
                     } else if (err.type === 'invalid_token') {
                         return reject(new OAuthException('invalid_token', `Access token invalid: ${data.access_token}`))
                     }
@@ -229,72 +216,73 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         })
     }
 
-    public getResourceData(data: FitbitAuthData, type: string, date: string): Promise<void> {
+    public syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             if (type === ResourceDataType.BODY) {
-                this.fitbit_client.get(`body/log/weight/date/${date}.json`)
+                this.getUserBodyDataFromInterval(data.access_token!, date, date)
+                    .then(res => {
+                        // If a weight exists, transform it in a Weigth data and publish.
+                        if (res[0]) {
+                            const weight: Weight = this.parseWeight(res[0], userId)
+                            this._logger.info(`Weight data received from Fitbit Server: ${weight.value}${weight.unit}.`)
+                        }
+                    })
+                    .catch(err => reject(err))
             } else if (type === ResourceDataType.ACTIVITIES) {
-                return
+                this.getUserActivities(data.access_token!, 1, date)
+                    .then(res => {
+                        // If a weight exists, transform it in a Weigth data and publish.
+                        if (res[0]) {
+                            const activity: PhysicalActivity = this.parsePhysicalActivity(res[0], userId)
+                            this._logger.info(`Activity data received from Fitbit Server: ${activity.name}.`)
+                        }
+                    })
+                    .catch(err => reject(err))
             } else if (type === ResourceDataType.SLEEP) {
-                return
+                this.getUserSleep(data.access_token!, 1, date)
+                    .then(res => {
+                        if (res[0]) {
+                            const sleep: Sleep = this.parseSleep(res[0], userId)
+                            this._logger.info(`Sleep data received from Fitbit Server from ${sleep.start_time}`)
+                        }
+                    })
+                    .catch(err => reject(err))
             }
         })
     }
 
     private async getUserActivityLogs(token: string, resource: string, baseDate: string, endDate: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            this.getUserData(`/activities/tracker/${resource}/date/${baseDate}/${endDate}.json`, token)
-                .then(result => {
-                    if (!result.success && result.errors) {
-                        return reject(new OAuthException(result.errors[0].errorType, result.errors[0].message))
-                    }
-                    return resolve(result[`activities-tracker-${resource}`])
-                }).catch(err => reject(err))
+            return this._fitbitClientRepo
+                .getDataFromPath(`/activities/tracker/${resource}/date/${baseDate}/${endDate}.json`, token)
+                .then(result => resolve(result[`activities-tracker-${resource}`]))
+                .catch(err => reject(err))
         })
     }
 
     private async getUserBodyDataFromInterval(token: string, baseDate: string, endDate: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            this.getUserData(`/body/log/weight/date/${baseDate}/${endDate}.json`, token)
-                .then(result => {
-                    if (!result.success && result.errors) {
-                        return reject(new OAuthException(result.errors[0].errorType, result.errors[0].message))
-                    }
-                    return resolve(result.weight)
-                }).catch(err => reject(err))
+            this._fitbitClientRepo
+                .getDataFromPath(`/body/log/weight/date/${baseDate}/${endDate}.json`, token)
+                .then(result => resolve(result.weight))
+                .catch(err => reject(err))
         })
     }
 
     private async getUserActivities(token: string, limit: number, afterDate: string): Promise<any> {
+        const path: string = `/activities/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
         return new Promise<any>((resolve, reject) => {
-            const path: string = `/activities/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
-            this.getUserData(path, token)
-                .then(result => {
-                    if (!result.success && result.errors) {
-                        return reject(new OAuthException(result.errors[0].errorType, result.errors[0].message))
-                    }
-                    return resolve(result.activities)
-                }).catch(err => reject(err))
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.activities))
+                .catch(err => reject(err))
         })
     }
 
     private async getUserSleep(token: string, limit: number, afterDate: string): Promise<any> {
+        const path: string = `/sleep/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
         return new Promise<any>((resolve, reject) => {
-            const path: string = `/sleep/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
-            this.getUserData(path, token)
-                .then(result => {
-                    if (!result.success && result.errors) {
-                        return reject(new OAuthException(result.errors[0].errorType, result.errors[0].message))
-                    }
-                    return resolve(result.sleep)
-                }).catch(err => reject(err))
-        })
-    }
-
-    private async getUserData(path: string, token: string): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
-            this.getDataFromPath(path, token)
-                .then(result => resolve(result[0]))
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.sleep))
                 .catch(err => reject(err))
         })
     }
@@ -316,21 +304,31 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
     }
 
     // // Parsers
-    private parseWeight(weights: Array<any>, userId: string): Array<Weight> {
+    private parseWeightList(weights: Array<any>, userId: string): Array<Weight> {
         if (!weights) return ([])
-        return weights.map(item => new Weight().fromJSON({
+        return weights.map(item => new Weight().fromJSON(this.parseWeight(item, userId)))
+    }
+
+    private parseWeight(item: any, userId: string): Weight {
+        if (!item) return item
+        return new Weight().fromJSON({
             type: MeasurementType.WEIGHT,
-            timestamp: new Date(item.date).toISOString(),
-            value: item.value,
+            timestamp: moment(item.date).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'),
+            value: item.weight,
             unit: 'kg',
             body_fat: item.fat,
             child_id: userId
-        }))
+        })
     }
 
-    private parsePhysicalActivity(activities: Array<any>, userId: string): Array<PhysicalActivity> {
+    private parsePhysicalActivityList(activities: Array<any>, userId: string): Array<PhysicalActivity> {
         if (!activities) return ([])
-        return activities.map(item => new PhysicalActivity().fromJSON({
+        return activities.map(item => this.parsePhysicalActivity(item, userId))
+    }
+
+    private parsePhysicalActivity(item: any, userId: string): PhysicalActivity {
+        if (!item) return item
+        return new PhysicalActivity().fromJSON({
             type: 'physical_activity',
             start_time: item.startTime,
             end_time: moment(item.startTime).add(item.duration, 'milliseconds').format(),
@@ -357,24 +355,32 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                     if (zone.name === 'Peak') return { min: zone.min, max: zone.max, duration: zone.minutes }
                 })[0]
             } : undefined
-        }))
+        })
     }
 
-    private parseSleep(sleep: Array<any>, userId: string): Array<Sleep> {
+    private parseSleepList(sleep: Array<any>, userId: string): Array<Sleep> {
         if (!sleep) return ([])
-        return sleep.map(item => new Sleep().fromJSON({
+        return sleep.map(item => this.parseSleep(item, userId))
+    }
+
+    private parseSleep(item: any, userId: string): Sleep {
+        if (!item) return item
+        return new Sleep().fromJSON({
             start_time: item.startTime,
             end_time: moment(item.startTime).add(item.duration, 'milliseconds').format(),
             duration: item.duration,
             type: item.type,
             pattern: {
                 data_set: item.levels.data.map(value => {
-                    return { start_time: value.startTime, name: value.level, duration: `${parseInt(value.seconds, 10) * 1000}` }
+                    return {
+                        start_time: value.startTime,
+                        name: value.level, duration: `${parseInt(value.seconds, 10) * 1000}`
+                    }
                 }),
                 summary: this.getSleepSummary(item.levels.summary)
             },
             child_id: userId
-        }))
+        })
     }
 
     private parseActivityLogs(stepsLogs: Array<any>,
@@ -418,5 +424,23 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
             }
         }
         return result
+    }
+
+    // MongoDB Error Listener
+    protected mongoDBErrorListener(err: any): ValidationException | ConflictException | RepositoryException | undefined {
+        if (err && err.name) {
+            if (err.name === 'ValidationError') {
+                return new ValidationException('Required fields were not provided!', err.message)
+            } else if (err.name === 'CastError' || new RegExp(/(invalid format)/i).test(err)) {
+                return new ValidationException('The given ID is in invalid format.',
+                    'A 12 bytes hexadecimal ID similar to this')
+            } else if (err.name === 'MongoError' && err.code === 11000) {
+                return new ConflictException('A registration with the same unique data already exists!')
+            } else if (err.name === 'ObjectParameterError') {
+                return new ValidationException('Invalid query parameters!')
+            }
+        }
+        return new RepositoryException('An internal error has occurred in the database!',
+            'Please try again later...')
     }
 }

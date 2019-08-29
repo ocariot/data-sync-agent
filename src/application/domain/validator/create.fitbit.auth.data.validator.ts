@@ -1,5 +1,6 @@
 import { FitbitAuthData } from '../model/fitbit.auth.data'
 import { ValidationException } from '../exception/validation.exception'
+import { DatetimeValidator } from './date.time.validator'
 
 export class CreateFitbitAuthDataValidator {
     public static validate(item: FitbitAuthData): void | ValidationException {
@@ -11,10 +12,11 @@ export class CreateFitbitAuthDataValidator {
         if (!item.scope) fields.push('scope')
         if (!item.user_id) fields.push('user_id')
         if (!item.token_type) fields.push('token_type')
+        if (item.last_sync) DatetimeValidator.validate(item.last_sync)
 
         if (fields.length) {
             throw new ValidationException('Required fields were not provided...',
-                'Fitbit Auth Data Validation:'.concat(fields.join(', ').concat(' required!')))
+                'Fitbit Auth Data Validation: '.concat(fields.join(', ').concat(' required!')))
         }
     }
 }

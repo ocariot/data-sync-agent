@@ -4,6 +4,9 @@ import { ILogger } from '../../utils/custom.logger'
 import { IConnectionDB } from '../../infrastructure/port/connection.db.interface'
 import { IBackgroundTask } from '../../application/port/background.task.interface'
 import { IFitbitAuthDataRepository } from '../../application/port/fitbit.auth.data.repository.interface'
+import { IUserAuthDataRepository } from '../../application/port/user.auth.data.repository.interface'
+import { Query } from '../../infrastructure/repository/query/query'
+import { UserAuthData } from '../../application/domain/model/user.auth.data'
 
 @injectable()
 export class CollectFitbitUserDataTask implements IBackgroundTask {
@@ -12,6 +15,7 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
     constructor(
         @inject(Identifier.MONGODB_CONNECTION) private readonly _mongodb: IConnectionDB,
         @inject(Identifier.FITBIT_AUTH_DATA_REPOSITORY) /*private*/ readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository,
+        @inject(Identifier.USER_AUTH_DATA_REPOSITORY) /*private*/ readonly _userAuthDataRepo: IUserAuthDataRepository,
         @inject(Identifier.LOGGER) /*private*/ readonly _logger: ILogger
     ) {
     }
@@ -27,12 +31,12 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
 
     private async getFitbitUsersData(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
-            // const usersData: Array<FitbitAuthData> = await this._fitbitAuthDataRepo.find(new Query())
-            // for await (const data of usersData) {
-            //     this._fitbitAuthDataRepo.getFitbitUserData(data, 1)
-            //         .then(() => this._logger.info(`Data from ${data.user_id} successful synchronized!`))
-            //         .catch(err => this._logger.error(err.message))
-            // }
+            const usersData: Array<UserAuthData> = await this._userAuthDataRepo.find(new Query())
+            for await (const data of usersData) {
+                this._fitbitAuthDataRepo.syncFitbitUserData(data.fitbit!, data.fitbit!.last_sync!, 1)
+                    .then(() => this._logger.info(`Data from ${data.user_id} successful synchronized!`))
+                    .catch(err => this._logger.error(err.message))
+            }
         })
     }
 

@@ -1,16 +1,13 @@
-import { IOAuthServiceInterface } from './oauth.service.interface'
 import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 
-export interface IFitbitAuthDataRepository extends IOAuthServiceInterface<FitbitAuthData> {
+export interface IFitbitAuthDataRepository {
     revokeToken(accessToken: string): Promise<boolean>
-
-    findAuthDataFromUser(userId: string): Promise<FitbitAuthData>
 
     refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData>
 
-    getDataFromPath(path: string, accessToken: string): Promise<any>
+    syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void>
 
-    getFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void>
+    syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void>
 
     subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
 }

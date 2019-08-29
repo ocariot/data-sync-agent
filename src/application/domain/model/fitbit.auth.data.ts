@@ -2,6 +2,7 @@ import { IJSONSerializable } from '../utils/json.serializable.interface'
 import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 import { Entity } from './entity'
+import moment from 'moment'
 
 export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDeserializable<FitbitAuthData> {
     private _access_token?: string
@@ -10,6 +11,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
     private _scope?: string
     private _token_type?: string
     private _user_id?: string
+    private _last_sync?: string
 
     constructor() {
         super()
@@ -63,6 +65,14 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         this._user_id = value
     }
 
+    get last_sync(): string | undefined {
+        return this._last_sync
+    }
+
+    set last_sync(value: string | undefined) {
+        this._last_sync = value
+    }
+
     public fromJSON(json: any): FitbitAuthData {
         if (!json) return this
         if (typeof json === 'string' && JsonUtils.isJsonString(json)) {
@@ -75,6 +85,8 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         if (json.refresh_token !== undefined) this.refresh_token = json.refresh_token
         if (json.scope !== undefined) this.scope = json.scope
         if (json.token_type !== undefined) this.token_type = json.token_type
+        if (json.last_sync !== undefined) this.last_sync = moment(json.last_sync).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+
         return this
     }
 
@@ -85,6 +97,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
             refresh_token: this.refresh_token,
             scope: this.scope,
             token_type: this.token_type,
+            last_sync: this.last_sync,
             user_id: this.user_id
         }
     }

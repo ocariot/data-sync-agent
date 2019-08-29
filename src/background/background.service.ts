@@ -8,6 +8,7 @@ export class BackgroundService {
 
     constructor(
         @inject(Identifier.MONGODB_CONNECTION) private readonly _mongodb: IConnectionDB,
+        @inject(Identifier.COLLECT_FITBIT_USER_DATA_TASK) /*private*/ readonly _collectFitbitUserDataTask: IBackgroundTask,
         @inject(Identifier.PUBLISH_EVENT_BUS_TASK) private readonly _publishTask: IBackgroundTask
     ) {
     }
@@ -19,6 +20,7 @@ export class BackgroundService {
              * Go ahead only when the run is resolved.
              * Since the application depends on the database connection to work.
              */
+            // await this._collectFitbitUserDataTask.run()
             await this._mongodb.tryConnect(0, 1000)
             await this._publishTask.run()
         } catch (err) {

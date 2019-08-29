@@ -1,15 +1,16 @@
 import { controller, httpGet, httpPost, request, response } from 'inversify-express-utils'
 import { Request, Response } from 'express'
+import HttpStatus from 'http-status-codes'
 import { inject } from 'inversify'
 import { Identifier } from '../../di/identifiers'
 import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
-import HttpStatus from 'http-status-codes'
-import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
+import { ILogger } from '../../utils/custom.logger'
 
 @controller('/v1/fitbit/subscriber')
 export class FitbitSubscriberController {
     constructor(
-        @inject(Identifier.FITBIT_AUTH_DATA_SERVICE) readonly _fitbitAuthDataService: IUserAuthDataService<FitbitAuthData>
+        @inject(Identifier.USER_AUTH_DATA_SERVICE) private readonly _userAuthDataService: IUserAuthDataService,
+        @inject(Identifier.LOGGER) private readonly _logger: ILogger
     ) {
     }
 
@@ -21,7 +22,8 @@ export class FitbitSubscriberController {
 
     @httpPost('/')
     public async getInfo(@request() req: Request, @response() res: Response): Promise<Response> {
-        console.log('i was called with', req.body)
-        return res.status(200).send({received: true, resource: req.body[0].collectionType})
+        this._logger.info(`Prepare to sync ${req.body[0].collectionType} from ${req.body[0].ownerId}.`)
+        this._userAuthDataService.syncLastFitbitUserData(req.body[0].ownerId, req.body[0].collectionType, req.body[0].date)
+        return res.status(200).send({ received: true, resource: req.body[0].collectionType })
     }
 }

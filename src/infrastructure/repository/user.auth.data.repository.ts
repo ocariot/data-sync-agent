@@ -20,10 +20,10 @@ export class UserAuthDataRepository extends BaseRepository<UserAuthData, UserAut
         super(_userAuthDataRepoModel, _userAuthEntityMapper, _logger)
     }
 
-    public async getAuthDataFromUser(userId: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
+    public async getAuthDataFromUser(userId: string): Promise<UserAuthData> {
+        return new Promise<UserAuthData>((resolve, reject) => {
             this.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
-                .then(res => resolve(!!res))
+                .then(res => resolve(res ? this.mapper.transform(res) : undefined))
                 .catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }

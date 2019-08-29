@@ -32,11 +32,8 @@ export class Weight extends Measurement implements IJSONSerializable, IJSONDeser
             json = JSON.parse(json)
         }
 
+        super.fromJSON(json)
         if (json.id !== undefined) super.id = json.id
-        if (json.timestamp !== undefined) this.timestamp = this.convertDatetimeString(json.timestamp)
-        if (json.value !== undefined) this.value = json.value
-        if (json.unit !== undefined) this.unit = json.unit
-        if (json.child_id !== undefined) this.child_id = json.child_id
         if (json.body_fat !== undefined) {
             this.body_fat = new BodyFat().fromJSON(json)
             this.body_fat.value = json.body_fat

@@ -24,9 +24,6 @@ import { FitbitAuthData } from '../application/domain/model/fitbit.auth.data'
 import { FitbitAuthDataEntity } from '../infrastructure/entity/fitbit.auth.data.entity'
 import { UserAuthDataEntityMapper } from '../infrastructure/entity/mapper/user.auth.data.entity.mapper'
 import { IEntityMapper } from '../infrastructure/port/entity.mapper.interface'
-import { FitbitAuthDataRepository } from '../infrastructure/repository/fitbit.auth.data.repository'
-import { IUserAuthDataRepository } from '../application/port/user.auth.data.repository.interface'
-import { IUserAuthDataService } from '../application/port/user.auth.data.service.interface'
 import { UserAuthDataService } from '../application/service/user.auth.data.service'
 import { PublishEventBusTask } from '../background/task/publish.event.bus.task'
 import { IBackgroundTask } from '../application/port/background.task.interface'
@@ -35,7 +32,14 @@ import { FitbitSubscriberController } from '../ui/controllers/fitbit.subscriber.
 import { FitbitAuthDataEntityMapper } from '../infrastructure/entity/mapper/fitbit.auth.data.entity.mapper'
 import { UserAuthData } from '../application/domain/model/user.auth.data'
 import { UserAuthDataEntity } from '../infrastructure/entity/user.auth.data.entity'
+import { IUserAuthDataRepository } from '../application/port/user.auth.data.repository.interface'
+import { UserAuthDataRepository } from '../infrastructure/repository/user.auth.data.repository'
 import { IFitbitAuthDataRepository } from '../application/port/fitbit.auth.data.repository.interface'
+import { FitbitAuthDataRepository } from '../infrastructure/repository/fitbit.auth.data.repository'
+import { FitbitController } from '../ui/controllers/fitbit.controller'
+import { FitbitClientRepository } from '../infrastructure/repository/fitbit.client.repository'
+import { IFitbitClientRepository } from '../application/port/fitbit.client.repository.interface'
+import { IUserAuthDataService } from '../application/port/user.auth.data.service.interface'
 
 class IoC {
     private readonly _container: Container
@@ -70,6 +74,7 @@ class IoC {
 
         // Controllers
         this._container.bind<HomeController>(Identifier.HOME_CONTROLLER).to(HomeController).inSingletonScope()
+        this._container.bind<FitbitController>(Identifier.FITBIT_CONTROLLER).to(FitbitController).inSingletonScope()
         this._container.bind<FitbitSubscriberController>(Identifier.FITBIT_SUBSCRIBER_CONTROLLER)
             .to(FitbitSubscriberController).inSingletonScope()
         this._container.bind<UserFitbitAuthController>(Identifier.USER_FITBIT_AUTH_CONTROLLER)
@@ -90,7 +95,10 @@ class IoC {
             .to(FitbitAuthDataRepository).inSingletonScope()
         this._container
             .bind<IUserAuthDataRepository>(Identifier.USER_AUTH_DATA_REPOSITORY)
-            .to(FitbitAuthDataRepository).inSingletonScope()
+            .to(UserAuthDataRepository).inSingletonScope()
+        this._container
+            .bind<IFitbitClientRepository>(Identifier.FITBIT_CLIENT_REPOSITORY)
+            .to(FitbitClientRepository).inSingletonScope()
 
         // Models
         this._container.bind(Identifier.INTEGRATION_EVENT_REPO_MODEL).toConstantValue(IntegrationEventRepoModel)

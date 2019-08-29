@@ -17,7 +17,6 @@ export class UserAuthDataEntityMapper implements IEntityMapper<UserAuthData, Use
 
         if (item.id !== undefined) result.id = item.id
         if (item.user_id !== undefined) result.user_id = item.user_id
-        if (item.last_sync !== undefined) result.last_sync = item.last_sync
         if (item.fitbit !== undefined) result.fitbit = item.fitbit.toJSON()
 
         return result
@@ -33,7 +32,6 @@ export class UserAuthDataEntityMapper implements IEntityMapper<UserAuthData, Use
         if (!json) return result
         if (json.id !== undefined) result.id = json.id
         if (json.user_id !== undefined) result.user_id = json.user_id
-        if (json.last_sync !== undefined) result.last_sync = json.last_sync
         if (json.fitbit !== undefined) result.fitbit = new FitbitAuthData().fromJSON(json.fitbit)
 
         return result

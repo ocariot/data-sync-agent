@@ -2,7 +2,6 @@ import { IJSONSerializable } from '../utils/json.serializable.interface'
 import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 import { Entity } from './entity'
-import { DatetimeValidator } from '../validator/date.time.validator'
 
 /**
  * Implementation of the measurement entity.
@@ -60,11 +59,6 @@ export class Measurement extends Entity implements IJSONSerializable, IJSONDeser
         this._child_id = value
     }
 
-    public convertDatetimeString(value: string): Date {
-        DatetimeValidator.validate(value)
-        return new Date(value)
-    }
-
     public fromJSON(json: any): Measurement {
         if (!json) return this
         if (typeof json === 'string' && JsonUtils.isJsonString(json)) {
@@ -72,7 +66,7 @@ export class Measurement extends Entity implements IJSONSerializable, IJSONDeser
         }
 
         if (json.type !== undefined) this.type = json.type
-        if (json.timestamp !== undefined) this.timestamp = this.convertDatetimeString(json.timestamp)
+        if (json.timestamp !== undefined) this.timestamp = json.timestamp
         if (json.value !== undefined) this.value = json.value
         if (json.unit !== undefined) this.unit = json.unit
         if (json.child_id !== undefined) this.child_id = json.child_id

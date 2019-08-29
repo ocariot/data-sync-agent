@@ -6,5 +6,6 @@ export class FitbitAuthDataEntity extends UserAuthDataEntity {
     public expires_in?: number
     public refresh_token?: string
     public scope?: string
+    public last_sync?: string
     public token_type?: string
 }
