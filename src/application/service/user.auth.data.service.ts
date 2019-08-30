@@ -105,13 +105,13 @@ export class UserAuthDataService implements IUserAuthDataService {
         try {
             const payload: any = await this._fitbitAuthDataRepo.getTokenPayload(data.fitbit!.access_token!)
             const scopes: Array<string> = payload.scopes.split(' ')
-            if (scopes.includes('rwei')) {
+            if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
             }
-            if (scopes.includes('ract')) {
+            if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
             }
-            if (scopes.includes('rsle')) {
+            if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
             }
         } catch (err) {
