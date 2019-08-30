@@ -7,6 +7,7 @@ import { CreateUserAuthDataValidator } from '../domain/validator/create.user.aut
 import { IFitbitAuthDataRepository } from '../port/fitbit.auth.data.repository.interface'
 import { IUserAuthDataService } from '../port/user.auth.data.service.interface'
 import { Query } from '../../infrastructure/repository/query/query'
+import { ValidationException } from '../domain/exception/validation.exception'
 
 @injectable()
 export class UserAuthDataService implements IUserAuthDataService {
@@ -23,11 +24,11 @@ export class UserAuthDataService implements IUserAuthDataService {
             if (exists) {
                 item.id = exists.id
                 const result: UserAuthData = await this._userAuthDataRepo.update(item)
-                await this.subscribeFitbitEvents(result)
+                this.subscribeFitbitEvents(result)
                 return Promise.resolve(result)
             }
             const authData: UserAuthData = await this._userAuthDataRepo.create(item)
-            await this.subscribeFitbitEvents(authData)
+            this.subscribeFitbitEvents(authData)
             return Promise.resolve(authData)
         } catch (err) {
             return Promise.reject(err)
@@ -50,6 +51,18 @@ export class UserAuthDataService implements IUserAuthDataService {
         throw Error('Not implemented!')
     }
 
+    public async addFitbitAuthData(data: UserAuthData, initSync: string): Promise<UserAuthData> {
+        try {
+            const result: UserAuthData = await this.add(data)
+            if (initSync !== 'false') {
+                this._fitbitAuthDataRepo.syncFitbitUserData(result.fitbit!, result.fitbit!.last_sync!, 3)
+            }
+            return Promise.resolve(result)
+        } catch (err) {
+            return Promise.reject(err)
+        }
+    }
+
     public async revokeFitbitAccessToken(userId: string): Promise<boolean> {
         try {
             const authData: UserAuthData = await this._userAuthDataRepo.getAuthDataFromUser(userId)
@@ -61,10 +74,14 @@ export class UserAuthDataService implements IUserAuthDataService {
         throw Error('Not implemented!')
     }
 
-    public async syncUserData(userId: string): Promise<void> {
+    public async syncFitbitUserData(userId: string): Promise<void> {
         try {
             const authData: UserAuthData = await this._userAuthDataRepo.getAuthDataFromUser(userId)
-            if (authData) await this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 3)
+            if (!authData || !authData.fitbit) {
+                throw new ValidationException(
+                    ' Error: User does not have authentication data. Please, submit authentication data and try again.')
+            }
+            this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 3)
             return Promise.resolve()
         } catch (err) {
             return Promise.reject(err)
@@ -86,9 +103,17 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
         try {
-            await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
-            await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-            await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
+            const payload: any = await this._fitbitAuthDataRepo.getTokenPayload(data.fitbit!.access_token!)
+            const scopes: Array<string> = payload.scopes.split(' ')
+            if (scopes.includes('rwei')) {
+                await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
+            }
+            if (scopes.includes('ract')) {
+                await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
+            }
+            if (scopes.includes('rsle')) {
+                await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
+            }
         } catch (err) {
             return Promise.reject(err)
         }

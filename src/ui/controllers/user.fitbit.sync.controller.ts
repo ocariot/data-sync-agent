@@ -29,7 +29,7 @@ export class UserFitbitSyncController {
     @httpPost('/')
     public async requestDataSync(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            this._userAuthDataService.syncUserData(req.params.user_id).then()
+            await this._userAuthDataService.syncFitbitUserData(req.params.user_id).then()
             return res.status(HttpStatus.ACCEPTED).send({
                 status: 'pending',
                 completion_estimate: moment().add('5', 'minute').toISOString()

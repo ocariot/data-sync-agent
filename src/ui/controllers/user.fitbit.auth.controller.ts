@@ -29,10 +29,11 @@ export class UserFitbitAuthController {
     @httpPost('/')
     public async saveAuthData(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            await this._userAuthDataService.add(new UserAuthData().fromJSON({
-                user_id: req.params.user_id,
-                fitbit: { ...req.body, last_sync: req.query.filters.last_sync ? req.query.filters.last_sync : undefined }
-            }))
+            const userAuth: UserAuthData = new UserAuthData().fromJSON({
+                user_id: req.params.user_id, fitbit: { ...req.body }
+            })
+            if (!!req.query.filters.last_sync) userAuth.fitbit!.last_sync! = req.query.filters.last_sync
+            await this._userAuthDataService.addFitbitAuthData(userAuth, req.query.filters.init_sync)
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
