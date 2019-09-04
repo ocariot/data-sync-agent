@@ -40,6 +40,12 @@ import { FitbitController } from '../ui/controllers/fitbit.controller'
 import { FitbitClientRepository } from '../infrastructure/repository/fitbit.client.repository'
 import { IFitbitClientRepository } from '../application/port/fitbit.client.repository.interface'
 import { IUserAuthDataService } from '../application/port/user.auth.data.service.interface'
+import { ResourceRepoModel } from '../infrastructure/database/schema/resource.schema'
+import { Resource } from '../application/domain/model/resource'
+import { ResourceEntity } from '../infrastructure/entity/resource.entity'
+import { ResourceEntityMapper } from '../infrastructure/entity/mapper/resource.entity.mapper'
+import { IResourceRepository } from '../application/port/resource.repository.interface'
+import { ResourceRepository } from '../infrastructure/repository/resource.repository'
 
 class IoC {
     private readonly _container: Container
@@ -99,10 +105,14 @@ class IoC {
         this._container
             .bind<IFitbitClientRepository>(Identifier.FITBIT_CLIENT_REPOSITORY)
             .to(FitbitClientRepository).inSingletonScope()
+        this._container
+            .bind<IResourceRepository>(Identifier.RESOURCE_REPOSITORY)
+            .to(ResourceRepository).inSingletonScope()
 
         // Models
         this._container.bind(Identifier.INTEGRATION_EVENT_REPO_MODEL).toConstantValue(IntegrationEventRepoModel)
         this._container.bind(Identifier.USER_AUTH_REPO_MODEL).toConstantValue(UserAuthRepoModel)
+        this._container.bind(Identifier.RESOURCE_REPO_MODEL).toConstantValue(ResourceRepoModel)
 
         // Mappers
         this.container
@@ -111,6 +121,9 @@ class IoC {
         this.container
             .bind<IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>>(Identifier.FITBIT_AUTH_DATA_ENTITY_MAPPER)
             .to(FitbitAuthDataEntityMapper).inSingletonScope()
+        this.container
+            .bind<IEntityMapper<Resource, ResourceEntity>>(Identifier.RESOURCE_ENTITY_MAPPER)
+            .to(ResourceEntityMapper).inSingletonScope()
 
         // Background Services
         this._container

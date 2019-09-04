@@ -20,7 +20,8 @@ export class UserAuthDataService implements IUserAuthDataService {
     public async add(item: UserAuthData): Promise<UserAuthData> {
         try {
             CreateUserAuthDataValidator.validate(item)
-            const exists: UserAuthData = await this._userAuthDataRepo.getAuthDataFromUser(item.user_id!)
+            const exists: UserAuthData =
+                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: item.user_id! } }))
             if (exists) {
                 item.id = exists.id
                 const result: UserAuthData = await this._userAuthDataRepo.update(item)
@@ -65,7 +66,8 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     public async revokeFitbitAccessToken(userId: string): Promise<boolean> {
         try {
-            const authData: UserAuthData = await this._userAuthDataRepo.getAuthDataFromUser(userId)
+            const authData: UserAuthData =
+                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
             if (authData) await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
             return Promise.resolve(!!authData)
         } catch (err) {
@@ -76,7 +78,8 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     public async syncFitbitUserData(userId: string): Promise<void> {
         try {
-            const authData: UserAuthData = await this._userAuthDataRepo.getAuthDataFromUser(userId)
+            const authData: UserAuthData =
+                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
             if (!authData || !authData.fitbit) {
                 throw new ValidationException(
                     ' Error: User does not have authentication data. Please, submit authentication data and try again.')

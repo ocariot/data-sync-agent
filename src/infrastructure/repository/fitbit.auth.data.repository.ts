@@ -19,6 +19,9 @@ import { ValidationException } from '../../application/domain/exception/validati
 import { ConflictException } from '../../application/domain/exception/conflict.exception'
 import { RepositoryException } from '../../application/domain/exception/repository.exception'
 import { ResourceDataType } from '../../application/domain/utils/resource.data.type'
+import { IResourceRepository } from '../../application/port/resource.repository.interface'
+import { Query } from './query/query'
+import { Resource } from '../../application/domain/model/resource'
 
 @injectable()
 export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
@@ -26,11 +29,12 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
     private max_calls_refresh_token: number = 3 // Max calls to refresh a access token
 
     constructor(
-        @inject(Identifier.USER_AUTH_REPO_MODEL) readonly _userAuthRepoModel: any,
+        @inject(Identifier.USER_AUTH_REPO_MODEL) private readonly _userAuthRepoModel: any,
         @inject(Identifier.FITBIT_AUTH_DATA_ENTITY_MAPPER)
-        readonly _fitbitAuthEntityMapper: IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>,
-        @inject(Identifier.LOGGER) readonly _logger: ILogger,
-        @inject(Identifier.FITBIT_CLIENT_REPOSITORY) private readonly _fitbitClientRepo: IFitbitClientRepository
+        private readonly _fitbitAuthEntityMapper: IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>,
+        @inject(Identifier.LOGGER) private readonly _logger: ILogger,
+        @inject(Identifier.FITBIT_CLIENT_REPOSITORY) private readonly _fitbitClientRepo: IFitbitClientRepository,
+        @inject(Identifier.RESOURCE_REPOSITORY) readonly _resourceRepo: IResourceRepository
     ) {
     }
 
@@ -155,30 +159,76 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         return new Promise<void>((resolve, reject) => {
             if (type === ResourceDataType.BODY) {
                 this.getUserBodyDataFromInterval(data.access_token!, date, date)
-                    .then(res => {
-                        // If a weight exists, transform it in a Weigth data and publish.
-                        if (res[0]) {
-                            const weight: Weight = this.parseWeight(res[0], userId)
-                            this._logger.info(`Weight data received from ${userId}: ${weight.value}${weight.unit}.`)
+                    .then(async weights => {
+                        if (weights && weights.length) {
+                            const resources: Array<any> = []
+                            for await(const weight of weights) {
+                                const exists: boolean =
+                                    await this._resourceRepo.checkExists(new Query().fromJSON({
+                                        filters: { resource_id: weight.logId }
+                                    }))
+                                if (!exists) {
+                                    resources.push(weight)
+                                }
+                            }
+                            // Parse list of weights
+                            const weightList: Array<Weight> = this.parseWeightList(resources, userId)
+                            if (weightList.length) {
+                                this._logger.info(`Weight data received from ${userId}: `
+                                    + `${weightList[0].value}${weightList[0].unit}.`)
+                                // Publish list of weights
+
+                                // If publish is successful, save the sync resources on database
+                                await this.saveResourceList(resources, userId)
+                            }
                         }
                     })
                     .catch(err => reject(err))
             } else if (type === ResourceDataType.ACTIVITIES) {
                 this.getUserActivities(data.access_token!, 1, date)
-                    .then(res => {
-                        // If a weight exists, transform it in a Weigth data and publish.
-                        if (res[0]) {
-                            const activity: PhysicalActivity = this.parsePhysicalActivity(res[0], userId)
-                            this._logger.info(`Activity data received from  ${userId}: ${activity.name}.`)
+                    .then(async activities => {
+                        if (activities && activities.length) {
+                            const resources: Array<any> = []
+                            for await(const activity of activities) {
+                                const exists: boolean =
+                                    await this._resourceRepo.checkExists(new Query().fromJSON({
+                                        filters: { resource_id: activity.logId }
+                                    }))
+                                if (!exists) resources.push(activity)
+
+                            }
+                            // Parse list of activities
+                            const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
+                            if (activityList.length) {
+                                this._logger.info(`Activity data received from  ${userId}: ${activityList[0].name}.`)
+                                // Publish list of weights
+
+                                // If publish is successful, save the sync resources on database
+                                await this.saveResourceList(resources, userId)
+                            }
                         }
                     })
                     .catch(err => reject(err))
             } else if (type === ResourceDataType.SLEEP) {
                 this.getUserSleep(data.access_token!, 1, date)
-                    .then(res => {
-                        if (res[0]) {
-                            const sleep: Sleep = this.parseSleep(res[0], userId)
-                            this._logger.info(`Sleep data received from ${userId} from ${sleep.start_time}.`)
+                    .then(async sleeps => {
+                        const resources: Array<any> = []
+                        if (sleeps && sleeps.length) {
+                            for await (const sleep of sleeps) {
+                                const exists: boolean =
+                                    await this._resourceRepo.checkExists(new Query().fromJSON({
+                                        filters: { resource_id: sleep.logId }
+                                    }))
+                                if (!exists) resources.push(sleep)
+                            }
+                            // Parse list of sleep
+                            const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
+                            if (sleepList.length) {
+                                this._logger.info(`Sleep data received from ${userId} from ${sleepList[0].start_time}.`)
+
+                                // If publish is successful, save the sync resources on database
+                                await this.saveResourceList(resources, userId)
+                            }
                         }
                     })
                     .catch(err => reject(err))
@@ -193,6 +243,26 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
             return Promise.reject(new ValidationException('Could not complete get token information. ' +
                 'Please try again later.'))
         }
+    }
+
+    private saveResourceList(resources: Array<any>, userId: string): Promise<Array<Resource>> {
+        return new Promise<Array<Resource>>(async (resolve, reject) => {
+            const result: Array<Resource> = []
+            for await (const item of resources) {
+                try {
+                    const resource: Resource = await this._resourceRepo.create(new Resource().fromJSON({
+                        resource_id: item.logId,
+                        date_sync: new Date().toISOString(),
+                        user_id: userId,
+                        provider: 'Fitbit'
+                    }))
+                    result.push(resource)
+                } catch (err) {
+                    return reject(this.mongoDBErrorListener(err))
+                }
+            }
+            return resolve(result)
+        })
     }
 
     private async syncWeightData(data: FitbitAuthData, lastSync: string): Promise<Array<any>> {

@@ -21,14 +21,18 @@ export abstract class Identifier {
     public static readonly USER_AUTH_DATA_REPOSITORY: any = Symbol.for('UserAuthDataRepository')
     public static readonly FITBIT_AUTH_DATA_REPOSITORY: any = Symbol.for('FitbitAuthDataRepository')
     public static readonly FITBIT_CLIENT_REPOSITORY: any = Symbol.for('FitbitClientRepository')
+    public static readonly RESOURCE_REPOSITORY: any = Symbol.for('ResourceRepository')
 
     // Models
     public static readonly INTEGRATION_EVENT_REPO_MODEL: any = Symbol.for('IntegrationEventRepoModel')
     public static readonly USER_AUTH_REPO_MODEL: any = Symbol.for('UserAuthRepoModel')
+    public static readonly RESOURCE_REPO_MODEL: any = Symbol.for('ResourceRepoModel')
 
     // Mappers
     public static readonly USER_AUTH_DATA_ENTITY_MAPPER: any = Symbol.for('UserAuthDataEntityMapper')
     public static readonly FITBIT_AUTH_DATA_ENTITY_MAPPER: any = Symbol.for('FitbitAuthDataEntityMapper')
+    public static readonly RESOURCE_ENTITY_MAPPER: any = Symbol.for('ResourceEntityMapper')
+
     // Background Services
     public static readonly MONGODB_CONNECTION_FACTORY: any = Symbol.for('ConnectionFactoryMongodb')
     public static readonly MONGODB_CONNECTION: any = Symbol.for('ConnectionMongodb')
