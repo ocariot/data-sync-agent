@@ -72,6 +72,10 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         return this._fitbitClientRepo.subscribeUserEvent(data, resource, subscriptionId)
     }
 
+    public async unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
+        return this._fitbitClientRepo.unsubscribeUserEvent(data, resource, subscriptionId)
+    }
+
     public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {

@@ -8,4 +8,6 @@ export interface IFitbitClientRepository {
     getDataFromPath(path: string, accessToken: string): Promise<any>
 
     subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
+
+    unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
 }

@@ -5,6 +5,8 @@ import { DIContainer } from '../../../di/di'
 import { ValidationException } from '../../domain/exception/validation.exception'
 import { IUserAuthDataRepository } from '../../port/user.auth.data.repository.interface'
 import { Query } from '../../../infrastructure/repository/query/query'
+import { IFitbitAuthDataRepository } from '../../port/fitbit.auth.data.repository.interface'
+import { UserAuthData } from '../../domain/model/user.auth.data'
 
 /**
  * Handler for UserDeleteEvent operation.
@@ -14,7 +16,10 @@ import { Query } from '../../../infrastructure/repository/query/query'
 export const userDeleteEventHandler = async (event: any) => {
 
     const logger: ILogger = DIContainer.get<ILogger>(Identifier.LOGGER)
-    const repo: IUserAuthDataRepository = DIContainer.get<IUserAuthDataRepository>(Identifier.USER_AUTH_DATA_REPOSITORY)
+    const userAuthDataRepo: IUserAuthDataRepository =
+        DIContainer.get<IUserAuthDataRepository>(Identifier.USER_AUTH_DATA_REPOSITORY)
+    const fitbitAuthDataRepo: IFitbitAuthDataRepository =
+        DIContainer.get<IFitbitAuthDataRepository>(Identifier.FITBIT_AUTH_DATA_REPOSITORY)
 
     try {
         if (typeof event === 'string') event = JSON.parse(event)
@@ -27,10 +32,25 @@ export const userDeleteEventHandler = async (event: any) => {
         ObjectIdValidator.validate(childId)
 
         // 2. Delete Child Data
-        await repo.deleteByQuery(new Query().fromJSON({ filters: { user_id: childId } }))
+        const query: Query = new Query().fromJSON({ filters: { user_id: childId } })
+        const userAuthData: UserAuthData = await userAuthDataRepo.findOne(query)
+        if (userAuthData) {
+            const payload: any = await fitbitAuthDataRepo.getTokenPayload(userAuthData.fitbit!.access_token!)
+            const scopes: Array<string> = payload.scopes.split(' ')
+            if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
+                await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'body', 'BODY')
+            }
+            if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
+                await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'activities', 'ACTIVITIES')
+            }
+            if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
+                await fitbitAuthDataRepo.subscribeUserEvent(userAuthData.fitbit!, 'sleep', 'SLEEP')
+            }
+            await userAuthDataRepo.deleteByQuery(query)
 
-        // 3. If got here, it's because the action was successful.
-        logger.info(`Action for event ${event.event_name} successfully held!`)
+            // 3. If got here, it's because the action was successful.
+            logger.info(`Action for event ${event.event_name} successfully held!`)
+        }
     } catch (err) {
         logger.warn(`An error occurred while attempting `
             .concat(`perform the operation with the ${event.event_name} name event. ${err.message}`)

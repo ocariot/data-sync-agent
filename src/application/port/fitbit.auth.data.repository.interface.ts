@@ -13,5 +13,7 @@ export interface IFitbitAuthDataRepository {
 
     subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
 
+    unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
+
     getTokenPayload(token: string): Promise<any>
 }
