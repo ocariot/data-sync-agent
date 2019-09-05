@@ -2,18 +2,11 @@ import 'reflect-metadata'
 import { Container } from 'inversify'
 import { HomeController } from '../ui/controllers/home.controller'
 import { Identifier } from './identifiers'
-import { ConnectionFactoryMongodb } from '../infrastructure/database/connection.factory.mongodb'
-import { ConnectionMongodb } from '../infrastructure/database/connection.mongodb'
-import { IConnectionDB } from '../infrastructure/port/connection.db.interface'
 import { IConnectionFactory } from '../infrastructure/port/connection.factory.interface'
 import { BackgroundService } from '../background/background.service'
 import { App } from '../app'
 import { CustomLogger, ILogger } from '../utils/custom.logger'
 import { ConnectionFactoryRabbitMQ } from '../infrastructure/eventbus/rabbitmq/connection.factory.rabbitmq'
-import { IConnectionEventBus } from '../infrastructure/port/connection.event.bus.interface'
-import { EventBusRabbitMQ } from '../infrastructure/eventbus/rabbitmq/eventbus.rabbitmq'
-import { ConnectionRabbitMQ } from '../infrastructure/eventbus/rabbitmq/connection.rabbitmq'
-import { IEventBus } from '../infrastructure/port/event.bus.interface'
 import { IntegrationEventRepoModel } from '../infrastructure/database/schema/integration.event.schema'
 import { IntegrationEventRepository } from '../infrastructure/repository/integration.event.repository'
 import { IIntegrationEventRepository } from '../application/port/integration.event.repository.interface'
@@ -25,7 +18,6 @@ import { FitbitAuthDataEntity } from '../infrastructure/entity/fitbit.auth.data.
 import { UserAuthDataEntityMapper } from '../infrastructure/entity/mapper/user.auth.data.entity.mapper'
 import { IEntityMapper } from '../infrastructure/port/entity.mapper.interface'
 import { UserAuthDataService } from '../application/service/user.auth.data.service'
-import { PublishEventBusTask } from '../background/task/publish.event.bus.task'
 import { IBackgroundTask } from '../application/port/background.task.interface'
 import { CollectFitbitUserDataTask } from '../background/task/collect.fitbit.user.data.task'
 import { FitbitSubscriberController } from '../ui/controllers/fitbit.subscriber.controller'
@@ -46,6 +38,13 @@ import { ResourceEntity } from '../infrastructure/entity/resource.entity'
 import { ResourceEntityMapper } from '../infrastructure/entity/mapper/resource.entity.mapper'
 import { IResourceRepository } from '../application/port/resource.repository.interface'
 import { ResourceRepository } from '../infrastructure/repository/resource.repository'
+import { ConnectionFactoryMongoDB } from '../infrastructure/database/connection.factory.mongodb'
+import { MongoDB } from '../infrastructure/database/mongo.db'
+import { IDatabase } from '../infrastructure/port/database.interface'
+import { RabbitMQ } from '../infrastructure/eventbus/rabbitmq/rabbitmq'
+import { SubscribeEventBusTask } from '../background/task/subscribe.event.bus.task'
+import { ProviderEventBusTask } from '../background/task/provider.event.bus.task'
+import { IEventBus } from '../infrastructure/port/eventbus.interface'
 
 class IoC {
     private readonly _container: Container
@@ -126,29 +125,29 @@ class IoC {
             .to(ResourceEntityMapper).inSingletonScope()
 
         // Background Services
-        this._container
-            .bind<IConnectionFactory>(Identifier.MONGODB_CONNECTION_FACTORY)
-            .to(ConnectionFactoryMongodb).inSingletonScope()
-        this._container
-            .bind<IConnectionDB>(Identifier.MONGODB_CONNECTION)
-            .to(ConnectionMongodb).inSingletonScope()
-        this._container
+        this.container
             .bind<IConnectionFactory>(Identifier.RABBITMQ_CONNECTION_FACTORY)
             .to(ConnectionFactoryRabbitMQ).inSingletonScope()
-        this._container
-            .bind<IConnectionEventBus>(Identifier.RABBITMQ_CONNECTION)
-            .to(ConnectionRabbitMQ)
-        this._container
+        this.container
             .bind<IEventBus>(Identifier.RABBITMQ_EVENT_BUS)
-            .to(EventBusRabbitMQ).inSingletonScope()
-        this._container
+            .to(RabbitMQ).inSingletonScope()
+        this.container
+            .bind<IConnectionFactory>(Identifier.MONGODB_CONNECTION_FACTORY)
+            .to(ConnectionFactoryMongoDB).inSingletonScope()
+        this.container
+            .bind<IDatabase>(Identifier.MONGODB_CONNECTION)
+            .to(MongoDB).inSingletonScope()
+        this.container
             .bind(Identifier.BACKGROUND_SERVICE)
             .to(BackgroundService).inSingletonScope()
 
         // Tasks
-        this._container
-            .bind<IBackgroundTask>(Identifier.PUBLISH_EVENT_BUS_TASK)
-            .to(PublishEventBusTask).inSingletonScope()
+        this.container
+            .bind<IBackgroundTask>(Identifier.SUBSCRIBE_EVENT_BUS_TASK)
+            .to(SubscribeEventBusTask).inSingletonScope()
+        this.container
+            .bind<IBackgroundTask>(Identifier.PROVIDER_EVENT_BUS_TASK)
+            .to(ProviderEventBusTask).inSingletonScope()
         this._container
             .bind<IBackgroundTask>(Identifier.COLLECT_FITBIT_USER_DATA_TASK)
             .to(CollectFitbitUserDataTask).inSingletonScope()

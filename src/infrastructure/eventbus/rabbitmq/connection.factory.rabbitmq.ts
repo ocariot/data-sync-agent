@@ -1,19 +1,26 @@
 import { injectable } from 'inversify'
-import { amqpClient } from 'amqp-client-node'
-import { IConnectionFactory } from '../../port/connection.factory.interface'
-import { Default } from '../../../utils/default'
+import { IConnectionFactory, IEventBusOptions } from '../../port/connection.factory.interface'
+import { IOcariotRabbitMQClient, OcariotRabbitMQClient } from '@ocariot/rabbitmq-client-node'
 
 @injectable()
 export class ConnectionFactoryRabbitMQ implements IConnectionFactory {
+    private readonly options = {
+        rpcTimeout: 5000,
+        receiveFromYourself: false,
+        retries: 0,
+        interval: 2000
+    }
+
     /**
-     * Create instance of Event Bus
+     * Create instance of Class belonging to the @ocariot/rabbitmq-client-node library to connect to RabbitMQ.
      *
-     * @param _retries Total attempts to be made until give up reconnecting
-     * @param _interval Interval in milliseconds between each attempt
-     * @return Promise<Connection>
+     * @param uri This specification defines an "amqp" URI scheme.
+     * @param options {IEventBusOptions} Connection setup Options.
+     * @return Promise<IOcariotRabbitMQClient>
      */
-    public async createConnection(_retries: number, _interval: number): Promise<any> {
-        return amqpClient.createConnetion(process.env.RABBITMQ_URI || Default.RABBITMQ_URI,
-            { retries: _retries, interval: _interval })
+    public async createConnection(uri: string, options?: IEventBusOptions): Promise<IOcariotRabbitMQClient> {
+        return Promise.resolve(
+            new OcariotRabbitMQClient('data.sync.agent.app', uri, { ...this.options, ...options })
+        )
     }
 }

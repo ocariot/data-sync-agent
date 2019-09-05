@@ -34,15 +34,16 @@ export abstract class Identifier {
     public static readonly RESOURCE_ENTITY_MAPPER: any = Symbol.for('ResourceEntityMapper')
 
     // Background Services
-    public static readonly MONGODB_CONNECTION_FACTORY: any = Symbol.for('ConnectionFactoryMongodb')
-    public static readonly MONGODB_CONNECTION: any = Symbol.for('ConnectionMongodb')
+    // Background Services
+    public static readonly RABBITMQ_EVENT_BUS: any = Symbol.for('RabbitMQ')
     public static readonly RABBITMQ_CONNECTION_FACTORY: any = Symbol.for('ConnectionFactoryRabbitMQ')
-    public static readonly RABBITMQ_CONNECTION: any = Symbol.for('ConnectionRabbitMQ')
-    public static readonly RABBITMQ_EVENT_BUS: any = Symbol.for('EventBusRabbitMQ')
+    public static readonly MONGODB_CONNECTION_FACTORY: any = Symbol.for('ConnectionFactoryMongoDB')
+    public static readonly MONGODB_CONNECTION: any = Symbol.for('MongoDBConnection')
     public static readonly BACKGROUND_SERVICE: any = Symbol.for('BackgroundService')
 
     // Tasks
-    public static readonly PUBLISH_EVENT_BUS_TASK: any = Symbol.for('PublishEventBusTask')
+    public static readonly SUBSCRIBE_EVENT_BUS_TASK: any = Symbol.for('SubscribeEventBusTask')
+    public static readonly PROVIDER_EVENT_BUS_TASK: any = Symbol.for('ProviderEventBusTask')
     public static readonly COLLECT_FITBIT_USER_DATA_TASK: any = Symbol.for('CollectFitbitUserDataTask')
 
     // Log

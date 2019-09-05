@@ -30,10 +30,8 @@ export class UserFitbitSyncController {
     public async requestDataSync(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
             await this._userAuthDataService.syncFitbitUserData(req.params.user_id).then()
-            return res.status(HttpStatus.ACCEPTED).send({
-                status: 'pending',
-                completion_estimate: moment().add('5', 'minute').toISOString()
-            })
+            return res.status(HttpStatus.ACCEPTED)
+                .send({ status: 'pending', completion_estimate: moment().add('5', 'minute').toISOString() })
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())

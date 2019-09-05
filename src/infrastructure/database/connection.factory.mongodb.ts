@@ -1,39 +1,34 @@
 import { injectable } from 'inversify'
 import mongoose, { Connection, Mongoose } from 'mongoose'
-import { IConnectionFactory } from '../port/connection.factory.interface'
-import { Default } from '../../utils/default'
+import { IConnectionFactory, IDBOptions } from '../port/connection.factory.interface'
 
 @injectable()
-export class ConnectionFactoryMongodb implements IConnectionFactory {
+export class ConnectionFactoryMongoDB implements IConnectionFactory {
     private readonly options = {
         useNewUrlParser: true,
         useCreateIndex: true,
         useFindAndModify: false,
         bufferMaxEntries: 0,
         reconnectTries: Number.MAX_SAFE_INTEGER,
-        reconnectInterval: 1500
-    }
-
-    public createConnection(retries: number, interval: number): Promise<Connection> {
-        this.options.reconnectTries = (retries === 0) ? Number.MAX_SAFE_INTEGER : retries
-        this.options.reconnectInterval = interval
-
-        return new Promise<Connection>((resolve, reject) => {
-            mongoose.connect(this.getDBUri(), this.options)
-                .then((result: Mongoose) => resolve(result.connection))
-                .catch(err => reject(err))
-        })
+        reconnectInterval: 2000
     }
 
     /**
-     * Retrieve the URI for connection to MongoDB.
+     * Create instance of MongoDb.
      *
-     * @return {string}
+     * @param uri This specification defines an URI scheme.
+     * For more details see: {@link https://docs.mongodb.com/manual/reference/connection-string/}
+     * @param options {IDBOptions} Connection setup Options.
+     * @return Promise<Connection>
      */
-    private getDBUri(): string {
-        if (process.env.NODE_ENV && process.env.NODE_ENV === 'test') {
-            return process.env.MONGODB_URI_TEST || Default.MONGODB_URI_TEST
-        }
-        return process.env.MONGODB_URI || Default.MONGODB_URI
+    public createConnection(uri: string, options?: IDBOptions): Promise<Connection> {
+        if (options && options.retries && options.retries > 0) this.options.reconnectTries = options.retries
+        if (options && options.interval) this.options.reconnectInterval = options.interval
+
+        return new Promise<Connection>((resolve, reject) => {
+            mongoose.connect(uri, this.options)
+                .then((result: Mongoose) => resolve(result.connection))
+                .catch(err => reject(err))
+        })
     }
 }

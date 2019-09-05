@@ -3,7 +3,7 @@ import { DIContainer } from '../../../src/di/di'
 import { Identifier } from '../../../src/di/identifiers'
 import { IntegrationEvent } from '../../../src/application/integration-event/event/integration.event'
 import { IIntegrationEventHandler } from '../../../src/application/integration-event/handler/integration.event.handler.interface'
-import { EventBusRabbitMQ } from '../../../src/infrastructure/eventbus/rabbitmq/eventbus.rabbitmq'
+import { Rabbitmq } from '../../../src/infrastructure/eventbus/rabbitmq/eventbus.rabbitmq'
 
 const eventBus: EventBusRabbitMQ = DIContainer.get(Identifier.RABBITMQ_EVENT_BUS)
 

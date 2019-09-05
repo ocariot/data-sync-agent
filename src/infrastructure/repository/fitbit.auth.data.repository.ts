@@ -22,6 +22,7 @@ import { ResourceDataType } from '../../application/domain/utils/resource.data.t
 import { IResourceRepository } from '../../application/port/resource.repository.interface'
 import { Query } from './query/query'
 import { Resource } from '../../application/domain/model/resource'
+import { IEventBus } from '../port/eventbus.interface'
 
 @injectable()
 export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
@@ -32,9 +33,10 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         @inject(Identifier.USER_AUTH_REPO_MODEL) private readonly _userAuthRepoModel: any,
         @inject(Identifier.FITBIT_AUTH_DATA_ENTITY_MAPPER)
         private readonly _fitbitAuthEntityMapper: IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>,
-        @inject(Identifier.LOGGER) private readonly _logger: ILogger,
         @inject(Identifier.FITBIT_CLIENT_REPOSITORY) private readonly _fitbitClientRepo: IFitbitClientRepository,
-        @inject(Identifier.RESOURCE_REPOSITORY) readonly _resourceRepo: IResourceRepository
+        @inject(Identifier.RESOURCE_REPOSITORY) readonly _resourceRepo: IResourceRepository,
+        @inject(Identifier.RABBITMQ_EVENT_BUS) private readonly _eventBus: IEventBus,
+        @inject(Identifier.LOGGER) private readonly _logger: ILogger
     ) {
     }
 
@@ -55,11 +57,14 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
     private updateRefreshToken(userId: string, token: FitbitAuthData): Promise<FitbitAuthData> {
         const itemUp: any = this._fitbitAuthEntityMapper.transform(token)
         return new Promise<FitbitAuthData>((resolve, reject) => {
-            this._userAuthRepoModel.findOneAndUpdate({ user_id: userId }, itemUp, { new: true })
+            this._userAuthRepoModel.findOneAndUpdate(
+                { 'fitbit.user_id': userId },
+                { fitbit: itemUp },
+                { new: true })
                 .then(res => {
                     if (!res) return resolve(undefined)
                     return resolve(this._fitbitAuthEntityMapper.transform(res))
-                }).catcj(err => this.mongoDBErrorListener(err))
+                }).catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }
 
@@ -105,10 +110,10 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 )
 
                 // This data must be published to the message bus.
-                weightList
-                activitiesList
-                sleepList
-                userLog
+                await this._eventBus.bus.pubSavePhysicalActivity(activitiesList.map(item => item.toJSON()))
+                await this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
+                await this._eventBus.bus.pubSaveSleep(sleepList.map(item => item.toJSON()))
+                await this._eventBus.bus.pubSaveLog(userLog.toJSON())
 
                 // Finally, the last sync variable from user needs to be updated
                 await this.updateLastSync(data.user_id!, moment().toISOString())
@@ -155,85 +160,14 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         })
     }
 
-    public syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            if (type === ResourceDataType.BODY) {
-                this.getUserBodyDataFromInterval(data.access_token!, date, date)
-                    .then(async weights => {
-                        if (weights && weights.length) {
-                            const resources: Array<any> = []
-                            for await(const weight of weights) {
-                                const exists: boolean =
-                                    await this._resourceRepo.checkExists(new Query().fromJSON({
-                                        filters: { resource_id: weight.logId }
-                                    }))
-                                if (!exists) {
-                                    resources.push(weight)
-                                }
-                            }
-                            // Parse list of weights
-                            const weightList: Array<Weight> = this.parseWeightList(resources, userId)
-                            if (weightList.length) {
-                                this._logger.info(`Weight data received from ${userId}: `
-                                    + `${weightList[0].value}${weightList[0].unit}.`)
-                                // Publish list of weights
-
-                                // If publish is successful, save the sync resources on database
-                                await this.saveResourceList(resources, userId)
-                            }
-                        }
-                    })
-                    .catch(err => reject(err))
-            } else if (type === ResourceDataType.ACTIVITIES) {
-                this.getUserActivities(data.access_token!, 1, date)
-                    .then(async activities => {
-                        if (activities && activities.length) {
-                            const resources: Array<any> = []
-                            for await(const activity of activities) {
-                                const exists: boolean =
-                                    await this._resourceRepo.checkExists(new Query().fromJSON({
-                                        filters: { resource_id: activity.logId }
-                                    }))
-                                if (!exists) resources.push(activity)
-
-                            }
-                            // Parse list of activities
-                            const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
-                            if (activityList.length) {
-                                this._logger.info(`Activity data received from  ${userId}: ${activityList[0].name}.`)
-                                // Publish list of weights
-
-                                // If publish is successful, save the sync resources on database
-                                await this.saveResourceList(resources, userId)
-                            }
-                        }
-                    })
-                    .catch(err => reject(err))
-            } else if (type === ResourceDataType.SLEEP) {
-                this.getUserSleep(data.access_token!, 1, date)
-                    .then(async sleeps => {
-                        const resources: Array<any> = []
-                        if (sleeps && sleeps.length) {
-                            for await (const sleep of sleeps) {
-                                const exists: boolean =
-                                    await this._resourceRepo.checkExists(new Query().fromJSON({
-                                        filters: { resource_id: sleep.logId }
-                                    }))
-                                if (!exists) resources.push(sleep)
-                            }
-                            // Parse list of sleep
-                            const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
-                            if (sleepList.length) {
-                                this._logger.info(`Sleep data received from ${userId} from ${sleepList[0].start_time}.`)
-
-                                // If publish is successful, save the sync resources on database
-                                await this.saveResourceList(resources, userId)
-                            }
-                        }
-                    })
-                    .catch(err => reject(err))
-            }
-        })
+    public async syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
+        try {
+            if (type === ResourceDataType.BODY) await this.syncLastFitbitUserWeight(data, userId, date)
+            else if (type === ResourceDataType.ACTIVITIES) await this.syncLastFitbitUserActivity(data, userId, date)
+            else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
+        } catch (err) {
+            return Promise.reject(err)
+        }
     }
 
     public getTokenPayload(token: string): Promise<any> {
@@ -245,11 +179,89 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         }
     }
 
+    private syncLastFitbitUserWeight(data: FitbitAuthData, userId: string, date: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.getUserBodyDataFromInterval(data.access_token!, date, date)
+                .then(async weights => {
+                    if (weights && weights.length) {
+                        const resources: Array<any> = []
+                        for await(const weight of weights) {
+                            const query: Query = new Query().fromJSON({ filters: { resource_id: weight.logId } })
+                            const exists: boolean = await this._resourceRepo.checkExists(query)
+                            if (!exists) resources.push(weight)
+                        }
+                        // Parse list of weights
+                        const weightList: Array<Weight> = this.parseWeightList(resources, userId)
+                        if (weightList.length) {
+                            // Publish list of weights
+                            await this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
+
+                            // If publish is successful, save the sync resources on database
+                            await this.saveResourceList(resources, userId)
+                            this._logger.info(`Weight data received from ${userId}`)
+                        }
+                    }
+                }).catch(err => reject(err))
+        })
+    }
+
+    private syncLastFitbitUserActivity(data: FitbitAuthData, userId: string, date: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.getUserActivities(data.access_token!, 1, date)
+                .then(async activities => {
+                    if (activities && activities.length) {
+                        const resources: Array<any> = []
+                        for await(const activity of activities) {
+                            const query: Query = new Query().fromJSON({ filters: { resource_id: activity.logId } })
+                            const exists: boolean = await this._resourceRepo.checkExists(query)
+                            if (!exists) resources.push(activity)
+                        }
+                        // Parse list of activities
+                        const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
+                        if (activityList.length) {
+                            // Publish list of weights
+                            await this._eventBus.bus.pubSavePhysicalActivity(activityList.map(item => item.toJSON()))
+
+                            // If publish is successful, save the sync resources on database
+                            await this.saveResourceList(resources, userId)
+                            this._logger.info(`Activity data received from  ${userId}`)
+                        }
+                    }
+                }).catch(err => reject(err))
+        })
+    }
+
+    private syncLastFitbitUserSleep(data: FitbitAuthData, userId: string, date: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.getUserSleep(data.access_token!, 1, date)
+                .then(async sleeps => {
+                    const resources: Array<any> = []
+                    if (sleeps && sleeps.length) {
+                        for await (const sleep of sleeps) {
+                            const query: Query = new Query().fromJSON({ filters: { resource_id: sleep.logId } })
+                            const exists: boolean = await this._resourceRepo.checkExists(query)
+                            if (!exists) resources.push(sleep)
+                        }
+                        const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
+                        if (sleepList.length) {
+                            // Publish list of sleep.
+                            await this._eventBus.bus.pubSavePhysicalActivity(sleepList.map(item => item.toJSON()))
+
+                            // If publish is successful, save the sync resources on database
+                            await this.saveResourceList(resources, userId)
+                            this._logger.info(`Sleep data received from ${userId} from ${sleepList[0].start_time}.`)
+                        }
+                    }
+                }).catch(err => reject(err))
+        })
+    }
+
     private saveResourceList(resources: Array<any>, userId: string): Promise<Array<Resource>> {
         return new Promise<Array<Resource>>(async (resolve, reject) => {
             const result: Array<Resource> = []
-            for await (const item of resources) {
-                try {
+            if (!resources || !resources.length) return result
+            try {
+                for await (const item of resources) {
                     const resource: Resource = await this._resourceRepo.create(new Resource().fromJSON({
                         resource_id: item.logId,
                         date_sync: new Date().toISOString(),
@@ -257,11 +269,11 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         provider: 'Fitbit'
                     }))
                     result.push(resource)
-                } catch (err) {
-                    return reject(this.mongoDBErrorListener(err))
                 }
+                return resolve(result)
+            } catch (err) {
+                return reject(this.mongoDBErrorListener(err))
             }
-            return resolve(result)
         })
     }
 
@@ -521,7 +533,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         return result
     }
 
-    // MongoDB Error Listener
+    // MongoDb Error Listener
     protected mongoDBErrorListener(err: any): ValidationException | ConflictException | RepositoryException | undefined {
         if (err && err.name) {
             if (err.name === 'ValidationError') {

@@ -1,22 +1,22 @@
 import { Connection } from 'mongoose'
 import { inject, injectable } from 'inversify'
-import { IConnectionFactory } from '../port/connection.factory.interface'
+import { IConnectionFactory, IDBOptions } from '../port/connection.factory.interface'
 import { Identifier } from '../../di/identifiers'
-import { IConnectionDB } from '../port/connection.db.interface'
+import { IDatabase } from '../port/database.interface'
 import { ILogger } from '../../utils/custom.logger'
 import { EventEmitter } from 'events'
 
 /**
- * Implementation of the interface that provides connection with MongoDB.
- * To implement the MongoDB abstraction the mongoose library was used.
+ * Implementation of the interface that provides connection with MongoDb.
+ * To implement the MongoDb abstraction the mongoose library was used.
  *
  * @see {@link https://mongoosejs.com/} for more details.
- * @implements {IConnectionDB}
+ * @implements {IDatabase}
  */
 @injectable()
-export class ConnectionMongodb implements IConnectionDB {
+export class MongoDB implements IDatabase {
     private _connection?: Connection
-    private _eventConnection: EventEmitter
+    private readonly _eventConnection: EventEmitter
 
     constructor(
         @inject(Identifier.MONGODB_CONNECTION_FACTORY) private readonly _connectionFactory: IConnectionFactory,
@@ -25,7 +25,7 @@ export class ConnectionMongodb implements IConnectionDB {
         this._eventConnection = new EventEmitter()
     }
 
-    get conn(): Connection | undefined {
+    get connection(): Connection | undefined {
         return this._connection
     }
 
@@ -34,31 +34,34 @@ export class ConnectionMongodb implements IConnectionDB {
     }
 
     /**
-     * Once connected, the reconnection policy is managed by the MongoDB driver,
+     * Once connected, the reconnection policy is managed by the MongoDb driver,
      * the values set in the environment variables or in the default file are
      * used for the total number of retries and intervals between them.
      *
-     * In case MongoDB is initially not available for a first connection,
+     * In case MongoDb is initially not available for a first connection,
      * a new attempt will be made every 2 seconds. After the successful
-     * connection, reconnection will be automatically managed by the MongoDB driver.
+     * connection, reconnection will be automatically managed by the MongoDb driver.
      *
+     * @param uri This specification defines an URI scheme.
+     * For more details see: {@link https://docs.mongodb.com/manual/reference/connection-string/}
+     * @param options {IDBOptions} Connection setup Options.
      * @return {Promise<void>}
      */
-    public async tryConnect(retries: number, interval: number): Promise<void> {
+    public async connect(uri: string, options?: IDBOptions): Promise<void> {
         const _this = this
-        await this._connectionFactory.createConnection(retries, interval)
+        await this._connectionFactory.createConnection(uri, options)
             .then((connection: Connection) => {
                 this._connection = connection
                 this.connectionStatusListener(this._connection)
                 this._eventConnection.emit('connected')
-                this._logger.info('Connection established with MongoDB...')
+                this._logger.info('Connection established with MongoDb...')
             })
             .catch((err) => {
                 this._connection = undefined
                 this._eventConnection.emit('disconnected')
                 this._logger.warn(`Error trying to connect for the first time with mongoDB: ${err.message}`)
                 setTimeout(async () => {
-                    _this.tryConnect(retries, interval).then()
+                    _this.connect(uri, options).then()
                 }, 2000)
             })
     }
@@ -75,15 +78,15 @@ export class ConnectionMongodb implements IConnectionDB {
             return
         }
 
-        connection.on('connected', (con) => {
-            this._logger.warn('Reconnection established with MongoDB...')
+        connection.on('connected', () => {
+            this._logger.warn('Reconnection established with MongoDb...')
             this._eventConnection.emit('connected')
         })
 
         connection.on('disconnected', () => {
             this._connection = undefined
             this._eventConnection.emit('disconnected')
-            this._logger.warn('Connection to MongoDB was lost...')
+            this._logger.warn('Connection to MongoDb was lost...')
         })
     }
 

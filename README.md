@@ -17,8 +17,8 @@ It was built based on the [template-base-ts](https://github.com/nutes-uepb/templ
 3. Make a copy of the ".env.example" file, naming to .env. After that, open and edit the settings as needed.
 
 ## Installation and Development server
-Requires [Node.js](https://nodejs.org/) v6+ and [MongoDB](https://www.mongodb.com) to run.
-Install the dependencies, start the local MongoDB, and start the server.
+Requires [Node.js](https://nodejs.org/) v6+ and [MongoDb](https://www.mongodb.com) to run.
+Install the dependencies, start the local MongoDb, and start the server.
 ```sh
 $ npm install
 $ npm run start:dev

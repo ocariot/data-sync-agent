@@ -84,7 +84,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                 throw new ValidationException(
                     ' Error: User does not have authentication data. Please, submit authentication data and try again.')
             }
-            this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 3)
+            await this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1)
             return Promise.resolve()
         } catch (err) {
             return Promise.reject(err)
