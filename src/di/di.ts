@@ -43,7 +43,6 @@ import { MongoDB } from '../infrastructure/database/mongo.db'
 import { IDatabase } from '../infrastructure/port/database.interface'
 import { RabbitMQ } from '../infrastructure/eventbus/rabbitmq/rabbitmq'
 import { SubscribeEventBusTask } from '../background/task/subscribe.event.bus.task'
-import { ProviderEventBusTask } from '../background/task/provider.event.bus.task'
 import { IEventBus } from '../infrastructure/port/eventbus.interface'
 
 class IoC {
@@ -145,9 +144,6 @@ class IoC {
         this.container
             .bind<IBackgroundTask>(Identifier.SUBSCRIBE_EVENT_BUS_TASK)
             .to(SubscribeEventBusTask).inSingletonScope()
-        this.container
-            .bind<IBackgroundTask>(Identifier.PROVIDER_EVENT_BUS_TASK)
-            .to(ProviderEventBusTask).inSingletonScope()
         this._container
             .bind<IBackgroundTask>(Identifier.COLLECT_FITBIT_USER_DATA_TASK)
             .to(CollectFitbitUserDataTask).inSingletonScope()

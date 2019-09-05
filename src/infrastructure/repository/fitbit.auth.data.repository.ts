@@ -123,7 +123,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 if (err.type) {
                     /*
                     * If the token was expired, it will try refresh the token and make a new data request.
-                    * If the token or refresh token was invalid, the method reject an error for invalid token / refresh token.
+                    * If the token or refresh token was invalid, the method reject an error for invalid token/refresh token.
                     * Otherwise, the method will reject the respective error.
                     */
                     if (err.type === 'expired_token') {
@@ -131,7 +131,8 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                             return reject(new OAuthException(
                                 'invalid_token',
                                 `The access token could not be refresh: ${data.access_token}`,
-                                'Probably, this access token or the refresh token was invalid. Please make a new request.'))
+                                'Probably, this access token or the refresh token was invalid. Please make a ' +
+                                'new request.'))
                         }
                         try {
                             await this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)

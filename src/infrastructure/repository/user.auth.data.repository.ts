@@ -6,6 +6,7 @@ import { inject, injectable } from 'inversify'
 import { Identifier } from '../../di/identifiers'
 import { IEntityMapper } from '../port/entity.mapper.interface'
 import { ILogger } from '../../utils/custom.logger'
+import { IQuery } from '../../application/port/query.interface'
 
 @injectable()
 export class UserAuthDataRepository extends BaseRepository<UserAuthData, UserAuthDataEntity>
@@ -18,5 +19,15 @@ export class UserAuthDataRepository extends BaseRepository<UserAuthData, UserAut
         @inject(Identifier.LOGGER) readonly _logger: ILogger
     ) {
         super(_userAuthDataRepoModel, _userAuthEntityMapper, _logger)
+    }
+
+    public deleteByQuery(query: IQuery): Promise<boolean> {
+        const q: any = query.toJSON()
+        return new Promise<boolean>((resolve, reject) => {
+            this.Model.findOneAndDelete(q.filters)
+                .exec()
+                .then((result) => resolve(!!result))
+                .catch(err => reject(this.mongoDBErrorListener(err)))
+        })
     }
 }

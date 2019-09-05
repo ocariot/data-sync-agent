@@ -3,6 +3,8 @@ import { ILogger } from '../../../utils/custom.logger'
 import { ObjectIdValidator } from '../../domain/validator/object.id.validator'
 import { DIContainer } from '../../../di/di'
 import { ValidationException } from '../../domain/exception/validation.exception'
+import { IUserAuthDataRepository } from '../../port/user.auth.data.repository.interface'
+import { Query } from '../../../infrastructure/repository/query/query'
 
 /**
  * Handler for UserDeleteEvent operation.
@@ -12,6 +14,7 @@ import { ValidationException } from '../../domain/exception/validation.exception
 export const userDeleteEventHandler = async (event: any) => {
 
     const logger: ILogger = DIContainer.get<ILogger>(Identifier.LOGGER)
+    const repo: IUserAuthDataRepository = DIContainer.get<IUserAuthDataRepository>(Identifier.USER_AUTH_DATA_REPOSITORY)
 
     try {
         if (typeof event === 'string') event = JSON.parse(event)
@@ -24,6 +27,7 @@ export const userDeleteEventHandler = async (event: any) => {
         ObjectIdValidator.validate(childId)
 
         // 2. Delete Child Data
+        await repo.deleteByQuery(new Query().fromJSON({ filters: { user_id: childId } }))
 
         // 3. If got here, it's because the action was successful.
         logger.info(`Action for event ${event.event_name} successfully held!`)
