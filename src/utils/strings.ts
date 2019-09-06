@@ -9,7 +9,7 @@
  */
 export abstract class Strings {
     public static readonly APP: any = {
-        TITLE: 'Data Aquisition Agent Service',
+        TITLE: 'Data Sync Agent Service',
         APP_DESCRIPTION: 'Microservice responsible for data synchronization of FitBit and CVE platform with OCARIoT platform.'
     }
 
