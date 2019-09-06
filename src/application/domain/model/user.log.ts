@@ -105,4 +105,15 @@ export class UserLog implements IJSONSerializable, IJSONDeserializable<UserLog> 
                 this.sedentary_minutes ? this.sedentary_minutes.map(item => item.toJSON()) : this.sedentary_minutes
         }
     }
+
+    public toJSONList(): Array<any> {
+        return [
+            ...this.steps ? this.steps.map(item => item.toJSON()) : this.steps,
+            ...this.calories ? this.calories.map(item => item.toJSON()) : this.calories,
+            ...this.active_minutes ? this.active_minutes.map(item => item.toJSON()) : this.active_minutes,
+            ...this.lightly_active_minutes ?
+                this.lightly_active_minutes.map(item => item.toJSON()) : this.lightly_active_minutes,
+            ...this.sedentary_minutes ? this.sedentary_minutes.map(item => item.toJSON()) : this.sedentary_minutes
+        ]
+    }
 }

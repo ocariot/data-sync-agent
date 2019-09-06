@@ -78,7 +78,8 @@ export class Log extends Entity implements IJSONSerializable, IJSONDeserializabl
 
         return {
             date: this.date,
-            value: this.value
+            value: this.value,
+            type: this.type
         }
     }
 }
