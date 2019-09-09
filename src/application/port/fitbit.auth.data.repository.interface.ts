@@ -7,7 +7,7 @@ export interface IFitbitAuthDataRepository {
 
     refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData>
 
-    syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void>
+    syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<void>
 
     syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void>
 

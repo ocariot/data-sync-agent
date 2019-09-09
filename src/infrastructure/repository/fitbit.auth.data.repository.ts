@@ -76,7 +76,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         return this._fitbitClientRepo.unsubscribeUserEvent(data, resource, subscriptionId)
     }
 
-    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number): Promise<void> {
+    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
                 const payload: any = await this.getTokenPayload(data.access_token!)
@@ -122,9 +122,9 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 if (activitiesList.length) {
                     this._eventBus.bus.pubSavePhysicalActivity(activitiesList.map(item => item.toJSON()))
                         .then(() => {
-                            this._logger.info(`Physical activities from ${data.user_id!} successful published!`)
+                            this._logger.info(`Physical activities from ${userId} successful published!`)
                             this.saveResourceList(activities, data.user_id!)
-                                .then(() => this._logger.info(`Physical Activity logs from ${data.user_id} saved successful!`))
+                                .then(() => this._logger.info(`Physical Activity logs from ${userId} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save physical activities logs: ${err.message}`))
                         })
                         .catch(err => this._logger.error(`Error at publish physical activities logs: ${err.message}`))
@@ -132,7 +132,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 if (weightList.length) {
                     this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
                         .then(() => {
-                            this._logger.info(`Weight Measurements from ${data.user_id!} successful published!`)
+                            this._logger.info(`Weight Measurements from ${userId} successful published!`)
                             this.saveResourceList(weights, data.user_id!)
                                 .then(() => this._logger.info(`Weight logs from ${data.user_id} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save weight logs: ${err.message}`))
@@ -143,9 +143,9 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 if (sleepList.length) {
                     this._eventBus.bus.pubSaveSleep(sleepList.map(item => item.toJSON()))
                         .then(() => {
-                            this._logger.info(`Sleep from ${data.user_id!} successful published!`)
+                            this._logger.info(`Sleep from ${userId} successful published!`)
                             this.saveResourceList(sleep, data.user_id!)
-                                .then(() => this._logger.info(`Sleep logs from ${data.user_id} saved successful!`))
+                                .then(() => this._logger.info(`Sleep logs from ${userId} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save sleep logs: ${err.message}`))
                         })
                         .catch(err => this._logger.error(`Error at publish sleep logs: ${err.message}`))
@@ -156,8 +156,12 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 })
 
                 // Finally, the last sync variable from user needs to be updated
-                await this.updateLastSync(data.user_id!, moment().toISOString())
-                this._logger.info(`Data sync from ${data.user_id} at ${moment().toISOString()} successful!`)
+
+                lastSync = moment().toISOString()
+                await this.updateLastSync(data.user_id!, lastSync)
+                this._eventBus.bus.pubFitbitLastSync({ child_id: userId, last_sync: lastSync })
+                    .then(() => this._logger.info(`Last sync from ${userId}successful published!`))
+                    .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
                 return resolve()
             } catch (err) {
                 if (err.type) {
@@ -165,7 +169,9 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                     * If the token was expired, it will try refresh the token and make a new data request.
                     * If the token or refresh token was invalid, the method reject an error for invalid token/refresh token.
                     * Otherwise, the method will reject the respective error.
+                    *
                     */
+                    await this.publishFitbitAuthError(data, err, userId)
                     if (err.type === 'expired_token') {
                         if (calls === this.max_calls_refresh_token) {
                             return reject(new OAuthException(
@@ -179,7 +185,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         } catch (err) {
                             return reject(err)
                         }
-                        setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1), 1000)
+                        setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1, userId), 1000)
                     } else if (err.type === 'invalid_token') {
                         return reject(new OAuthException('invalid_token', `Access token invalid: ${data.access_token}`))
                     }
@@ -208,6 +214,11 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                 await this.syncLastFitbitUserActivity(data, userId, date)
                 await this.syncLastFitbitUserActivityLogs(data, userId, date)
             } else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
+            const lastSync = moment().toISOString()
+            await this.updateLastSync(data.user_id!, lastSync)
+            this._eventBus.bus.pubFitbitLastSync({ child_id: userId, last_sync: lastSync })
+                .then(() => this._logger.info(`Last sync from ${userId}successful published!`))
+                .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
         } catch (err) {
             return Promise.reject(err)
         }
@@ -630,6 +641,70 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
             }
         }
         return result
+    }
+
+    public publishFitbitAuthError(data: FitbitAuthData, error: any, userId: string): void {
+        /*
+        * Publish Error according to the type.
+        * Mapped Error Codes:
+        *
+        * 1011 - Expired Token
+        * 1012 - Invalid Token
+        * 1021 - Invalid Refresh Token
+        * 1151 - Too Many Requests
+        * 1500 - Unknown Error
+        *
+        */
+        switch (error.type) {
+            case 'expired_token':
+                this._eventBus.bus.pubFitbitAuthError({
+                    child_id: userId,
+                    error: {
+                        code: 1011,
+                        message: `Expired access token: ${data.access_token}`,
+                        description: 'The provided token was expired.'
+                    }
+                })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
+                break
+            case 'invalid_token':
+                this._eventBus.bus.pubFitbitAuthError({
+                    child_id: userId,
+                    error: {
+                        code: 1011,
+                        message: `Expired access token: ${data.access_token}`,
+                        description: 'The provided token was expired.'
+                    }
+                })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
+                break
+            case 'system':
+                this._eventBus.bus.pubFitbitAuthError({
+                    child_id: userId,
+                    error: {
+                        code: 1151,
+                        message: `Data request limit for user has expired: ${userId}.`,
+                        description: 'Please wait a minimum of one hour and try again.'
+                    }
+                })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
+                break
+            default:
+                this._eventBus.bus.pubFitbitAuthError({
+                    child_id: userId,
+                    error: {
+                        code: 1500,
+                        message: `An internal error has occurred in Fitbit Client.`,
+                        description: 'Please wait a minimum of one hour and try again.'
+                    }
+                })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
+                break
+        }
     }
 
     // MongoDb Error Listener
