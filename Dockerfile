@@ -1,15 +1,15 @@
 FROM node:10.16.3
 
 # Create app directory
-RUN mkdir -p /usr/src/ac
-WORKDIR /usr/src/ac
+RUN mkdir -p /usr/src/ds
+WORKDIR /usr/src/ds
 
 # Install app dependencies
-COPY package.json /usr/src/ac/
+COPY package.json /usr/src/ds/
 RUN npm install
 
 # Copy app source
-COPY . /usr/src/ac
+COPY . /usr/src/ds
 
 # Create self-signed certificates
 RUN chmod +x ./create-self-signed-certs.sh

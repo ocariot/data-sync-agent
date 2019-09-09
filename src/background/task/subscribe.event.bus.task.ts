@@ -30,6 +30,5 @@ export class SubscribeEventBusTask implements IBackgroundTask {
             .subDeleteUser(userDeleteEventHandler)
             .then(() => this._logger.info('Subscribe in UserDeleteEvent successful!'))
             .catch((err) => this._logger.error(`Error trying to subscribe to UserDeleteEvent: ${err.message}`))
-
     }
 }

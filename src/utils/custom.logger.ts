@@ -9,11 +9,13 @@ export class CustomLogger implements ILogger {
     private readonly _logger: Logger
     private readonly _logDir = process.env.LOG_DIR || Default.LOG_DIR
     private _options: any = {}
+    private readonly _moduleName: string
 
     constructor() {
         if (!fs.existsSync(this._logDir)) fs.mkdirSync(this._logDir) // create directory if it does not exist
         this.initOptions() // initialize options logger
         this._logger = this.internalCreateLogger()
+        this._moduleName = 'data.sync.app'
     }
 
     get logger(): Logger {
@@ -77,27 +79,27 @@ export class CustomLogger implements ILogger {
     }
 
     public error(message: string): void {
-        this._logger.error(message)
+        this._logger.error(message, { module: this._moduleName })
     }
 
     public warn(message: string): void {
-        this._logger.warn(message)
+        this._logger.warn(message, { module: this._moduleName })
     }
 
     public info(message: string): void {
-        this._logger.info(message)
+        this._logger.info(message, { module: this._moduleName })
     }
 
     public verbose(message: string): void {
-        this._logger.verbose(message)
+        this._logger.verbose(message, { module: this._moduleName })
     }
 
     public debug(message: string): void {
-        this._logger.debug(message)
+        this._logger.debug(message, { module: this._moduleName })
     }
 
     public silly(message: string): void {
-        this._logger.silly(message)
+        this._logger.silly(message, { module: this._moduleName })
     }
 }
 
