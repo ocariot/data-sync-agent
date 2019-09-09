@@ -643,7 +643,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         return result
     }
 
-    public publishFitbitAuthError(data: FitbitAuthData, err: any, userId: string): void {
+    public publishFitbitAuthError(data: FitbitAuthData, error: any, userId: string): void {
         /*
         * Publish Error according to the type.
         * Mapped Error Codes:
@@ -655,7 +655,7 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
         * 1500 - Unknown Error
         *
         */
-        switch (err.type) {
+        switch (error.type) {
             case 'expired_token':
                 this._eventBus.bus.pubFitbitAuthError({
                     child_id: userId,
@@ -665,6 +665,8 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         description: 'The provided token was expired.'
                     }
                 })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
                 break
             case 'invalid_token':
                 this._eventBus.bus.pubFitbitAuthError({
@@ -675,6 +677,8 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         description: 'The provided token was expired.'
                     }
                 })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
                 break
             case 'system':
                 this._eventBus.bus.pubFitbitAuthError({
@@ -685,6 +689,8 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         description: 'Please wait a minimum of one hour and try again.'
                     }
                 })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
                 break
             default:
                 this._eventBus.bus.pubFitbitAuthError({
@@ -695,6 +701,8 @@ export class FitbitAuthDataRepository implements IFitbitAuthDataRepository {
                         description: 'Please wait a minimum of one hour and try again.'
                     }
                 })
+                    .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
                 break
         }
     }
