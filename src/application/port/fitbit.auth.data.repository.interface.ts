@@ -9,7 +9,7 @@ export interface IFitbitAuthDataRepository {
 
     syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<void>
 
-    syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void>
+    syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string, calls: number): Promise<void>
 
     subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
 

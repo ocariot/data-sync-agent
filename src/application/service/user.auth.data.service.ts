@@ -20,10 +20,13 @@ export class UserAuthDataService implements IUserAuthDataService {
     public async add(item: UserAuthData): Promise<UserAuthData> {
         try {
             CreateUserAuthDataValidator.validate(item)
-            const exists: UserAuthData =
+            item.fitbit!.is_valid = true
+            const exists: boolean = await this._userAuthDataRepo.checkUserExists(item.user_id!)
+            if (!exists) throw new ValidationException(`The user does not have register on platform: ${item.user_id!}`)
+            const alreadySaved: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: item.user_id! } }))
-            if (exists) {
-                item.id = exists.id
+            if (alreadySaved) {
+                item.id = alreadySaved.id
                 const result: UserAuthData = await this._userAuthDataRepo.update(item)
                 this.subscribeFitbitEvents(result)
                 return Promise.resolve(result)
@@ -84,7 +87,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                 throw new ValidationException(
                     ' Error: User does not have authentication data. Please, submit authentication data and try again.')
             }
-            this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
+            await this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
             return Promise.resolve()
         } catch (err) {
             return Promise.reject(err)
@@ -96,7 +99,7 @@ export class UserAuthDataService implements IUserAuthDataService {
             const authData: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { 'fitbit.user_id': fitbitUserId } }))
             if (authData) {
-                await this._fitbitAuthDataRepo.syncLastFitbitUserData(authData.fitbit!, authData.user_id!, type, date)
+                await this._fitbitAuthDataRepo.syncLastFitbitUserData(authData.fitbit!, authData.user_id!, type, date, 1)
             }
             return Promise.resolve()
         } catch (err) {

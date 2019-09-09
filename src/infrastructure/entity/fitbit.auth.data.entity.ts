@@ -8,4 +8,5 @@ export class FitbitAuthDataEntity extends UserAuthDataEntity {
     public scope?: string
     public last_sync?: string
     public token_type?: string
+    public is_valid?: boolean
 }
