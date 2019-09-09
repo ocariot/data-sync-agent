@@ -7,9 +7,14 @@ export class FitbitController {
 
     @httpGet('/')
     public async getF(@request() req: Request, @response() res: Response): Promise<Response> {
-        return req.query.filters.verify && req.query.filters.verify === `${process.env.FITBIT_CLIENT_SUBSCRIBER}` ?
-            res.status(HttpStatus.OK).send(
-                { client_id: `${process.env.FITBIT_CLIENT_ID}`, client_secret: `${process.env.FITBIT_CLIENT_SECRET}` }) :
-            res.status(HttpStatus.NOT_FOUND).send()
+        return (process.env.FITBIT_CLIENT_ID && process.env.FITBIT_CLIENT_SECRET) ?
+            res.status(HttpStatus.OK).send({
+                client_id: `${process.env.FITBIT_CLIENT_ID}`,
+                client_secret: `${process.env.FITBIT_CLIENT_SECRET}`
+            }) :
+            res.status(HttpStatus.NOT_FOUND).send({
+                code: 404,
+                message: 'Fitbit client id and secret key not found!'
+            })
     }
 }
