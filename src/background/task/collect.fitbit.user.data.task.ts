@@ -33,7 +33,7 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
         return new Promise<void>(async (resolve, reject) => {
             const usersData: Array<UserAuthData> = await this._userAuthDataRepo.find(new Query())
             for await (const data of usersData) {
-                this._fitbitAuthDataRepo.syncFitbitUserData(data.fitbit!, data.fitbit!.last_sync!, 1)
+                this._fitbitAuthDataRepo.syncFitbitUserData(data.fitbit!, data.fitbit!.last_sync!, 1, data.user_id!)
                     .then(() => this._logger.info(`Data from ${data.user_id} successful synchronized!`))
                     .catch(err => this._logger.error(err.message))
             }
