@@ -7,7 +7,6 @@ Microservice responsible for data synchronization of FitBit and CVE platform wit
 **Main features:**
 - Automatically sync Fitbit Data
 - Publish sync data into a message chanel
-- Creation of groups of children.
  
 
 ## Prerequisites
