@@ -7,11 +7,7 @@ export class CreateFitbitAuthDataValidator {
         const fields: Array<string> = []
 
         if (!item.access_token) fields.push('access_token')
-        if (!item.expires_in) fields.push('expires_in')
         if (!item.refresh_token) fields.push('refresh_token')
-        if (!item.scope) fields.push('scope')
-        if (!item.user_id) fields.push('user_id')
-        if (!item.token_type) fields.push('token_type')
         if (item.last_sync) DatetimeValidator.validate(item.last_sync)
 
         if (fields.length) {

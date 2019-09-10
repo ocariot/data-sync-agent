@@ -8,8 +8,6 @@ import { App } from '../app'
 import { CustomLogger, ILogger } from '../utils/custom.logger'
 import { ConnectionFactoryRabbitMQ } from '../infrastructure/eventbus/rabbitmq/connection.factory.rabbitmq'
 import { IntegrationEventRepoModel } from '../infrastructure/database/schema/integration.event.schema'
-import { IntegrationEventRepository } from '../infrastructure/repository/integration.event.repository'
-import { IIntegrationEventRepository } from '../application/port/integration.event.repository.interface'
 import { UserFitbitAuthController } from '../ui/controllers/user.fitbit.auth.controller'
 import { UserFitbitSyncController } from '../ui/controllers/user.fitbit.sync.controller'
 import { UserAuthRepoModel } from '../infrastructure/database/schema/oauth.data.schema'
@@ -26,8 +24,8 @@ import { UserAuthData } from '../application/domain/model/user.auth.data'
 import { UserAuthDataEntity } from '../infrastructure/entity/user.auth.data.entity'
 import { IUserAuthDataRepository } from '../application/port/user.auth.data.repository.interface'
 import { UserAuthDataRepository } from '../infrastructure/repository/user.auth.data.repository'
-import { IFitbitAuthDataRepository } from '../application/port/fitbit.auth.data.repository.interface'
-import { FitbitAuthDataRepository } from '../infrastructure/repository/fitbit.auth.data.repository'
+import { IFitbitDataRepository } from '../application/port/fitbit.auth.data.repository.interface'
+import { FitbitDataRepository } from '../infrastructure/repository/fitbit.data.repository'
 import { FitbitController } from '../ui/controllers/fitbit.controller'
 import { FitbitClientRepository } from '../infrastructure/repository/fitbit.client.repository'
 import { IFitbitClientRepository } from '../application/port/fitbit.client.repository.interface'
@@ -92,11 +90,8 @@ class IoC {
 
         // Repositories
         this._container
-            .bind<IIntegrationEventRepository>(Identifier.INTEGRATION_EVENT_REPOSITORY)
-            .to(IntegrationEventRepository).inSingletonScope()
-        this._container
-            .bind<IFitbitAuthDataRepository>(Identifier.FITBIT_AUTH_DATA_REPOSITORY)
-            .to(FitbitAuthDataRepository).inSingletonScope()
+            .bind<IFitbitDataRepository>(Identifier.FITBIT_DATA_REPOSITORY)
+            .to(FitbitDataRepository).inSingletonScope()
         this._container
             .bind<IUserAuthDataRepository>(Identifier.USER_AUTH_DATA_REPOSITORY)
             .to(UserAuthDataRepository).inSingletonScope()

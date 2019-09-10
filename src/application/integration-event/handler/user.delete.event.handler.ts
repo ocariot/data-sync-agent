@@ -5,7 +5,7 @@ import { DIContainer } from '../../../di/di'
 import { ValidationException } from '../../domain/exception/validation.exception'
 import { IUserAuthDataRepository } from '../../port/user.auth.data.repository.interface'
 import { Query } from '../../../infrastructure/repository/query/query'
-import { IFitbitAuthDataRepository } from '../../port/fitbit.auth.data.repository.interface'
+import { IFitbitDataRepository } from '../../port/fitbit.auth.data.repository.interface'
 import { UserAuthData } from '../../domain/model/user.auth.data'
 
 /**
@@ -18,8 +18,8 @@ export const userDeleteEventHandler = async (event: any) => {
     const logger: ILogger = DIContainer.get<ILogger>(Identifier.LOGGER)
     const userAuthDataRepo: IUserAuthDataRepository =
         DIContainer.get<IUserAuthDataRepository>(Identifier.USER_AUTH_DATA_REPOSITORY)
-    const fitbitAuthDataRepo: IFitbitAuthDataRepository =
-        DIContainer.get<IFitbitAuthDataRepository>(Identifier.FITBIT_AUTH_DATA_REPOSITORY)
+    const fitbitAuthDataRepo: IFitbitDataRepository =
+        DIContainer.get<IFitbitDataRepository>(Identifier.FITBIT_DATA_REPOSITORY)
 
     try {
         if (typeof event === 'string') event = JSON.parse(event)

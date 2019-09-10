@@ -17,9 +17,8 @@ export abstract class Identifier {
     public static readonly USER_AUTH_DATA_SERVICE: any = Symbol.for('UserAuthDataService')
 
     // Repositories
-    public static readonly INTEGRATION_EVENT_REPOSITORY: any = Symbol.for('IntegrationEventRepository')
     public static readonly USER_AUTH_DATA_REPOSITORY: any = Symbol.for('UserAuthDataRepository')
-    public static readonly FITBIT_AUTH_DATA_REPOSITORY: any = Symbol.for('FitbitAuthDataRepository')
+    public static readonly FITBIT_DATA_REPOSITORY: any = Symbol.for('FitbitDataRepository')
     public static readonly FITBIT_CLIENT_REPOSITORY: any = Symbol.for('FitbitClientRepository')
     public static readonly RESOURCE_REPOSITORY: any = Symbol.for('ResourceRepository')
 

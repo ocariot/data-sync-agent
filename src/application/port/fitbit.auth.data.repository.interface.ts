@@ -1,6 +1,6 @@
 import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 
-export interface IFitbitAuthDataRepository {
+export interface IFitbitDataRepository {
     updateLastSync(userId: string, lastSync: string): Promise<boolean>
 
     revokeToken(accessToken: string): Promise<boolean>

@@ -30,7 +30,7 @@ export class UserFitbitAuthController {
     public async saveAuthData(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
             const userAuth: UserAuthData = new UserAuthData().fromJSON({
-                user_id: req.params.user_id, fitbit: { ...req.body }
+                user_id: req.params.user_id, fitbit: { ...req.body, token_type: 'Bearer' }
             })
             if (!!req.query.filters.last_sync) userAuth.fitbit!.last_sync! = req.query.filters.last_sync
             await this._userAuthDataService.addFitbitAuthData(userAuth, req.query.filters.init_sync)

@@ -3,7 +3,7 @@ import { Identifier } from '../../di/identifiers'
 import { ILogger } from '../../utils/custom.logger'
 import { IConnectionDB } from '../../infrastructure/port/connection.db.interface'
 import { IBackgroundTask } from '../../application/port/background.task.interface'
-import { IFitbitAuthDataRepository } from '../../application/port/fitbit.auth.data.repository.interface'
+import { IFitbitDataRepository } from '../../application/port/fitbit.auth.data.repository.interface'
 import { IUserAuthDataRepository } from '../../application/port/user.auth.data.repository.interface'
 import { Query } from '../../infrastructure/repository/query/query'
 import { UserAuthData } from '../../application/domain/model/user.auth.data'
@@ -14,7 +14,7 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
 
     constructor(
         @inject(Identifier.MONGODB_CONNECTION) private readonly _mongodb: IConnectionDB,
-        @inject(Identifier.FITBIT_AUTH_DATA_REPOSITORY) /*private*/ readonly _fitbitAuthDataRepo: IFitbitAuthDataRepository,
+        @inject(Identifier.FITBIT_DATA_REPOSITORY) /*private*/ readonly _fitbitAuthDataRepo: IFitbitDataRepository,
         @inject(Identifier.USER_AUTH_DATA_REPOSITORY) /*private*/ readonly _userAuthDataRepo: IUserAuthDataRepository,
         @inject(Identifier.LOGGER) /*private*/ readonly _logger: ILogger
     ) {

@@ -46,7 +46,7 @@ export class FitbitClientRepository implements IFitbitClientRepository {
 
     public async subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.fitbit_client.post(`/${resource}/apiSubscriptions/${subscriptionId}.json`, data.access_token)
+            this.fitbit_client.post(`/${resource}/apiSubscriptions/${subscriptionId}-${data.user_id}.json`, data.access_token)
                 .then(res => {
                     if (res[0].errors) reject(this.fitbitClientErrorListener(res[0].errors[0]))
                     return resolve()
@@ -56,7 +56,7 @@ export class FitbitClientRepository implements IFitbitClientRepository {
 
     public async unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.fitbit_client.delete(`/${resource}/apiSubscriptions/${subscriptionId}.json`, data.access_token)
+            this.fitbit_client.delete(`/${resource}/apiSubscriptions/${subscriptionId}-${data.user_id}.json`, data.access_token)
                 .then(res => {
                     if (res[0] && res[0].errors) reject(this.fitbitClientErrorListener(res[0].errors[0]))
                     return resolve()
