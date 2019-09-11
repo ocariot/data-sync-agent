@@ -25,12 +25,11 @@ Application settings are defined by environment variables. To define the setting
 | `PORT_HTTP` | Port used to listen for HTTP requests. Any request received on this port is redirected to the HTTPS port. | `5000` |
 | `PORT_HTTPS` | Port used to listen for HTTPS requests. Do not forget to provide the private key and the SSL/TLS certificate. See the topic [generate certificates](#generate-certificates). | `5001` |
 | `HOST_WHITELIST` | Access control based on IP addresses. Only allow IP requests in the unlock list. You can define IP or host, for example: `[127.0.0.1, api.ocariot.com]`. To accept requests from any customer, use the character `*`. | `[*]` |
-| `HOST_API` |  API host address. | `https://localhost:5001` |
 | `SSL_KEY_PATH` | SSL/TLS certificate private key. | `.certs/server.key` |
 | `SSL_CERT_PATH` | SSL/TLS certificate. | `.certs/server.crt` |
-| `MONGODB_URI` | Database connection URI used if the application is running in development or production environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options`. | `mongodb://127.0.0.1:27017`<br/>`/ocariot-data-sync-agent` |
-| `MONGODB_URI_TEST` | Database connection URI used if the application is running in test environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options`. | `mongodb://127.0.0.1:27017`<br/>`/ocariot-data-sync-agent-test` |
-| `RABBITMQ_URI` | URI containing the parameters for connection to the message channel RabbitMQ. The [URI specifications ](https://www.rabbitmq.com/uri-spec.html) defined by RabbitMQ are accepted. For example: `amqp://user:pass@host:port/vhost`. | `amqp://guest:guest`<br/>`@127.0.0.1:5672` |
+| `MONGODB_URI` | Database connection URI used if the application is running in development or production environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent` |
+| `MONGODB_URI_TEST` | Database connection URI used if the application is running in test environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent-test` |
+| `RABBITMQ_URI` | URI containing the parameters for connection to the message channel RabbitMQ. The [URI specifications ](https://www.rabbitmq.com/uri-spec.html) defined by RabbitMQ are accepted. For example: `amqp://user:pass@host:port` | `amqp://guest:guest`<br/>`@127.0.0.1:5672` |
 | `RABBITMQ_CA_PATH` | CA certificate. | `.certs/ca.crt` |
 | `FITBIT_CLIENT_ID` | Client Id for Fitbit Application resposible to manage user data. | `CIENT_ID_HERE` |
 | `FITBIT_CLIENT_SECRET` | Client Secret for Fitbit Application resposible to manage user data. | `CIENT_SECRET_HERE` |
@@ -113,22 +112,22 @@ docker run --rm \
   -e HOST_WHITELIST="[localhost]" \
   -e SSL_KEY_PATH=.certs/server.key \
   -e SSL_CERT_PATH=.certs/server.crt \
-  -e JWT_PRIVATE_KEY_PATH=.certs/jwt.key \
-  -e JWT_PUBLIC_KEY_PATH=.certs/jwt.key.pub \
-  -e ISSUER=ocariot \
-  -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=admin123 \
-  -e ENCRYPT_SECRET_KEY=s3cr3tk3y \
-  -e RABBITMQ_URI="amqp://guest:guest@192.168.0.1:5672/ocariot" \
-  -e MONGODB_URI="mongodb://192.168.0.2:27017/ocariot-data-sync-agent" \
+  -e RABBITMQ_URI="amqp://guest:guest@192.168.0.1:5672" \
+  -e MONGODB_URI="mongodb://192.168.0.2:27017/ocariot-ds-agent" \
+  -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
+  -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
+  -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
   ocariot/ds-agent
 ```
 If the MongoDB or RabbitMQ instance is in the host local, add the `--net=host` statement when creating the container, this will cause the docker container to communicate with its local host.
 ```sh
 docker run --rm \
   --net=host \
-  -e RABBITMQ_URI="amqp://guest:guest@localhost:5672/ocariot" \
-  -e MONGODB_URI="mongodb://localhost:27017/ocariot-data-sync-agent" \
+  -e RABBITMQ_URI="amqp://guest:guest@localhost:5672" \
+  -e MONGODB_URI="mongodb://localhost:27017/ocariot-ds-agent" \
+  -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
+  -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
+  -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
   ocariot/ds-agent
 ```
 To generate your own docker image, run the following command:
@@ -138,28 +137,27 @@ docker build -t image_name:tag .
 
 [//]: # (These are reference links used in the body of this note.)
 [license-image]: https://img.shields.io/badge/license-Apache%202-blue.svg
-[license-url]: https://github.com/ocariot/ds-agent/blob/master/LICENSE
+[license-url]: https://github.com/ocariot/data-sync-agent/blob/master/LICENSE
 [node-image]: https://img.shields.io/badge/node-%3E%3D%208.0.0-brightgreen.svg
 [node-url]: https://nodejs.org
-[travis-image]: https://travis-ci.org/ocariot/ds-agent.svg?branch=master
-[travis-url]: https://travis-ci.org/ocariot/ds-agent
-[coverage-image]: https://coveralls.io/repos/github/ocariot/ds-agent/badge.svg
-[coverage-url]: https://coveralls.io/github/ocariot/ds-agent?branch=master
-[known-vulnerabilities-image]: https://snyk.io/test/github/ocariot/ds-agent/badge.svg
-[known-vulnerabilities-url]: https://snyk.io/test/github/ocariot/ds-agent
-[dependencies-image]: https://david-dm.org/ocariot/ds-agent.svg
-[dependencies-url]: https://david-dm.org/ocariot/ds-agent
-[dependencies-dev-image]: https://david-dm.org/ocariot/ds-agent/dev-status.svg
-[dependencies-dev-url]: https://david-dm.org/ocariot/ds-agent?type=dev
+[travis-image]: https://travis-ci.org/ocariot/data-sync-agent.svg?branch=master
+[travis-url]: https://travis-ci.org/ocariot/data-sync-agent
+[coverage-image]: https://coveralls.io/repos/github/ocariot/data-sync-agent/badge.svg
+[coverage-url]: https://coveralls.io/github/ocariot/data-sync-agent?branch=master
+[known-vulnerabilities-image]: https://snyk.io/test/github/ocariot/data-sync-agent/badge.svg
+[known-vulnerabilities-url]: https://snyk.io/test/github/ocariot/data-sync-agent
+[dependencies-image]: https://david-dm.org/ocariot/data-sync-agent.svg
+[dependencies-url]: https://david-dm.org/ocariot/data-sync-agent
+[dependencies-dev-image]: https://david-dm.org/ocariot/data-sync-agent/dev-status.svg
+[dependencies-dev-url]: https://david-dm.org/ocariot/data-sync-agent?type=dev
 [swagger-image]: https://img.shields.io/badge/swagger-v1-brightgreen.svg
-[swagger-url]: https://app.swaggerhub.com/apis-docs/nutes.ocariot/ds-agent-service/v1
-[last-commit-image]: https://img.shields.io/github/last-commit/ocariot/ds-agent.svg
-[last-commit-url]: https://github.com/ocariot/ds-agent/commits
-[releases-image]: https://img.shields.io/github/release-date/ocariot/ds-agent.svg
-[releases-url]: https://github.com/ocariot/ds-agent/releases
-[contributors-image]: https://img.shields.io/github/contributors/ocariot/ds-agent.svg
-[contributors-url]: https://github.com/ocariot/ds-agent/graphs/contributors
-
+[swagger-url]: https://app.swaggerhub.com/apis-docs/nutes.ocariot/data-sync-agent/v1
+[last-commit-image]: https://img.shields.io/github/last-commit/ocariot/data-sync-agent.svg
+[last-commit-url]: https://github.com/ocariot/data-sync-agent/commits
+[releases-image]: https://img.shields.io/github/release-date/ocariot/data-sync-agent.svg
+[releases-url]: https://github.com/ocariot/data-sync-agent/releases
+[contributors-image]: https://img.shields.io/github/contributors/ocariot/data-sync-agent.svg
+[contributors-url]: https://github.com/ocariot/data-sync-agent/graphs/contributors
 
 ## Pre Installation
 1. The microservice runs on HTTPS, so it is necessary to generate the private key and certificate. In the development and testing environment, you must use a self-signed certificate. You can do this as you wish, if you prefer, check the following links that will help you create the necessary files (file.key and file.crt).
@@ -176,7 +174,7 @@ docker build -t image_name:tag .
 Requires [Node.js](https://nodejs.org/) v6+ and [MongoDb](https://www.mongodb.com) to run.
 Install the dependencies, start the local MongoDb, and start the server.
 ```sh
-$ npm install
+$ npm installdata-syn
 $ npm run start:dev
 ```
 Navigate to `http://127.0.0.1:3000`.
@@ -206,7 +204,8 @@ Navigate to `http://127.0.0.1:3000`.
 ## Generating code documentation
 - Run `npm run build:doc` the html documentation will be generated in the /docs directory by [typedoc](https://typedoc.org/).
 
-## Features
+-------
+
 ### Fitbit Client Errors Published in Message Bus
 This microservice has a particular way of managing errors from the Fitbit Client, which is responsible for communicating with the Fitbit Server to interact with platform user data. When an error is generated by the client, it is published to the message channel with the following structure:
 ```

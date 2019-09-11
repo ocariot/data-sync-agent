@@ -8,6 +8,7 @@ export class ConnectionFactoryMongoDB implements IConnectionFactory {
         useNewUrlParser: true,
         useCreateIndex: true,
         useFindAndModify: false,
+        useUnifiedTopology: true,
         bufferMaxEntries: 0,
         reconnectTries: Number.MAX_SAFE_INTEGER,
         reconnectInterval: 2000
