@@ -11,11 +11,6 @@ export class PhysicalActivityLevel implements IJSONSerializable, IJSONDeserializ
     private _name!: ActivityLevelType // Name of physicalactivity level (sedentary, light, fair or very).
     private _duration!: number // Total time spent in milliseconds on the level.
 
-    constructor(name?: ActivityLevelType, duration?: number) {
-        if (name) this.name = name
-        if (duration) this.duration = duration
-    }
-
     get name(): ActivityLevelType {
         return this._name
     }

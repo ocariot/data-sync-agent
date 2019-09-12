@@ -1,0 +1,110 @@
+import { DefaultEntityMock } from '../../mocks/models/default.entity.mock'
+import { assert } from 'chai'
+import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.auth.data'
+
+describe('Models: FitbitAuthData', () => {
+    describe('fromJSON()', () => {
+        context('when convert a json into a model', () => {
+            it('should return a model', () => {
+                const res: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA)
+                assert.propertyVal(res, 'id', DefaultEntityMock.FITBIT_AUTH_DATA.id)
+                assert.propertyVal(res, 'access_token', DefaultEntityMock.FITBIT_AUTH_DATA.access_token)
+                assert.propertyVal(res, 'expires_in', DefaultEntityMock.FITBIT_AUTH_DATA.expires_in)
+                assert.propertyVal(res, 'refresh_token', DefaultEntityMock.FITBIT_AUTH_DATA.refresh_token)
+                assert.propertyVal(res, 'scopes', DefaultEntityMock.FITBIT_AUTH_DATA.scopes)
+                assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
+                assert.propertyVal(res, 'user_id', DefaultEntityMock.FITBIT_AUTH_DATA.user_id)
+                assert.propertyVal(res, 'last_sync', DefaultEntityMock.FITBIT_AUTH_DATA.last_sync)
+                assert.propertyVal(res, 'is_valid', DefaultEntityMock.FITBIT_AUTH_DATA.is_valid)
+            })
+        })
+        context('when convert a json string into a model', () => {
+            it('should return a model', () => {
+                const res: FitbitAuthData = new FitbitAuthData().fromJSON(JSON.stringify(DefaultEntityMock.FITBIT_AUTH_DATA))
+                assert.propertyVal(res, 'id', DefaultEntityMock.FITBIT_AUTH_DATA.id)
+                assert.propertyVal(res, 'access_token', DefaultEntityMock.FITBIT_AUTH_DATA.access_token)
+                assert.propertyVal(res, 'expires_in', DefaultEntityMock.FITBIT_AUTH_DATA.expires_in)
+                assert.propertyVal(res, 'refresh_token', DefaultEntityMock.FITBIT_AUTH_DATA.refresh_token)
+                assert.propertyVal(res, 'scopes', DefaultEntityMock.FITBIT_AUTH_DATA.scopes)
+                assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
+                assert.propertyVal(res, 'user_id', DefaultEntityMock.FITBIT_AUTH_DATA.user_id)
+                assert.propertyVal(res, 'last_sync', DefaultEntityMock.FITBIT_AUTH_DATA.last_sync)
+                assert.propertyVal(res, 'is_valid', DefaultEntityMock.FITBIT_AUTH_DATA.is_valid)
+            })
+        })
+        context('when json is invalid', () => {
+            it('should return undefined parameters for undefined json', () => {
+                const res: FitbitAuthData = new FitbitAuthData().fromJSON(undefined)
+                assert.propertyVal(res, 'id', undefined)
+                assert.propertyVal(res, 'access_token', undefined)
+                assert.propertyVal(res, 'expires_in', undefined)
+                assert.propertyVal(res, 'refresh_token', undefined)
+                assert.propertyVal(res, 'scopes', undefined)
+                assert.propertyVal(res, 'token_type', undefined)
+                assert.propertyVal(res, 'user_id', undefined)
+                assert.propertyVal(res, 'last_sync', undefined)
+                assert.propertyVal(res, 'is_valid', undefined)
+            })
+            it('should return undefined parameters for empty json', () => {
+                const res: FitbitAuthData = new FitbitAuthData().fromJSON({})
+                assert.propertyVal(res, 'id', undefined)
+                assert.propertyVal(res, 'access_token', undefined)
+                assert.propertyVal(res, 'expires_in', undefined)
+                assert.propertyVal(res, 'refresh_token', undefined)
+                assert.propertyVal(res, 'scopes', undefined)
+                assert.propertyVal(res, 'token_type', undefined)
+                assert.propertyVal(res, 'user_id', undefined)
+                assert.propertyVal(res, 'last_sync', undefined)
+                assert.propertyVal(res, 'is_valid', undefined)
+            })
+            it('should return undefined parameters for empty json string', () => {
+                const res: FitbitAuthData = new FitbitAuthData().fromJSON('')
+                assert.propertyVal(res, 'id', undefined)
+                assert.propertyVal(res, 'access_token', undefined)
+                assert.propertyVal(res, 'expires_in', undefined)
+                assert.propertyVal(res, 'refresh_token', undefined)
+                assert.propertyVal(res, 'scopes', undefined)
+                assert.propertyVal(res, 'token_type', undefined)
+                assert.propertyVal(res, 'user_id', undefined)
+                assert.propertyVal(res, 'last_sync', undefined)
+                assert.propertyVal(res, 'is_valid', undefined)
+            })
+            it('should return undefined parameters for invalid json string', () => {
+                const res: FitbitAuthData = new FitbitAuthData().fromJSON('invalid')
+                assert.propertyVal(res, 'id', undefined)
+                assert.propertyVal(res, 'access_token', undefined)
+                assert.propertyVal(res, 'expires_in', undefined)
+                assert.propertyVal(res, 'refresh_token', undefined)
+                assert.propertyVal(res, 'scopes', undefined)
+                assert.propertyVal(res, 'token_type', undefined)
+                assert.propertyVal(res, 'user_id', undefined)
+                assert.propertyVal(res, 'last_sync', undefined)
+                assert.propertyVal(res, 'is_valid', undefined)
+            })
+        })
+    })
+
+    describe('toJSON()', () => {
+        context('when convert a model into a json', () => {
+            it('should return a json', () => {
+                const model: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA)
+                const res: any = model.toJSON()
+                assert.deepEqual(res, DefaultEntityMock.FITBIT_AUTH_DATA)
+            })
+        })
+        context('when the model parameters are undefined', () => {
+            it('should return a json with undefined parameters', () => {
+                const model: FitbitAuthData = new FitbitAuthData().fromJSON({})
+                const res: any = model.toJSON()
+                assert.propertyVal(res, 'access_token', undefined)
+                assert.propertyVal(res, 'expires_in', undefined)
+                assert.propertyVal(res, 'refresh_token', undefined)
+                assert.propertyVal(res, 'scopes', undefined)
+                assert.propertyVal(res, 'token_type', undefined)
+                assert.propertyVal(res, 'user_id', undefined)
+                assert.propertyVal(res, 'last_sync', undefined)
+                assert.propertyVal(res, 'is_valid', undefined)
+            })
+        })
+    })
+})

@@ -23,7 +23,6 @@ export abstract class Identifier {
     public static readonly RESOURCE_REPOSITORY: any = Symbol.for('ResourceRepository')
 
     // Models
-    public static readonly INTEGRATION_EVENT_REPO_MODEL: any = Symbol.for('IntegrationEventRepoModel')
     public static readonly USER_AUTH_REPO_MODEL: any = Symbol.for('UserAuthRepoModel')
     public static readonly RESOURCE_REPO_MODEL: any = Symbol.for('ResourceRepoModel')
 

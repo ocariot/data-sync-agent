@@ -85,14 +85,14 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     throw new OAuthException(
                         'invalid_token',
                         'The access token is invalid.',
-                        'It was necessary refresh the token before continue.')
+                        'Please make a new Fitbit Auth data and try again.')
                 }
 
                 if (this.verifyTokenExpired(data)) {
                     throw new OAuthException(
                         'expired_token',
                         'The access token is expired.',
-                        'Please make a new Fitbit Auth data and try again.')
+                        'It was necessary refresh the token before continue.')
                 }
                 const scopes: Array<string> = data.scopes!.split(' ')
                 const syncWeights: Array<any> = scopes.includes('rwei') ?

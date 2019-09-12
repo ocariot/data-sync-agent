@@ -15,14 +15,6 @@ export class UserLog implements IJSONSerializable, IJSONDeserializable<UserLog> 
     private _lightly_active_minutes!: Array<Log> // Logs of lightly active minutes of a child
     private _sedentary_minutes!: Array<Log> // Logs of sedentary minutes of a child
 
-    constructor(steps?: Array<Log>, calories?: Array<Log>, active_minutes?: Array<Log>, lightly_active_minutes?: Array<Log>,
-                sedentary_minutes?: Array<Log>) {
-        if (steps) this.steps = steps
-        if (calories) this.calories = calories
-        if (active_minutes) this.active_minutes = active_minutes
-        if (sedentary_minutes) this.sedentary_minutes = sedentary_minutes
-    }
-
     get steps(): Array<Log> {
         return this._steps
     }
@@ -108,12 +100,11 @@ export class UserLog implements IJSONSerializable, IJSONDeserializable<UserLog> 
 
     public toJSONList(): Array<any> {
         return [
-            ...this.steps ? this.steps.map(item => item.toJSON()) : this.steps,
-            ...this.calories ? this.calories.map(item => item.toJSON()) : this.calories,
-            ...this.active_minutes ? this.active_minutes.map(item => item.toJSON()) : this.active_minutes,
-            ...this.lightly_active_minutes ?
-                this.lightly_active_minutes.map(item => item.toJSON()) : this.lightly_active_minutes,
-            ...this.sedentary_minutes ? this.sedentary_minutes.map(item => item.toJSON()) : this.sedentary_minutes
+            ...this.steps ? this.steps.map(item => item.toJSON()) : [],
+            ...this.calories ? this.calories.map(item => item.toJSON()) : [],
+            ...this.active_minutes ? this.active_minutes.map(item => item.toJSON()) : [],
+            ...this.lightly_active_minutes ? this.lightly_active_minutes.map(item => item.toJSON()) : [],
+            ...this.sedentary_minutes ? this.sedentary_minutes.map(item => item.toJSON()) : []
         ]
     }
 }

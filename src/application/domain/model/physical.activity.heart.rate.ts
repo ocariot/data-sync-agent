@@ -1,7 +1,9 @@
 import { HeartRateZone } from './heart.rate.zone'
 import { JsonUtils } from '../utils/json.utils'
+import { IJSONSerializable } from '../utils/json.serializable.interface'
+import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 
-export class PhysicalActivityHeartRate {
+export class PhysicalActivityHeartRate implements IJSONSerializable, IJSONDeserializable<PhysicalActivityHeartRate>{
     private _average?: number // Average heart rate
     private _out_of_range_zone?: HeartRateZone // 'Out of Range' heart rate zone
     private _fat_burn_zone?: HeartRateZone // 'Fat Burn' heart rate zone
