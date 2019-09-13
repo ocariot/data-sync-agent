@@ -648,21 +648,21 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             calories: item.calories,
             steps: item.steps,
             levels: item.activityLevel.map(level => {
-                return { duration: level.minutes, name: level.name }
+                return { duration: level.minutes * 60000, name: level.name }
             }),
             heart_rate: item.averageHeartRate && item.heartRateZones ? {
                 average: item.averageHeartRate,
                 out_of_range_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Out of Range') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Out of Range') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0],
                 fat_burn_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Fat Burn') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Fat Burn') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0],
                 cardio_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Cardio') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Cardio') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0],
                 peak_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Peak') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Peak') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0]
             } : undefined
         })
