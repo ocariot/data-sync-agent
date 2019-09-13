@@ -8,7 +8,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
     private _access_token?: string
     private _expires_in?: number
     private _refresh_token?: string
-    private _scopes?: string
+    private _scope?: string
     private _token_type?: string
     private _user_id?: string
     private _last_sync?: string
@@ -42,12 +42,12 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         this._refresh_token = value
     }
 
-    get scopes(): string | undefined {
-        return this._scopes
+    get scope(): string | undefined {
+        return this._scope
     }
 
-    set scopes(value: string | undefined) {
-        this._scopes = value
+    set scope(value: string | undefined) {
+        this._scope = value
     }
 
     get token_type(): string | undefined {
@@ -92,7 +92,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         if (json.access_token !== undefined) this.access_token = json.access_token
         if (json.expires_in !== undefined) this.expires_in = json.expires_in
         if (json.refresh_token !== undefined) this.refresh_token = json.refresh_token
-        if (json.scopes !== undefined) this.scopes = json.scopes
+        if (json.scope !== undefined) this.scope = json.scope
         if (json.token_type !== undefined) this.token_type = json.token_type
         if (json.last_sync !== undefined) this.last_sync = moment(json.last_sync).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
         if (json.is_valid !== undefined) this.is_valid = json.is_valid
@@ -104,7 +104,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
             access_token: this.access_token,
             expires_in: this.expires_in,
             refresh_token: this.refresh_token,
-            scopes: this.scopes,
+            scope: this.scope,
             token_type: this.token_type,
             last_sync: this.last_sync,
             user_id: this.user_id,
