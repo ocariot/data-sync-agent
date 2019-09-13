@@ -413,7 +413,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 minutesSedentaryLogs,
                 minutesLightlyActiveLogs,
                 this.mergeLogsValues(minutesFairlyActiveLogs, minutesVeryActiveLogs),
-                data.user_id!
+                userId
             )
 
             this._eventBus.bus.pubSaveLog(userLog.toJSONList())
