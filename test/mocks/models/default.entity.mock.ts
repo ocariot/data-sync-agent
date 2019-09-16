@@ -1,5 +1,6 @@
 import { LogType } from '../../../src/application/domain/model/log'
 import { ActivityLevelType } from '../../../src/application/domain/model/physical.activity.level'
+import { SleepType } from '../../../src/application/domain/model/sleep'
 
 export abstract class DefaultEntityMock {
     public static ACTIVITY: any = {
@@ -136,5 +137,11 @@ export abstract class DefaultEntityMock {
     public static SLEEP_PATTERN_STAGES: any = {
         data_set: [DefaultEntityMock.SLEEP_PATTERN_DATA_SET],
         summary: DefaultEntityMock.SLEEP_PATTERN_STAGES_SUMMARY
+    }
+
+    public static SLEEP: any = {
+        ...DefaultEntityMock.ACTIVITY,
+        pattern: DefaultEntityMock.SLEEP_PATTERN_PHASES,
+        type: SleepType.CLASSIC
     }
 }

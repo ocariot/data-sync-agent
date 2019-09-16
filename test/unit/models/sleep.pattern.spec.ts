@@ -1,36 +1,42 @@
 import { DefaultEntityMock } from '../../mocks/models/default.entity.mock'
 import { assert } from 'chai'
 import { SleepPattern } from '../../../src/application/domain/model/sleep.pattern'
+import { SleepPatternDataSet } from '../../../src/application/domain/model/sleep.pattern.data.set'
+import { SleepPatternPhasesSummary } from '../../../src/application/domain/model/sleep.pattern.phases.summary'
+import { SleepPatternStagesSummary } from '../../../src/application/domain/model/sleep.pattern.stages.summary'
 
 describe('Models: SleepPattern', () => {
     describe('fromJSON()', () => {
-        // const summary: SleepPatternSummaryData = new SleepPatternSummaryData(10, 10000)
-        // context('when convert a json into a model', () => {
-        //     it('should return a model', () => {
-        //         const res: SleepPattern =
-        //             new SleepPattern().fromJSON(DefaultEntityMock.SLEEP_PATTERN_PHASES)
-        //         assert.deepPropertyVal(res, 'data_set', DefaultEntityMock.SLEEP_PATTERN_PHASES.data_set)
-        //         assert.deepPropertyVal(res, 'summary', DefaultEntityMock.SLEEP_PATTERN_PHASES.summary)
-        //     })
-        // })
-        //
-        // context('when convert a json into a model', () => {
-        //     it('should return a model', () => {
-        //         const res: SleepPattern =
-        //             new SleepPattern().fromJSON(DefaultEntityMock.SLEEP_PATTERN_STAGES)
-        //         assert.deepPropertyVal(res, 'data_set', [summary])
-        //         assert.deepPropertyVal(res, 'summary', DefaultEntityMock.SLEEP_PATTERN_STAGES.summary)
-        //     })
-        // })
-        //
-        // context('when convert a json string into a model', () => {
-        //     it('should return a model', () => {
-        //         const res: SleepPattern = new SleepPattern()
-        //             .fromJSON(JSON.stringify(DefaultEntityMock.SLEEP_PATTERN_PHASES))
-        //         assert.deepPropertyVal(res, 'data_set', [summary])
-        //         assert.deepPropertyVal(res, 'summary', DefaultEntityMock.SLEEP_PATTERN_PHASES.summary)
-        //     })
-        // })
+        const dataset: Array<SleepPatternDataSet> =
+            [new SleepPatternDataSet().fromJSON(DefaultEntityMock.SLEEP_PATTERN_DATA_SET)]
+        const phases: SleepPatternPhasesSummary =
+            new SleepPatternPhasesSummary().fromJSON(DefaultEntityMock.SLEEP_PATTERN_PHASES_SUMMARY)
+        const stages: SleepPatternStagesSummary =
+            new SleepPatternStagesSummary().fromJSON(DefaultEntityMock.SLEEP_PATTERN_STAGES_SUMMARY)
+        context('when convert a json into a model', () => {
+            it('should return a model', () => {
+                const res: SleepPattern = new SleepPattern()
+                    .fromJSON(JSON.stringify(DefaultEntityMock.SLEEP_PATTERN_PHASES))
+                assert.deepPropertyVal(res, 'data_set', dataset)
+                assert.deepPropertyVal(res, 'summary',  phases)
+            })
+        })
+        context('when convert a json into a model', () => {
+            it('should return a model', () => {
+                const res: SleepPattern = new SleepPattern()
+                    .fromJSON(JSON.stringify(DefaultEntityMock.SLEEP_PATTERN_STAGES))
+                assert.deepPropertyVal(res, 'data_set', dataset)
+                assert.deepPropertyVal(res, 'summary',  stages)
+            })
+        })
+        context('when convert a json string into a model', () => {
+            it('should return a model', () => {
+                const res: SleepPattern = new SleepPattern()
+                    .fromJSON(JSON.stringify(DefaultEntityMock.SLEEP_PATTERN_PHASES))
+                assert.deepPropertyVal(res, 'data_set', dataset)
+                assert.deepPropertyVal(res, 'summary',  phases)
+            })
+        })
         context('when json is invalid', () => {
             it('should return undefined parameters for undefined json', () => {
                 const res: SleepPattern = new SleepPattern().fromJSON(undefined)
