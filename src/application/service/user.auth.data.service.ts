@@ -31,10 +31,14 @@ export class UserAuthDataService implements IUserAuthDataService {
                 newItem.id = alreadySaved.id
                 const result: UserAuthData = await this._userAuthDataRepo.update(newItem)
                 this.subscribeFitbitEvents(result)
+                    .then()
+                    .catch(err => Promise.reject(err))
                 return Promise.resolve(result)
             }
             const authData: UserAuthData = await this._userAuthDataRepo.create(newItem)
             this.subscribeFitbitEvents(authData)
+                .then()
+                .catch(err => Promise.reject(err))
             return Promise.resolve(authData)
         } catch (err) {
             if (err.message.indexOf('rpc') !== -1) {
@@ -67,6 +71,8 @@ export class UserAuthDataService implements IUserAuthDataService {
             const result: UserAuthData = await this.add(data)
             if (initSync !== 'false') {
                 this._fitbitAuthDataRepo.syncFitbitUserData(result.fitbit!, result.fitbit!.last_sync!, 3, result.user_id!)
+                    .then()
+                    .catch(err => Promise.reject(err))
             }
             return Promise.resolve(result)
         } catch (err) {
@@ -94,7 +100,9 @@ export class UserAuthDataService implements IUserAuthDataService {
                 throw new ValidationException(
                     ' Error: User does not have authentication data. Please, submit authentication data and try again.')
             }
-            await this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
+            this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
+                .then()
+                .catch(err => Promise.reject(err))
             return Promise.resolve()
         } catch (err) {
             return Promise.reject(err)
@@ -107,9 +115,8 @@ export class UserAuthDataService implements IUserAuthDataService {
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { 'fitbit.user_id': fitbitUserId } }))
             if (authData) {
                 this._fitbitAuthDataRepo.syncLastFitbitUserData(authData.fitbit!, authData.user_id!, type, date, 1)
-                    .catch(err => {
-                        // Do nothing
-                    })
+                    .then()
+                    .catch()
             }
             return Promise.resolve()
         } catch (err) {
@@ -119,7 +126,7 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
         try {
-            const scopes: Array<string> = data.fitbit!.scopes!.split(' ')
+            const scopes: Array<string> = data.fitbit!.scope!.split(' ')
             if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
             }
@@ -138,7 +145,7 @@ export class UserAuthDataService implements IUserAuthDataService {
         try {
             const payload: any = await this._fitbitAuthDataRepo.getTokenPayload(data.fitbit!.access_token!)
             if (payload.sub) data.fitbit!.user_id = payload.sub
-            if (payload.scopes) data.fitbit!.scopes = payload.scopes
+            if (payload.scopes) data.fitbit!.scope = payload.scopes
             if (payload.exp) data.fitbit!.expires_in = payload.exp
             data.fitbit!.token_type = 'Bearer'
             return Promise.resolve(data)

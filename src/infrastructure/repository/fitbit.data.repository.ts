@@ -53,7 +53,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this._fitbitClientRepo.refreshToken(accessToken, refreshToken, expiresIn)
                 .then(async tokenData => {
                     if (!tokenData) return resolve(undefined)
-                    return this.updateRefreshToken(userId, new FitbitAuthData().fromJSON(tokenData))
+                    return this.updateRefreshToken(userId, new FitbitAuthData().fromJSON({ ...tokenData, is_valid: true }))
                 }).catch(err => reject(err))
         })
     }
@@ -81,20 +81,14 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
-                if (!data.is_valid) {
+                if (data.is_valid === false) {
                     throw new OAuthException(
                         'invalid_token',
                         'The access token is invalid.',
                         'Please make a new Fitbit Auth data and try again.')
                 }
 
-                if (this.verifyTokenExpired(data)) {
-                    throw new OAuthException(
-                        'expired_token',
-                        'The access token is expired.',
-                        'It was necessary refresh the token before continue.')
-                }
-                const scopes: Array<string> = data.scopes!.split(' ')
+                const scopes: Array<string> = data.scope!.split(' ')
                 const syncWeights: Array<any> = scopes.includes('rwei') ?
                     await this.syncWeightData(data, lastSync) : []
                 const syncSleep: Array<any> = scopes.includes('rsle') ?
@@ -234,7 +228,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     public async syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string, calls: number):
         Promise<void> {
         try {
-            if (!data.is_valid) {
+            if (data.is_valid === false) {
                 throw new OAuthException(
                     'invalid_token',
                     `The access token is invalid: ${data.access_token}`,
@@ -293,10 +287,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
     }
 
-    private verifyTokenExpired(data: FitbitAuthData): boolean {
-        return new Date().getTime() > data.expires_in!
-    }
-
     private publishLastSync(userId: string): void {
         const lastSync = moment().toISOString()
         this._eventBus.bus.pubFitbitLastSync({ child_id: userId, last_sync: lastSync })
@@ -308,7 +298,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         return new Promise<FitbitAuthData>((resolve, reject) => {
             this._userAuthRepoModel.findOneAndUpdate(
                 { 'fitbit.user_id': userId },
-                { is_valid: false },
+                { 'fitbit.is_valid': false },
                 { new: true })
                 .then(res => {
                     if (!res) return resolve(undefined)
@@ -423,7 +413,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 minutesSedentaryLogs,
                 minutesLightlyActiveLogs,
                 this.mergeLogsValues(minutesFairlyActiveLogs, minutesVeryActiveLogs),
-                data.user_id!
+                userId
             )
 
             this._eventBus.bus.pubSaveLog(userLog.toJSONList())
@@ -658,21 +648,21 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             calories: item.calories,
             steps: item.steps,
             levels: item.activityLevel.map(level => {
-                return { duration: level.minutes, name: level.name }
+                return { duration: level.minutes * 60000, name: level.name }
             }),
             heart_rate: item.averageHeartRate && item.heartRateZones ? {
                 average: item.averageHeartRate,
                 out_of_range_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Out of Range') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Out of Range') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0],
                 fat_burn_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Fat Burn') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Fat Burn') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0],
                 cardio_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Cardio') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Cardio') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0],
                 peak_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Peak') return { min: zone.min, max: zone.max, duration: zone.minutes }
+                    if (zone.name === 'Peak') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
                 })[0]
             } : undefined
         })
