@@ -19,7 +19,7 @@ export abstract class DefaultEntityMock {
         refresh_token: 'd6ccf77f84d342267f9f011d2e16fb9e',
         scope: 'ract rsle rwei',
         token_type: 'Bearer',
-        user_id: '5d7a4a95c292db05e4uf7658',
+        user_id: 'ABC123',
         last_sync: '2019-09-12T13:36:49.741Z',
         is_valid: true
     }
@@ -143,5 +143,14 @@ export abstract class DefaultEntityMock {
         ...DefaultEntityMock.ACTIVITY,
         pattern: DefaultEntityMock.SLEEP_PATTERN_PHASES,
         type: SleepType.CLASSIC
+    }
+
+    public static USER_IDS: any = {
+        DOES_NOT_EXISTS: '5d7fb75ae48591c21a793f70',
+        DOES_NOT_SAVED: '5d7fd15c3e86dd635cc12767'
+    }
+
+    public static FITBIT_USER_IDS: any = {
+        DOES_NOT_SAVED: 'XXYYXX'
     }
 }
