@@ -11,4 +11,12 @@ export class JsonUtils {
             return false
         }
     }
+
+    public static cleanObject(json: any): any {
+        for (const prop of Object.keys(json)) {
+            if (json[prop] instanceof Object) json[prop] = this.cleanObject(json[prop])
+            if (json[prop] === undefined || json[prop] === null) delete json[prop]
+        }
+        return json
+    }
 }

@@ -17,7 +17,7 @@ export abstract class DefaultEntityMock {
             '94a0UBOeqWWFXaOQpg4sZz08y89gmV0',
         expires_in: 1568162400,
         refresh_token: 'd6ccf77f84d342267f9f011d2e16fb9e',
-        scopes: 'ract rsle rwei',
+        scope: 'ract rsle rwei',
         token_type: 'Bearer',
         user_id: '5d7a4a95c292db05e4uf7658',
         last_sync: '2019-09-12T13:36:49.741Z',
@@ -26,7 +26,7 @@ export abstract class DefaultEntityMock {
 
     public static USER_AUTH_DATA: any = {
         id: '5d7aa5125b593e3f113d190f',
-        user_id: '5d7a4a95c292db05e4uf7658',
+        user_id: '5d7f9e63abf760c7fbddaf98',
         fitbit: DefaultEntityMock.FITBIT_AUTH_DATA
     }
 

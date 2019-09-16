@@ -33,7 +33,7 @@ export class FitbitAuthDataEntityMapper implements IEntityMapper<FitbitAuthData,
         const result: FitbitAuthData = new FitbitAuthData()
 
         if (!json) return result
-        if (json.access_token !== undefined) result.user_id = json.user_id
+        if (json.access_token !== undefined) result.access_token = json.access_token
         if (json.expires_in !== undefined) result.expires_in = json.expires_in
         if (json.refresh_token !== undefined) result.refresh_token = json.refresh_token
         if (json.scope !== undefined) result.scope = json.scope
