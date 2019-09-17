@@ -8,6 +8,7 @@ import { IEntityMapper } from '../port/entity.mapper.interface'
 import { ILogger } from '../../utils/custom.logger'
 import { IQuery } from '../../application/port/query.interface'
 import { IEventBus } from '../port/eventbus.interface'
+import { Query } from './query/query'
 
 @injectable()
 export class UserAuthDataRepository extends BaseRepository<UserAuthData, UserAuthDataEntity>
@@ -38,6 +39,17 @@ export class UserAuthDataRepository extends BaseRepository<UserAuthData, UserAut
             this._eventBus.bus.getChildren(`?id=${userId}`)
                 .then(res => resolve(!!res))
                 .catch(err => reject(err))
+        })
+    }
+
+    public getUserAuthDataByUserId(userId: string): Promise<UserAuthData> {
+        const q = new Query()
+        q.filters = { user_id: userId }
+        return new Promise<UserAuthData>((resolve, reject) => {
+            this.Model.findOne(q.filters)
+                .exec()
+                .then(result => resolve(this._userAuthEntityMapper.transform(result)))
+                .catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }
 }

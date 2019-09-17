@@ -9,6 +9,8 @@ import { IUserAuthDataService } from '../port/user.auth.data.service.interface'
 import { Query } from '../../infrastructure/repository/query/query'
 import { ValidationException } from '../domain/exception/validation.exception'
 import { EventBusException } from '../domain/exception/eventbus.exception'
+import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
+import { ObjectIdValidator } from '../domain/validator/object.id.validator'
 
 @injectable()
 export class UserAuthDataService implements IUserAuthDataService {
@@ -119,6 +121,17 @@ export class UserAuthDataService implements IUserAuthDataService {
                     .catch()
             }
             return Promise.resolve()
+        } catch (err) {
+            return Promise.reject(err)
+        }
+    }
+
+    public async getFitbitAuthDataByUserId(userId: string): Promise<FitbitAuthData> {
+        try {
+            ObjectIdValidator.validate(userId)
+            const result = await this._userAuthDataRepo.getUserAuthDataByUserId(userId)
+            if (result && result.fitbit) return Promise.resolve(result.fitbit)
+            return Promise.resolve(new FitbitAuthData())
         } catch (err) {
             return Promise.reject(err)
         }

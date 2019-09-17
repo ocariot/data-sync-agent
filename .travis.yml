@@ -1,0 +1,33 @@
+language: node_js
+node_js:
+  - "8"
+  - "9"
+  - "10"
+  - "11"
+  - "12"
+env:
+  - NODE_ENV=test RABBITMQ_URI=amqp://guest:guest@127.0.0.1:5672/ MONGODB_URI_TEST=mongodb://127.0.0.1:27017/ocariot-ds-agent-test
+dist: xenial
+addons:
+  apt:
+    packages:
+      - rabbitmq-server
+services:
+  - rabbitmq
+  - mongodb
+sudo: false
+cache:
+  directories:
+    - node_modules
+before_script:
+  - sudo rabbitmqctl add_vhost ocariot
+  - sudo rabbitmqctl set_permissions -p ocariot guest ".*" ".*" ".*"
+  - npm install && npm install coveralls mocha-lcov-reporter --save-dev
+script:
+  - npm test
+after_success:
+  - nyc report --reporter=text-lcov | coveralls
+notifications:
+  email:
+    on_success: never
+    on_failure: always

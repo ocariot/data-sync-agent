@@ -1,6 +1,6 @@
 {
   "name": "data-sync-agent",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Service responsible for data synchronization of FitBit and CVE platform with OCARIoT platform.",
   "main": "dist/server.js",
   "scripts": {
@@ -9,9 +9,9 @@
     "start": "node dist/server.js",
     "start:dev": "gulp dev",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "test": "nyc --clean --all --reporter=text mocha --opts test/mocha.opts test/**/*.spec.ts",
-    "test:integration": "mocha --opts test/mocha.opts test/integration/**/*.spec.ts",
-    "test:unit": "mocha --opts test/mocha.opts test/unit/**/*.spec.ts",
+    "test": "nyc --clean --reporter=text-summary mocha --opts test/mocha.opts test/**/*.spec.ts",
+    "test:unit": "nyc --clean --all --reporter=text-summary mocha --opts test/mocha.opts test/unit/**/*.spec.ts",
+    "test:integration": "nyc --clean --all --reporter=text-summary mocha --opts test/mocha.opts test/integration/**/*.spec.ts",
     "test:single": "mocha --opts test/mocha.opts",
     "test:cov": "nyc --clean --all --reporter=html --reporter=text mocha --opts test/mocha.opts test/**/*.spec.ts"
   },

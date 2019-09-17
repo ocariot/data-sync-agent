@@ -1,11 +1,14 @@
 import HttpStatus from 'http-status-codes'
-import { controller, httpPost, request, response } from 'inversify-express-utils'
+import { controller, httpGet, httpPost, request, response } from 'inversify-express-utils'
 import { Request, Response } from 'express'
 import { ApiExceptionManager } from '../exception/api.exception.manager'
 import { inject } from 'inversify'
 import { Identifier } from '../../di/identifiers'
 import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
 import { UserAuthData } from '../../application/domain/model/user.auth.data'
+import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
+import { ApiException } from '../exception/api.exception'
+import { Strings } from '../../utils/strings'
 
 /**
  * Controller that implements User Fitbit Auth feature operations.
@@ -22,7 +25,7 @@ export class UserFitbitAuthController {
     }
 
     /**
-     * Submit the user user data to sync informations from Fitbit Server.
+     * Submit the user data to sync informations from Fitbit Server.
      *
      * @returns Promise<Response>
      */
@@ -35,6 +38,34 @@ export class UserFitbitAuthController {
             if (!!req.query.filters.last_sync) userAuth.fitbit!.last_sync! = req.query.filters.last_sync
             await this._userAuthDataService.addFitbitAuthData(userAuth, req.query.filters.init_sync)
             return res.status(HttpStatus.NO_CONTENT).send()
+        } catch (err) {
+            const handlerError = ApiExceptionManager.build(err)
+            return res.status(handlerError.code).send(handlerError.toJson())
+        }
+    }
+
+    /**
+     * Retrieves user data from Fitbit account.
+     *
+     * @returns Promise<Response>
+     */
+    @httpGet('/')
+    public async getFitbitAuthData(@request() req: Request, @response() res: Response): Promise<Response> {
+        try {
+            const result: FitbitAuthData = await this._userAuthDataService.getFitbitAuthDataByUserId(req.params.user_id)
+            if (!result || !result.access_token) {
+                return res.status(HttpStatus.NOT_FOUND).send(
+                    new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        Strings.FITBIT.AUTH_NOT_FOUND,
+                        Strings.FITBIT.AUTH_NOT_FOUND_DESCRIPTION
+                    ).toJson()
+                )
+            }
+            return res.status(HttpStatus.OK).send({
+                access_token: result.access_token,
+                refresh_token: result.refresh_token
+            })
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())

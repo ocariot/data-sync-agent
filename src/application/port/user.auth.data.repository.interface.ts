@@ -6,4 +6,6 @@ export interface IUserAuthDataRepository extends IRepository<UserAuthData> {
     checkUserExists(userId: string): Promise<boolean>
 
     deleteByQuery(query: IQuery): Promise<boolean>
+
+    getUserAuthDataByUserId(userId: string): Promise<UserAuthData>
 }
