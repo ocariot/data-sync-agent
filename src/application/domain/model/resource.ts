@@ -51,6 +51,7 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
             json = JSON.parse(json)
         }
 
+        if (json.id) super.id = json.id
         if (json.resource_id !== undefined) this.resource_id = json.resource_id
         if (json.user_id !== undefined) this.user_id = json.user_id
         if (json.date_sync !== undefined) this.date_sync = json.date_sync

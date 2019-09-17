@@ -1,7 +1,6 @@
 import { IJSONSerializable } from '../utils/json.serializable.interface'
 import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
-import { Entity } from './entity'
 import moment from 'moment'
 
 /**
@@ -9,19 +8,11 @@ import moment from 'moment'
  *
  * @implements {IJSONSerializable, IJSONDeserializable<Log>}
  */
-export class Log extends Entity implements IJSONSerializable, IJSONDeserializable<Log> {
+export class Log implements IJSONSerializable, IJSONDeserializable<Log> {
     private _date!: string // Date of the log according to the format yyyy-MM-dd.
     private _value!: number // Log value.
     private _type!: string // Log type
     private _child_id!: string // Child ID
-
-    constructor(date?: string, value?: number, type?: string, user_id?: string) {
-        super()
-        if (date) this.date = date
-        if (value) this.value = value
-        if (type) this.type = type
-        if (user_id) this.child_id = user_id
-    }
 
     get date(): string {
         return this._date
@@ -61,7 +52,6 @@ export class Log extends Entity implements IJSONSerializable, IJSONDeserializabl
             json = JSON.parse(json)
         }
 
-        if (json.id !== undefined) super.id = json.id
         if (json.type !== undefined) this.type = json.type
         if (json.date !== undefined) this.date = json.date
         if (json.value !== undefined) this.value = json.value

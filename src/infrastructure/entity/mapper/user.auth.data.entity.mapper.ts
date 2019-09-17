@@ -3,6 +3,7 @@ import { IEntityMapper } from '../../port/entity.mapper.interface'
 import { FitbitAuthData } from '../../../application/domain/model/fitbit.auth.data'
 import { UserAuthData } from '../../../application/domain/model/user.auth.data'
 import { UserAuthDataEntity } from '../user.auth.data.entity'
+import { JsonUtils } from '../../../application/domain/utils/json.utils'
 
 @injectable()
 export class UserAuthDataEntityMapper implements IEntityMapper<UserAuthData, UserAuthDataEntity> {
@@ -31,16 +32,8 @@ export class UserAuthDataEntityMapper implements IEntityMapper<UserAuthData, Use
         if (!json) return result
         if (json.id !== undefined) result.id = json.id
         if (json.user_id !== undefined) result.user_id = json.user_id
-        if (json.fitbit !== undefined) result.fitbit = new FitbitAuthData().fromJSON(this.cleanObject(json.fitbit))
+        if (json.fitbit !== undefined) result.fitbit = new FitbitAuthData().fromJSON(JsonUtils.cleanObject(json.fitbit))
 
         return result
-    }
-
-    private cleanObject(json: any): any {
-        for (const prop of Object.keys(json)) {
-            if (json[prop] instanceof Object) json[prop] = this.cleanObject(json[prop])
-            if (json[prop] === undefined || json[prop] === null) delete json[prop]
-        }
-        return json
     }
 }

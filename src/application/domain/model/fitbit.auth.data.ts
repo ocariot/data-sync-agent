@@ -2,7 +2,6 @@ import { IJSONSerializable } from '../utils/json.serializable.interface'
 import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 import { Entity } from './entity'
-import moment from 'moment'
 
 export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDeserializable<FitbitAuthData> {
     private _access_token?: string
@@ -94,7 +93,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         if (json.refresh_token !== undefined) this.refresh_token = json.refresh_token
         if (json.scope !== undefined) this.scope = json.scope
         if (json.token_type !== undefined) this.token_type = json.token_type
-        if (json.last_sync !== undefined) this.last_sync = moment(json.last_sync).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+        if (json.last_sync !== undefined) this.last_sync = new Date(json.last_sync).toISOString()
         if (json.is_valid !== undefined) this.is_valid = json.is_valid
         return this
     }

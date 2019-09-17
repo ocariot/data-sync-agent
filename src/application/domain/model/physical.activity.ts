@@ -64,12 +64,11 @@ export class PhysicalActivity extends Activity implements IJSONSerializable, IJS
 
     public fromJSON(json: any): PhysicalActivity {
         if (!json) return this
-        super.fromJSON(json)
-
         if (typeof json === 'string' && JsonUtils.isJsonString(json)) {
             json = JSON.parse(json)
         }
 
+        super.fromJSON(json)
         if (json.name !== undefined) this.name = json.name
         if (json.calories !== undefined) this.calories = json.calories
         if (json.steps !== undefined) this.steps = json.steps

@@ -15,7 +15,8 @@ export class Weight extends Measurement implements IJSONSerializable, IJSONDeser
 
     constructor() {
         super()
-        this.type = MeasurementType.WEIGHT
+        super.unit = 'kg'
+        super.type = MeasurementType.WEIGHT
     }
 
     get body_fat(): BodyFat | undefined {
@@ -44,11 +45,7 @@ export class Weight extends Measurement implements IJSONSerializable, IJSONDeser
 
     public toJSON(): any {
         return {
-            id: super.id,
-            timestamp: this.timestamp,
-            value: this.value,
-            unit: this.unit,
-            child_id: this.child_id,
+            ...super.toJSON(),
             body_fat: this.body_fat ? this.body_fat.value : undefined
         }
     }

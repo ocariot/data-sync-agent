@@ -7,7 +7,6 @@ import { BackgroundService } from '../background/background.service'
 import { App } from '../app'
 import { CustomLogger, ILogger } from '../utils/custom.logger'
 import { ConnectionFactoryRabbitMQ } from '../infrastructure/eventbus/rabbitmq/connection.factory.rabbitmq'
-import { IntegrationEventRepoModel } from '../infrastructure/database/schema/integration.event.schema'
 import { UserFitbitAuthController } from '../ui/controllers/user.fitbit.auth.controller'
 import { UserFitbitSyncController } from '../ui/controllers/user.fitbit.sync.controller'
 import { UserAuthRepoModel } from '../infrastructure/database/schema/oauth.data.schema'
@@ -103,7 +102,6 @@ class IoC {
             .to(ResourceRepository).inSingletonScope()
 
         // Models
-        this._container.bind(Identifier.INTEGRATION_EVENT_REPO_MODEL).toConstantValue(IntegrationEventRepoModel)
         this._container.bind(Identifier.USER_AUTH_REPO_MODEL).toConstantValue(UserAuthRepoModel)
         this._container.bind(Identifier.RESOURCE_REPO_MODEL).toConstantValue(ResourceRepoModel)
 

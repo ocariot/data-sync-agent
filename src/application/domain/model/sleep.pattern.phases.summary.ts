@@ -60,9 +60,9 @@ export class SleepPatternPhasesSummary implements IJSONSerializable, IJSONDeseri
 
     public toJSON(): any {
         return {
-            awake: this.awake,
-            asleep: this.asleep,
-            restless: this.restless,
+            awake: this.awake.toJSON(),
+            asleep: this.asleep.toJSON(),
+            restless: this.restless.toJSON(),
         }
     }
 }
