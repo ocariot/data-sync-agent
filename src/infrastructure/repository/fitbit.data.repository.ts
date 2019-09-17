@@ -51,9 +51,13 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     public refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData> {
         return new Promise<FitbitAuthData>(async (resolve, reject) => {
             this._fitbitClientRepo.refreshToken(accessToken, refreshToken, expiresIn)
-                .then(async tokenData => {
+                .then(tokenData => {
                     if (!tokenData) return resolve(undefined)
-                    return this.updateRefreshToken(userId, new FitbitAuthData().fromJSON({ ...tokenData, is_valid: true }))
+                    return resolve(
+                        this.updateRefreshToken(userId, new FitbitAuthData().fromJSON({
+                            ...tokenData,
+                            is_valid: true
+                        })))
                 }).catch(err => reject(err))
         })
     }
@@ -653,10 +657,18 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             heart_rate: item.averageHeartRate && item.heartRateZones ? {
                 average: item.averageHeartRate,
                 out_of_range_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Out of Range') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
+                    if (zone.name === 'Out of Range') return {
+                        min: zone.min,
+                        max: zone.max,
+                        duration: zone.minutes * 60000
+                    }
                 })[0],
                 fat_burn_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Fat Burn') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
+                    if (zone.name === 'Fat Burn') return {
+                        min: zone.min,
+                        max: zone.max,
+                        duration: zone.minutes * 60000
+                    }
                 })[0],
                 cardio_zone: item.heartRateZones.filter(zone => {
                     if (zone.name === 'Cardio') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }

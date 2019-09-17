@@ -37,18 +37,18 @@ describe('Services: UserAuthDataService', () => {
         })
         context('when the user does not exists', () => {
             it('should throw an error', () => {
-                data.user_id = DefaultEntityMock.USER_IDS.DOES_NOT_EXISTS
+                data.user_id = DefaultEntityMock.USER_IDS.does_not_exists
                 return service.add(data)
                     .catch(err => {
                         assert.propertyVal(err, 'message', 'The user does not have register on platform: ' +
-                            DefaultEntityMock.USER_IDS.DOES_NOT_EXISTS)
+                            DefaultEntityMock.USER_IDS.does_not_exists)
                         data.user_id = DefaultEntityMock.USER_AUTH_DATA.user_id
                     })
             })
         })
         context('when the auth data already exists', () => {
             it('should update and return the data', () => {
-                data.user_id = DefaultEntityMock.USER_IDS.DOES_NOT_SAVED
+                data.user_id = DefaultEntityMock.USER_IDS.does_not_saved
                 return service.add(data)
                     .then(res => {
                         assert.propertyVal(res, 'id', DefaultEntityMock.USER_AUTH_DATA.id)
@@ -137,7 +137,7 @@ describe('Services: UserAuthDataService', () => {
         })
         context('when the user does not exists', () => {
             it('should return false', () => {
-                return service.revokeFitbitAccessToken(DefaultEntityMock.USER_IDS.DOES_NOT_SAVED)
+                return service.revokeFitbitAccessToken(DefaultEntityMock.USER_IDS.does_not_saved)
                     .then(res => {
                         assert.isFalse(res)
                     })
@@ -166,7 +166,7 @@ describe('Services: UserAuthDataService', () => {
 
         context('when the user does not exists', () => {
             it('should throw an error', () => {
-                return service.syncFitbitUserData(DefaultEntityMock.USER_IDS.DOES_NOT_SAVED)
+                return service.syncFitbitUserData(DefaultEntityMock.USER_IDS.does_not_saved)
                     .catch(err => {
                         assert.propertyVal(err, 'message', 'User does not have authentication data. ' +
                             'Please, submit authentication data and try again.')

@@ -146,13 +146,13 @@ export abstract class DefaultEntityMock {
     }
 
     public static USER_IDS: any = {
-        DOES_NOT_EXISTS: '5d7fb75ae48591c21a793f70',
-        DOES_NOT_SAVED: '5d7fd15c3e86dd635cc12767',
-        CHILD_ID: '5d7a4a95c292db05e4f765a8'
+        does_not_exists: '5d7fb75ae48591c21a793f70',
+        does_not_saved: '5d7fd15c3e86dd635cc12767',
+        child_id: '5d7a4a95c292db05e4f765a8'
     }
 
     public static FITBIT_USER_IDS: any = {
-        DOES_NOT_SAVED: 'XXYYXX'
+        does_not_saved: 'XXYYXX'
     }
 
     public static CHILD: any = {

@@ -7,7 +7,7 @@ const data: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AU
 
 export class UserAuthDataRepositoryMock implements IUserAuthDataRepository {
     public checkUserExists(userId: string): Promise<boolean> {
-        return Promise.resolve(userId !== DefaultEntityMock.USER_IDS.DOES_NOT_EXISTS)
+        return Promise.resolve(userId !== DefaultEntityMock.USER_IDS.does_not_exists)
     }
 
     public count(query: IQuery): Promise<number> {
@@ -32,8 +32,8 @@ export class UserAuthDataRepositoryMock implements IUserAuthDataRepository {
 
     public findOne(query: IQuery): Promise<UserAuthData> {
         const q: any = query.toJSON()
-        if (q.filters.user_id === DefaultEntityMock.USER_IDS.DOES_NOT_SAVED ||
-            q.filters['fitbit.user_id'] === DefaultEntityMock.FITBIT_USER_IDS.DOES_NOT_SAVED) {
+        if (q.filters.user_id === DefaultEntityMock.USER_IDS.does_not_saved ||
+            q.filters['fitbit.user_id'] === DefaultEntityMock.FITBIT_USER_IDS.does_not_saved) {
             return Promise.resolve(undefined!)
         }
         return Promise.resolve(data)

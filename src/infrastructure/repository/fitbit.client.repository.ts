@@ -28,7 +28,7 @@ export class FitbitClientRepository implements IFitbitClientRepository {
     public refreshToken(accessToken: string, refreshToken: string, expiresIn?: number): Promise<any> {
         return new Promise<FitbitAuthData>(async (resolve, reject) => {
             this.fitbit_client.refreshAccessToken(accessToken, refreshToken, expiresIn)
-                .then(async tokenData => resolve(tokenData ? tokenData : undefined))
+                .then(tokenData => resolve(tokenData ? tokenData : undefined))
                 .catch(err => reject(this.fitbitClientErrorListener(err)))
         })
     }

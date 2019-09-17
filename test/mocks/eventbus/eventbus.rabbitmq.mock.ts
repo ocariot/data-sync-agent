@@ -11,9 +11,11 @@ export class EventBusRabbitMQMock implements IEventBus, IDisposable {
 
     constructor() {
         this._bus = {
-            getChildren: (query: string) => {
+            getChildren: (query: string): Promise<any> => {
                 const filters: any = qs.parser(query).filters
-                return filters.id && filters.id === DefaultEntityMock.USER_IDS.CHILD_ID ? [DefaultEntityMock.CHILD] : []
+                if (filters._id === 'error') return Promise.reject({ message: 'An error occurs!' })
+                return Promise.resolve(filters._id && filters._id === DefaultEntityMock.USER_IDS.child_id ?
+                    [DefaultEntityMock.CHILD] : [])
             }
         }
     }
