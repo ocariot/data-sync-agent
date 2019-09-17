@@ -3,12 +3,22 @@ import { IDisposable } from '../../../src/infrastructure/port/disposable.interfa
 import { IIntegrationEventHandler } from '../../../src/application/integration-event/handler/integration.event.handler.interface'
 import { IntegrationEvent } from '../../../src/application/integration-event/event/integration.event'
 import { IEventBusOptions } from '../../../src/infrastructure/port/connection.factory.interface'
-import { IOcariotRabbitMQClient } from '@ocariot/rabbitmq-client-node'
+import qs from 'query-strings-parser'
+import { DefaultEntityMock } from '../models/default.entity.mock'
 
 export class EventBusRabbitMQMock implements IEventBus, IDisposable {
-    private _bus!: IOcariotRabbitMQClient
+    private readonly _bus!: any
 
-    get bus(): IOcariotRabbitMQClient {
+    constructor() {
+        this._bus = {
+            getChildren: (query: string) => {
+                const filters: any = qs.parser(query).filters
+                return filters.id && filters.id === DefaultEntityMock.USER_IDS.CHILD_ID ? [DefaultEntityMock.CHILD] : []
+            }
+        }
+    }
+
+    get bus(): any {
         return this._bus
     }
 

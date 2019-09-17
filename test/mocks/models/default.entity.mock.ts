@@ -26,7 +26,7 @@ export abstract class DefaultEntityMock {
 
     public static USER_AUTH_DATA: any = {
         id: '5d7aa5125b593e3f113d190f',
-        user_id: '5d7f9e63abf760c7fbddaf98',
+        user_id: '5d7a4a95c292db05e4f765a8',
         fitbit: DefaultEntityMock.FITBIT_AUTH_DATA
     }
 
@@ -101,7 +101,7 @@ export abstract class DefaultEntityMock {
         id: '5d7a9fc8d3f5bbb30e0d6a1e',
         resource_id: '171847684',
         date_sync: '2019-09-12T13:36:49.741Z',
-        user_id: '5d7a4a95c292db05e4uf7658',
+        user_id: '5d7a4a95c292db05e4f765a8',
         provider: 'Fitbit'
     }
 
@@ -147,10 +147,19 @@ export abstract class DefaultEntityMock {
 
     public static USER_IDS: any = {
         DOES_NOT_EXISTS: '5d7fb75ae48591c21a793f70',
-        DOES_NOT_SAVED: '5d7fd15c3e86dd635cc12767'
+        DOES_NOT_SAVED: '5d7fd15c3e86dd635cc12767',
+        CHILD_ID: '5d7a4a95c292db05e4f765a8'
     }
 
     public static FITBIT_USER_IDS: any = {
         DOES_NOT_SAVED: 'XXYYXX'
+    }
+
+    public static CHILD: any = {
+        id: '5d7a4a95c292db05e4f765a8',
+        username: 'BR0009',
+        institution_id: '5d7bb0c519cc1c00126ca689',
+        gender: 'male',
+        age: 9
     }
 }

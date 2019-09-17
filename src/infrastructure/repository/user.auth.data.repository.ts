@@ -35,8 +35,8 @@ export class UserAuthDataRepository extends BaseRepository<UserAuthData, UserAut
 
     public checkUserExists(userId: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
-            this._eventBus.bus.getChildren(`?id=${userId}`)
-                .then(res => resolve(!!res))
+            this._eventBus.bus.getChildren(`?_id=${userId}&limit=1`)
+                .then(res => resolve(res && res.length))
                 .catch(err => reject(err))
         })
     }
