@@ -69,7 +69,7 @@
     "morgan": "^1.9.1",
     "query-strings-parser": "^2.1.2",
     "reflect-metadata": "^0.1.13",
-    "swagger-ui-express": "^4.0.7",
+    "swagger-ui-express": "^4.1.0",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.1.0"
   },
