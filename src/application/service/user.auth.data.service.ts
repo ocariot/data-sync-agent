@@ -9,10 +9,7 @@ import { IUserAuthDataService } from '../port/user.auth.data.service.interface'
 import { Query } from '../../infrastructure/repository/query/query'
 import { ValidationException } from '../domain/exception/validation.exception'
 import { EventBusException } from '../domain/exception/eventbus.exception'
-<<<<<<< HEAD
 import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
-=======
->>>>>>> test
 import { ObjectIdValidator } from '../domain/validator/object.id.validator'
 
 @injectable()
@@ -87,7 +84,6 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     public async revokeFitbitAccessToken(userId: string): Promise<boolean> {
         try {
-            ObjectIdValidator.validate(userId)
             const authData: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
             if (authData) await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
@@ -95,11 +91,11 @@ export class UserAuthDataService implements IUserAuthDataService {
         } catch (err) {
             return Promise.reject(err)
         }
+        throw Error('Not implemented!')
     }
 
     public async syncFitbitUserData(userId: string): Promise<void> {
         try {
-            ObjectIdValidator.validate(userId)
             const authData: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
             if (!authData || !authData.fitbit) {

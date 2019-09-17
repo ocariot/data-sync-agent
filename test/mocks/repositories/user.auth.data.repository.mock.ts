@@ -43,4 +43,8 @@ export class UserAuthDataRepositoryMock implements IUserAuthDataRepository {
         return Promise.resolve(data)
     }
 
+    public getUserAuthDataByUserId(userId: string): Promise<UserAuthData> {
+        return Promise.resolve(data)
+    }
+
 }

@@ -78,12 +78,7 @@ describe('Repositories: UserAuthDataRepository', () => {
 
     describe('checkUserExists()', () => {
         context('when validate if a user exists', () => {
-            it('should return true', () => {
-                return repo.checkUserExists(DefaultEntityMock.USER_IDS.CHILD_ID)
-                    .then(res => {
-
-                    })
-            })
+            it('should return true')
         })
     })
 })
