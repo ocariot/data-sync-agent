@@ -185,7 +185,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     if (err.type === 'expired_token') {
                         if (calls === this.max_calls_refresh_token) {
                             try {
-                                await this.updateTokenValidate(data.user_id!)
+                                await this.updateTokenValidate(userId)
                             } catch (err) {
                                 return reject(err)
                             }
@@ -203,7 +203,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1, userId), 1000)
                     } else if (err.type === 'invalid_token') {
                         try {
-                            await this.updateTokenValidate(data.user_id!)
+                            await this.updateTokenValidate(userId)
                         } catch (err) {
                             return reject(err)
                         }
@@ -215,9 +215,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    public updateLastSync(userId: string, lastSync?: string): Promise<boolean> {
+    public updateLastSync(userId: string, lastSync: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
-            if (!lastSync) lastSync = moment().toISOString()
             this._userAuthRepoModel.findOneAndUpdate(
                 { user_id: userId },
                 { 'fitbit.last_sync': lastSync },
@@ -241,7 +240,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 await this.syncLastFitbitUserActivity(data, userId, date)
                 await this.syncLastFitbitUserActivityLogs(data, userId, date)
             } else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
-            this.updateLastSync(userId)
+            this.updateLastSync(userId, moment().toISOString())
+            return Promise.resolve()
         } catch (err) {
             if (err.type) {
                 /*
@@ -252,7 +252,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 if (err.type === 'expired_token') {
                     if (calls === this.max_calls_refresh_token) {
                         try {
-                            await this.updateTokenValidate(data.user_id!)
+                            await this.updateTokenValidate(userId)
                         } catch (err) {
                             return Promise.reject(err)
                         }
@@ -270,7 +270,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     setTimeout(() => this.syncLastFitbitUserData(data, userId, type, date, calls + 1), 1000)
                 } else if (err.type === 'invalid_token') {
                     try {
-                        await this.updateTokenValidate(data.user_id!)
+                        await this.updateTokenValidate(userId)
                     } catch (err) {
                         return Promise.reject(err)
                     }
@@ -299,7 +299,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     private updateTokenValidate(userId: string): Promise<FitbitAuthData> {
         return new Promise<FitbitAuthData>((resolve, reject) => {
             this._userAuthRepoModel.findOneAndUpdate(
-                { 'fitbit.user_id': userId },
+                { user_id: userId },
                 { 'fitbit.is_valid': false },
                 { new: true })
                 .then(res => {

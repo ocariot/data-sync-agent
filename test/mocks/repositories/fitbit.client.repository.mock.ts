@@ -4,6 +4,9 @@ import { DefaultEntityMock } from '../models/default.entity.mock'
 
 export class FitbitClientRepositoryMock implements IFitbitClientRepository {
     public getDataFromPath(path: string, accessToken: string): Promise<any> {
+        if (accessToken === 'expired') {
+            return Promise.reject({ type: 'expired_token' })
+        }
         return Promise.resolve()
     }
 

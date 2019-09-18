@@ -16,6 +16,14 @@ export class EventBusRabbitMQMock implements IEventBus, IDisposable {
                 if (filters._id === 'error') return Promise.reject({ message: 'An error occurs!' })
                 return Promise.resolve(filters._id && filters._id === DefaultEntityMock.USER_IDS.child_id ?
                     [DefaultEntityMock.CHILD] : [])
+            },
+            pubFitbitLastSync: (object: any): Promise<any> => {
+                if (object.last_sync === 'error') return Promise.reject({ message: 'An error occurs!' })
+                return Promise.resolve()
+            },
+            pubFitbitAuthError: (err: any, userId: string): Promise<any> => {
+                if (userId === 'error') return Promise.reject({ message: 'An error occurs!' })
+                return Promise.resolve()
             }
         }
     }

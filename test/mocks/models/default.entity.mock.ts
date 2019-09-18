@@ -162,4 +162,14 @@ export abstract class DefaultEntityMock {
         gender: 'male',
         age: 9
     }
+
+    public static PAYLOAD: any = {
+        aud: 'A1B23C',
+        sub: 'ABC123',
+        iss: 'Fitbit',
+        typ: 'access_token',
+        scopes: 'rwei ract rsle',
+        exp: 1568162400,
+        iat: 1568133600
+    }
 }

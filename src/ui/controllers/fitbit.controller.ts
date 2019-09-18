@@ -6,7 +6,7 @@ import HttpStatus from 'http-status-codes'
 export class FitbitController {
 
     @httpGet('/')
-    public async getF(@request() req: Request, @response() res: Response): Promise<Response> {
+    public async getFitbitClient(@request() req: Request, @response() res: Response): Promise<Response> {
         return (process.env.FITBIT_CLIENT_ID && process.env.FITBIT_CLIENT_SECRET) ?
             res.status(HttpStatus.OK).send({
                 client_id: `${process.env.FITBIT_CLIENT_ID}`,
