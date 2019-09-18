@@ -47,4 +47,8 @@ export class FitbitDataRepositoryMock implements IFitbitDataRepository {
         return Promise.resolve(true)
     }
 
+   public publishLastSync(userId: string, lastSync: string): void {
+        return
+    }
+
 }

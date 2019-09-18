@@ -3,6 +3,8 @@ import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 export interface IFitbitDataRepository {
     updateLastSync(userId: string, lastSync: string): Promise<boolean>
 
+    publishLastSync(userId: string, lastSync: string): void
+
     revokeToken(accessToken: string): Promise<boolean>
 
     refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData>

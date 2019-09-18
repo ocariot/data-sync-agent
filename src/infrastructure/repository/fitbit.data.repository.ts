@@ -171,11 +171,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
                 // Finally, the last sync variable from user needs to be updated
 
-                lastSync = moment().toISOString()
-                await this.updateLastSync(data.user_id!, lastSync)
-                this._eventBus.bus.pubFitbitLastSync({ child_id: userId, last_sync: lastSync })
-                    .then(() => this._logger.info(`Last sync from ${userId} successful published!`))
-                    .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
+                if (!lastSync) lastSync = moment().toISOString()
+                await this.updateLastSync(userId, lastSync)
                 return resolve()
             } catch (err) {
                 if (err.type) {
@@ -218,10 +215,11 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    public updateLastSync(userId: string, lastSync: string): Promise<boolean> {
+    public updateLastSync(userId: string, lastSync?: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
+            if (!lastSync) lastSync = moment().toISOString()
             this._userAuthRepoModel.findOneAndUpdate(
-                { 'fitbit.user_id': userId },
+                { user_id: userId },
                 { 'fitbit.last_sync': lastSync },
                 { new: true })
                 .then(res => resolve(!!res))
@@ -243,6 +241,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 await this.syncLastFitbitUserActivity(data, userId, date)
                 await this.syncLastFitbitUserActivityLogs(data, userId, date)
             } else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
+            this.updateLastSync(userId)
         } catch (err) {
             if (err.type) {
                 /*
@@ -291,8 +290,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
     }
 
-    private publishLastSync(userId: string): void {
-        const lastSync = moment().toISOString()
+    public publishLastSync(userId: string, lastSync: string): void {
         this._eventBus.bus.pubFitbitLastSync({ child_id: userId, last_sync: lastSync })
             .then(() => this._logger.info(`Last sync from ${userId} successful published!`))
             .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
@@ -353,7 +351,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Weight Measurements from ${data.user_id!} successful published!`)
-                                    this.publishLastSync(userId)
                                     this.saveResourceList(resources, data.user_id!)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
@@ -423,7 +420,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this._eventBus.bus.pubSaveLog(userLog.toJSONList())
                 .then(() => {
                     this._logger.info(`Activities logs from ${userId} successful published!`)
-                    this.publishLastSync(userId)
                 })
                 .catch(err => this._logger.error(`Error at publish activities logs: ${err.message}`))
             return Promise.resolve()
@@ -446,7 +442,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             this._eventBus.bus.pubSavePhysicalActivity(sleepList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Sleep from ${data.user_id!} successful published!`)
-                                    this.publishLastSync(userId)
                                     this.saveResourceList(resources, data.user_id!)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database

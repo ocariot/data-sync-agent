@@ -75,6 +75,8 @@ export class UserAuthDataService implements IUserAuthDataService {
                 this._fitbitAuthDataRepo.syncFitbitUserData(result.fitbit!, result.fitbit!.last_sync!, 3, result.user_id!)
                     .then()
                     .catch(err => Promise.reject(err))
+            } else if (initSync === 'false' && result.fitbit!.last_sync) {
+                this._fitbitAuthDataRepo.publishLastSync(result.user_id!, result.fitbit!.last_sync)
             }
             return Promise.resolve(result)
         } catch (err) {

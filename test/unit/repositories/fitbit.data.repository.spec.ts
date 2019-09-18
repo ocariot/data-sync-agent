@@ -128,12 +128,12 @@ describe('Repositories: FitbitDataRepository', () => {
                     .mock(modelFake)
                     .expects('findOneAndUpdate')
                     .withArgs(
-                        { 'fitbit.user_id': data.fitbit!.user_id },
+                        { user_id: data.user_id },
                         { 'fitbit.last_sync': data.fitbit!.last_sync },
                         { new: true })
                     .resolves(data.fitbit!)
 
-                return repo.updateLastSync(data.fitbit!.user_id!, data.fitbit!.last_sync!)
+                return repo.updateLastSync(data.user_id!, data.fitbit!.last_sync!)
                     .then(res => {
                         assert.isTrue(res)
                     })
@@ -146,7 +146,7 @@ describe('Repositories: FitbitDataRepository', () => {
                     .mock(modelFake)
                     .expects('findOneAndUpdate')
                     .withArgs(
-                        { 'fitbit.user_id': data.fitbit!.user_id },
+                        { user_id: data.user_id },
                         { 'fitbit.last_sync': data.fitbit!.last_sync },
                         { new: true })
                     .rejects({
@@ -154,7 +154,7 @@ describe('Repositories: FitbitDataRepository', () => {
                         description: 'Please try again later...'
                     })
 
-                return repo.updateLastSync(data.fitbit!.user_id!, data.fitbit!.last_sync!)
+                return repo.updateLastSync(data.user_id!, data.fitbit!.last_sync!)
                     .catch(err => {
                         assert.propertyVal(err, 'message', 'An internal error has occurred in the database!')
                         assert.propertyVal(err, 'description', 'Please try again later...')
