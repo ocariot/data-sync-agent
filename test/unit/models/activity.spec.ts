@@ -8,8 +8,8 @@ describe('Models: Activity', () => {
             it('should return a model', () => {
                 const res: Activity = new Activity().fromJSON(DefaultEntityMock.ACTIVITY)
                 assert.propertyVal(res, 'id', DefaultEntityMock.ACTIVITY.id)
-                assert.deepPropertyVal(res, 'start_time', new Date(DefaultEntityMock.ACTIVITY.start_time))
-                assert.deepPropertyVal(res, 'end_time', new Date(DefaultEntityMock.ACTIVITY.end_time))
+                assert.deepPropertyVal(res, 'start_time', DefaultEntityMock.ACTIVITY.start_time)
+                assert.deepPropertyVal(res, 'end_time', DefaultEntityMock.ACTIVITY.end_time)
                 assert.propertyVal(res, 'duration', DefaultEntityMock.ACTIVITY.duration)
                 assert.propertyVal(res, 'child_id', DefaultEntityMock.ACTIVITY.child_id)
             })
@@ -18,8 +18,8 @@ describe('Models: Activity', () => {
             it('should return a model', () => {
                 const res: Activity = new Activity().fromJSON(JSON.stringify(DefaultEntityMock.ACTIVITY))
                 assert.propertyVal(res, 'id', DefaultEntityMock.ACTIVITY.id)
-                assert.deepPropertyVal(res, 'start_time', new Date(DefaultEntityMock.ACTIVITY.start_time))
-                assert.deepPropertyVal(res, 'end_time', new Date(DefaultEntityMock.ACTIVITY.end_time))
+                assert.deepPropertyVal(res, 'start_time', DefaultEntityMock.ACTIVITY.start_time)
+                assert.deepPropertyVal(res, 'end_time', DefaultEntityMock.ACTIVITY.end_time)
                 assert.propertyVal(res, 'duration', DefaultEntityMock.ACTIVITY.duration)
                 assert.propertyVal(res, 'child_id', DefaultEntityMock.ACTIVITY.child_id)
             })

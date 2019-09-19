@@ -8,8 +8,7 @@ describe('Models: SleepPatternDataSet', () => {
             it('should return a model', () => {
                 const res: SleepPatternDataSet =
                     new SleepPatternDataSet().fromJSON(DefaultEntityMock.SLEEP_PATTERN_DATA_SET)
-                assert.deepPropertyVal(res, 'start_time',
-                    new Date(DefaultEntityMock.SLEEP_PATTERN_DATA_SET.start_time))
+                assert.deepPropertyVal(res, 'start_time', DefaultEntityMock.ACTIVITY.start_time)
                 assert.propertyVal(res, 'duration', DefaultEntityMock.SLEEP_PATTERN_DATA_SET.duration)
                 assert.propertyVal(res, 'name', DefaultEntityMock.SLEEP_PATTERN_DATA_SET.name)
             })
@@ -18,8 +17,7 @@ describe('Models: SleepPatternDataSet', () => {
             it('should return a model', () => {
                 const res: SleepPatternDataSet =
                     new SleepPatternDataSet().fromJSON(JSON.stringify(DefaultEntityMock.SLEEP_PATTERN_DATA_SET))
-                assert.deepPropertyVal(res, 'start_time',
-                    new Date(DefaultEntityMock.SLEEP_PATTERN_DATA_SET.start_time))
+                assert.deepPropertyVal(res, 'start_time', DefaultEntityMock.ACTIVITY.start_time)
                 assert.propertyVal(res, 'duration', DefaultEntityMock.SLEEP_PATTERN_DATA_SET.duration)
                 assert.propertyVal(res, 'name', DefaultEntityMock.SLEEP_PATTERN_DATA_SET.name)
             })

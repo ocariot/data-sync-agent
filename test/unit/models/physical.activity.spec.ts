@@ -10,8 +10,8 @@ describe('Models: PhysicalActivity', () => {
             it('should return a model', () => {
                 const res: PhysicalActivity = new PhysicalActivity().fromJSON(DefaultEntityMock.PHYSICAL_ACTIVITY)
                 assert.propertyVal(res, 'id', DefaultEntityMock.PHYSICAL_ACTIVITY.id)
-                assert.deepPropertyVal(res, 'start_time', new Date(DefaultEntityMock.PHYSICAL_ACTIVITY.start_time))
-                assert.deepPropertyVal(res, 'end_time', new Date(DefaultEntityMock.PHYSICAL_ACTIVITY.end_time))
+                assert.deepPropertyVal(res, 'start_time', DefaultEntityMock.ACTIVITY.start_time)
+                assert.deepPropertyVal(res, 'end_time', DefaultEntityMock.ACTIVITY.end_time)
                 assert.propertyVal(res, 'child_id', DefaultEntityMock.PHYSICAL_ACTIVITY.child_id)
                 assert.propertyVal(res, 'name', DefaultEntityMock.PHYSICAL_ACTIVITY.name)
                 assert.deepPropertyVal(res, 'calories', DefaultEntityMock.PHYSICAL_ACTIVITY.calories)
@@ -27,8 +27,8 @@ describe('Models: PhysicalActivity', () => {
                 const res: PhysicalActivity =
                     new PhysicalActivity().fromJSON(JSON.stringify(DefaultEntityMock.PHYSICAL_ACTIVITY))
                 assert.propertyVal(res, 'id', DefaultEntityMock.PHYSICAL_ACTIVITY.id)
-                assert.deepPropertyVal(res, 'start_time', new Date(DefaultEntityMock.PHYSICAL_ACTIVITY.start_time))
-                assert.deepPropertyVal(res, 'end_time', new Date(DefaultEntityMock.PHYSICAL_ACTIVITY.end_time))
+                assert.deepPropertyVal(res, 'start_time', DefaultEntityMock.ACTIVITY.start_time)
+                assert.deepPropertyVal(res, 'end_time', DefaultEntityMock.ACTIVITY.end_time)
                 assert.propertyVal(res, 'child_id', DefaultEntityMock.PHYSICAL_ACTIVITY.child_id)
                 assert.propertyVal(res, 'name', DefaultEntityMock.PHYSICAL_ACTIVITY.name)
                 assert.deepPropertyVal(res, 'calories', DefaultEntityMock.PHYSICAL_ACTIVITY.calories)

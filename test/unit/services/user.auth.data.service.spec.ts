@@ -8,12 +8,13 @@ import { assert } from 'chai'
 import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.auth.data'
 import { Query } from '../../../src/infrastructure/repository/query/query'
 import moment = require('moment')
+import { CustomLoggerMock } from '../../mocks/custom.logger.mock'
 
 describe('Services: UserAuthDataService', () => {
     const data: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA)
     const fitbit: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA.fitbit)
     const service: IUserAuthDataService =
-        new UserAuthDataService(new UserAuthDataRepositoryMock(), new FitbitDataRepositoryMock())
+        new UserAuthDataService(new UserAuthDataRepositoryMock(), new FitbitDataRepositoryMock(), new CustomLoggerMock())
 
     describe('add()', () => {
         context('when save a data', () => {

@@ -195,7 +195,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
                         } catch (err) {
                             this._logger.error(`Error at update token validate: ${err.message}`)
-                            await this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
+                            await this.publishFitbitAuthError(this.fitbitClientErrorListener(err, data.access_token), userId)
                         }
                         setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1, userId), 1000)
                     } else if (err.type === 'invalid_token') {
