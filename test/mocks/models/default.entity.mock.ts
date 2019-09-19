@@ -69,6 +69,13 @@ export abstract class DefaultEntityMock {
         body_fat: 20
     }
 
+    public static FITBIT_WEIGHT: any = {
+        date: '2019-09-12',
+        weight: 60,
+        fat: 20,
+        resourceId: '5d7a9fc8d3f5bbb30e0d6a1f'
+    }
+
     public static HEART_RATE_ZONE: any = {
         min: 80,
         max: 100,

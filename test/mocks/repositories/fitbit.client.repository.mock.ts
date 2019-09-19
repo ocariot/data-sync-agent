@@ -7,6 +7,10 @@ export class FitbitClientRepositoryMock implements IFitbitClientRepository {
         if (accessToken === 'expired') {
             return Promise.reject({ type: 'expired_token' })
         }
+        const type: string = path.split('/')[1]
+        if (type === 'body') {
+            return Promise.resolve({ weight: [DefaultEntityMock.FITBIT_WEIGHT] })
+        }
         return Promise.resolve()
     }
 

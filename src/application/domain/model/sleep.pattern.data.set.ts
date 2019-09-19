@@ -8,16 +8,16 @@ import { JsonUtils } from '../utils/json.utils'
  * @implements {IJSONSerializable, IJSONDeserializable<SleepPatternDataSet>}
  */
 export class SleepPatternDataSet implements IJSONSerializable, IJSONDeserializable<SleepPatternDataSet> {
-    private _start_time!: Date // Date and time of the start of the pattern according to the UTC.
+    private _start_time!: string // Date and time of the start of the pattern according to the UTC.
     private _name!: PhasesPatternType | StagesPatternType // Sleep pattern name (asleep, restless or awake) or (deep, light,
                                                           // rem or wake).
     private _duration!: number // Total in milliseconds of the time spent on the pattern.
 
-    get start_time(): Date {
+    get start_time(): string {
         return this._start_time
     }
 
-    set start_time(value: Date) {
+    set start_time(value: string) {
         this._start_time = value
     }
 
@@ -43,7 +43,7 @@ export class SleepPatternDataSet implements IJSONSerializable, IJSONDeserializab
             json = JSON.parse(json)
         }
 
-        if (json.start_time !== undefined) this.start_time = new Date(json.start_time)
+        if (json.start_time !== undefined) this.start_time = json.start_time
         if (json.name !== undefined) this.name = json.name
         if (json.duration !== undefined) this.duration = json.duration
 
@@ -52,7 +52,7 @@ export class SleepPatternDataSet implements IJSONSerializable, IJSONDeserializab
 
     public toJSON(): any {
         return {
-            start_time: this.start_time ? this.start_time.toISOString() : this.start_time,
+            start_time: this.start_time ? this.start_time : this.start_time,
             name: this.name,
             duration: this.duration
         }

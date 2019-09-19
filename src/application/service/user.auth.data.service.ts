@@ -11,12 +11,14 @@ import { ValidationException } from '../domain/exception/validation.exception'
 import { EventBusException } from '../domain/exception/eventbus.exception'
 import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 import { ObjectIdValidator } from '../domain/validator/object.id.validator'
+import { ILogger } from '../../utils/custom.logger'
 
 @injectable()
 export class UserAuthDataService implements IUserAuthDataService {
     constructor(
         @inject(Identifier.USER_AUTH_DATA_REPOSITORY) private readonly _userAuthDataRepo: IUserAuthDataRepository,
-        @inject(Identifier.FITBIT_DATA_REPOSITORY) private readonly _fitbitAuthDataRepo: IFitbitDataRepository
+        @inject(Identifier.FITBIT_DATA_REPOSITORY) private readonly _fitbitAuthDataRepo: IFitbitDataRepository,
+        @inject(Identifier.LOGGER) private readonly _logger: ILogger
     ) {
     }
 
@@ -106,7 +108,7 @@ export class UserAuthDataService implements IUserAuthDataService {
             }
             this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
                 .then()
-                .catch(err => Promise.reject(err))
+                .catch(err => this._logger.error(err.message))
             return Promise.resolve()
         } catch (err) {
             return Promise.reject(err)

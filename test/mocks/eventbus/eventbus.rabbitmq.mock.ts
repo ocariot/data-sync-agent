@@ -24,6 +24,9 @@ export class EventBusRabbitMQMock implements IEventBus, IDisposable {
             pubFitbitAuthError: (err: any, userId: string): Promise<any> => {
                 if (userId === 'error') return Promise.reject({ message: 'An error occurs!' })
                 return Promise.resolve()
+            },
+            pubSaveWeight: (resource: any): Promise<any> => {
+                return Promise.resolve()
             }
         }
     }

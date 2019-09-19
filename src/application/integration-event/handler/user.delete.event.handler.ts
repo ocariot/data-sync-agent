@@ -44,7 +44,7 @@ export const userDeleteEventHandler = async (event: any) => {
                 await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'activities', 'ACTIVITIES')
             }
             if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
-                await fitbitAuthDataRepo.subscribeUserEvent(userAuthData.fitbit!, 'sleep', 'SLEEP')
+                await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'sleep', 'SLEEP')
             }
             await userAuthDataRepo.deleteByQuery(query)
 

@@ -7,7 +7,8 @@ const data: Resource = new Resource().fromJSON(DefaultEntityMock.RESOURCE)
 
 export class ResourceRepositoryMock implements IResourceRepository {
     public checkExists(query: IQuery): Promise<boolean> {
-        return Promise.resolve(true)
+        const q: any = query.toJSON()
+        return Promise.resolve(q.filters.resource_id === DefaultEntityMock.RESOURCE.resource_id)
     }
 
     public count(query: IQuery): Promise<number> {

@@ -10,7 +10,7 @@ import { Entity } from './entity'
  */
 export class Measurement extends Entity implements IJSONSerializable, IJSONDeserializable<Measurement> {
     private _type?: string // Type of measurement.
-    private _timestamp?: Date // Timestamp according to the UTC.
+    private _timestamp?: string // Timestamp according to the UTC.
     private _value?: number // Value of measurement.
     private _unit?: string // Unit of measurement.
     private _child_id?: string // Id of child associated with the measurement.
@@ -27,11 +27,11 @@ export class Measurement extends Entity implements IJSONSerializable, IJSONDeser
         if (value !== undefined) this._type = value.toLowerCase().trim()
     }
 
-    get timestamp(): Date | undefined {
+    get timestamp(): string | undefined {
         return this._timestamp
     }
 
-    set timestamp(value: Date | undefined) {
+    set timestamp(value: string | undefined) {
         this._timestamp = value
     }
 

@@ -15,7 +15,7 @@ const userAuthSchema = new Mongoose.Schema({
         fitbit: {// Fitbit UserAuthData
             ...oauthSchema,
             user_id: { type: String },
-            last_sync: { type: Date },
+            last_sync: { type: String },
             is_valid: { type: Boolean }
         }
 

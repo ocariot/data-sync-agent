@@ -58,7 +58,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             ...tokenData,
                             is_valid: true
                         })))
-                }).catch(err => reject(err))
+                }).catch(err => reject((this.fitbitClientErrorListener(err, accessToken, refreshToken))))
         })
     }
 
@@ -117,16 +117,16 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep)
                 const activities: Array<any> = await this.filterDataAlreadySync(syncActivities)
 
-                const weightList: Array<Weight> = await this.parseWeightList(weights, data.user_id!)
-                const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, data.user_id!)
-                const sleepList: Array<Sleep> = await this.parseSleepList(sleep, data.user_id!)
+                const weightList: Array<Weight> = await this.parseWeightList(weights, userId)
+                const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, userId)
+                const sleepList: Array<Sleep> = await this.parseSleepList(sleep, userId)
                 const userLog: UserLog = await this.parseActivityLogs(
                     stepsLogs,
                     caloriesLogs,
                     minutesSedentaryLogs,
                     minutesLightlyActiveLogs,
                     this.mergeLogsValues(minutesFairlyActiveLogs, minutesVeryActiveLogs),
-                    data.user_id!
+                    userId
                 )
 
                 // The sync data must be published to the message bus.
@@ -184,11 +184,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     */
                     if (err.type === 'expired_token') {
                         if (calls === this.max_calls_refresh_token) {
-                            try {
-                                await this.updateTokenValidate(userId)
-                            } catch (err) {
-                                return reject(err)
-                            }
+                            await this.updateTokenValidate(userId)
                             await this.publishFitbitAuthError(new OAuthException(
                                 'invalid_token',
                                 `The access token could not be refresh: ${data.access_token}`,
@@ -196,21 +192,18 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                                 'new request.'), userId)
                         }
                         try {
-                            await this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
+                            this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
                         } catch (err) {
-                            return reject(err)
+                            this._logger.error(`Error at update token validate: ${err.message}`)
+                            await this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
                         }
                         setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1, userId), 1000)
                     } else if (err.type === 'invalid_token') {
-                        try {
-                            await this.updateTokenValidate(userId)
-                        } catch (err) {
-                            return reject(err)
-                        }
+                        await this.updateTokenValidate(userId)
                     }
-                    await this.publishFitbitAuthError(err, userId)
+                    await this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
                 }
-                return reject(err)
+                return reject(this.fitbitClientErrorListener(err))
             }
         })
     }
@@ -269,11 +262,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     }
                     setTimeout(() => this.syncLastFitbitUserData(data, userId, type, date, calls + 1), 1000)
                 } else if (err.type === 'invalid_token') {
-                    try {
-                        await this.updateTokenValidate(userId)
-                    } catch (err) {
-                        return Promise.reject(err)
-                    }
+                    await this.updateTokenValidate(userId)
                 }
             }
             await this.publishFitbitAuthError(err, userId)
@@ -622,7 +611,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         if (!item) return item
         return new Weight().fromJSON({
             type: MeasurementType.WEIGHT,
-            timestamp: moment(item.date).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'),
+            timestamp: moment(item.date.concat('T').concat(item.time)).format('YYYY-MM-DDTHH:mm:ss[Z]'),
             value: item.weight,
             unit: 'kg',
             body_fat: item.fat,
@@ -639,8 +628,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         if (!item) return item
         return new PhysicalActivity().fromJSON({
             type: 'physical_activity',
-            start_time: item.startTime,
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').format(),
+            start_time: moment(item.startTime).format('YYYY-MM-DDTHH:mm:ss[Z]'),
+            end_time: moment(item.startTime).add(item.duration, 'milliseconds').format('YYYY-MM-DDTHH:mm:ss[Z]'),
             duration: item.duration,
             child_id: userId,
             name: item.activityName,
@@ -683,14 +672,14 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     private parseSleep(item: any, userId: string): Sleep {
         if (!item) return item
         return new Sleep().fromJSON({
-            start_time: item.startTime,
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').format(),
+            start_time: moment(item.startTime).format('YYYY-MM-DDTHH:mm:ss[Z]'),
+            end_time: moment(item.startTime).add(item.duration, 'milliseconds').format('YYYY-MM-DDTHH:mm:ss[Z]'),
             duration: item.duration,
             type: item.type,
             pattern: {
                 data_set: item.levels.data.map(value => {
                     return {
-                        start_time: value.startTime,
+                        start_time: moment(item.startTime).format('YYYY-MM-DDTHH:mm:ss[Z]'),
                         name: value.level,
                         duration: `${parseInt(value.seconds, 10) * 1000}`
                     }

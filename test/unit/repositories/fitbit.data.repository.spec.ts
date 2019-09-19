@@ -11,6 +11,7 @@ import { UserAuthData } from '../../../src/application/domain/model/user.auth.da
 import { assert } from 'chai'
 import sinon from 'sinon'
 import jwt from 'jsonwebtoken'
+import moment = require('moment')
 
 require('sinon-mongoose')
 
@@ -254,6 +255,22 @@ describe('Repositories: FitbitDataRepository', () => {
     })
 
     describe('syncLastFitbitUserData()', () => {
+        context('testing', () => {
+            it('test', () => {
+                sinon
+                    .mock(modelFake)
+                    .expects('findOneAndUpdate')
+                    .withArgs(
+                        { user_id: data.user_id },
+                        { 'fitbit.last_sync': moment().toISOString() },
+                        { new: true })
+                    .resolves(data.fitbit!)
+                return repo.syncLastFitbitUserData(data.fitbit!, data.user_id!, 'body', '2019-09-18', 1)
+                    .then(res => {
+                        console.log(res)
+                    })
+            })
+        })
         context('when token is expired', () => {
             it('should reject an error', () => {
                 data.fitbit!.access_token = 'expired'
