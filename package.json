@@ -67,6 +67,7 @@
     "moment": "^2.24.0",
     "mongoose": "^5.7.0",
     "morgan": "^1.9.1",
+    "node-cron": "^2.0.3",
     "query-strings-parser": "^2.1.2",
     "reflect-metadata": "^0.1.13",
     "swagger-ui-express": "^4.1.0",

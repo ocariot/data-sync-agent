@@ -14,6 +14,7 @@ export class BackgroundService {
         @inject(Identifier.MONGODB_CONNECTION) private readonly _mongodb: IDatabase,
         @inject(Identifier.RABBITMQ_EVENT_BUS) private readonly _eventBus: IEventBus,
         @inject(Identifier.SUBSCRIBE_EVENT_BUS_TASK) private readonly _subscribeTask: IBackgroundTask,
+        @inject(Identifier.COLLECT_FITBIT_USER_DATA_TASK) private readonly _collectTask: IBackgroundTask,
         @inject(Identifier.LOGGER) private readonly _logger: ILogger
     ) {
     }
@@ -38,6 +39,7 @@ export class BackgroundService {
 
             // Provide all resources
             this._subscribeTask.run()
+            this._collectTask.run()
         } catch (err) {
             return Promise.reject(new Error(`Error initializing services in background! ${err.message}`))
         }
