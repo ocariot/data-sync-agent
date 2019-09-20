@@ -10,7 +10,6 @@ import { DefaultEntityMock } from '../../mocks/models/default.entity.mock'
 import { UserAuthData } from '../../../src/application/domain/model/user.auth.data'
 import { assert } from 'chai'
 import sinon from 'sinon'
-import jwt from 'jsonwebtoken'
 
 require('sinon-mongoose')
 
@@ -192,7 +191,6 @@ describe('Repositories: FitbitDataRepository', () => {
     describe('syncFitbitUserData', () => {
         context('when token is expired', () => {
             it('should reject an error', () => {
-                console.log(generateTokenWithoutScope('none'))
                 data.fitbit!.access_token = 'expired'
                 sinon
                     .mock(modelFake)
@@ -292,9 +290,9 @@ describe('Repositories: FitbitDataRepository', () => {
     })
 })
 
-function generateTokenWithoutScope(scope: string): any {
-    const payload: any = { ...DefaultEntityMock.PAYLOAD }
-    payload.scopes = payload.scopes === 'none' ? '' :
-        payload.scopes.split(' ').filter(item => item !== scope).join(' ')
-    return jwt.sign(payload, 'shhhhh')
-}
+// function generateTokenWithoutScope(scope: string): any {
+//     const payload: any = { ...DefaultEntityMock.PAYLOAD }
+//     payload.scopes = payload.scopes === 'none' ? '' :
+//         payload.scopes.split(' ').filter(item => item !== scope).join(' ')
+//     return jwt.sign(payload, 'shhhhh')
+// }

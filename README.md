@@ -37,6 +37,7 @@ Application settings are defined by environment variables. To define the setting
 | `FITBIT_CLIENT_SECRET` | Client Secret for Fitbit Application resposible to manage user data. | `CIENT_SECRET_HERE` |
 | `FITBIT_CLIENT_SUBSCRIBER` | Client Subscriber code for automatically get notification from new sync data. | `CLIENT_SUBSCRIBER_HERE` |
 | `FITBIT_SUBSCRIBER_ID` | Customer Subscriber ID, used to manage the subscriber who will receive notification of a user resource. | `FITBIT_SUBSCRIBER_ID` |
+| `EXPRESSION_AUTO_SYNC` | Defines how often the application will automatically sync user data in the background according to the crontab expression. | `0 0 * * 0` |
 
 ## Generate Certificates
 For development and testing environments the easiest and fastest way is to generate your own self-signed certificates. These certificates can be used to encrypt data as well as certificates signed by a CA, but users will receive a warning that the certificate is not trusted for their computer or browser. Therefore, self-signed certificates should only be used in non-production environments, that is, development and testing environments. To do this, run the `create-self-signed-certs.sh` script in the root of the repository.
@@ -120,6 +121,7 @@ docker run --rm \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
   -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
   -e FITBIT_SUBSCRIBER_ID="SUBSCRIBER_ID_HERE" \
+  -e EXPRESSION_AUTO_SYNC="0 0 * * 0" \
   ocariot/ds-agent
 ```
 If the MongoDB or RabbitMQ instance is in the host local, add the `--net=host` statement when creating the container, this will cause the docker container to communicate with its local host.
@@ -132,6 +134,7 @@ docker run --rm \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
   -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
   -e FITBIT_SUBSCRIBER_ID="SUBSCRIBER_ID_HERE" \
+  -e EXPRESSION_AUTO_SYNC="0 0 * * 0" \
   ocariot/ds-agent
 ```
 To generate your own docker image, run the following command:
