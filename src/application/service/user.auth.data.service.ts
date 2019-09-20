@@ -122,7 +122,7 @@ export class UserAuthDataService implements IUserAuthDataService {
             if (authData) {
                 this._fitbitAuthDataRepo.syncLastFitbitUserData(authData.fitbit!, authData.user_id!, type, date, 1)
                     .then()
-                    .catch()
+                    .catch(err => this._logger.error(err.message))
             }
             return Promise.resolve()
         } catch (err) {

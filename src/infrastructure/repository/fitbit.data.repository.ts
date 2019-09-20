@@ -165,14 +165,18 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 const logList: Array<any> = userLog.toJSONList()
                 if (logList && logList.length) {
                     this._eventBus.bus.pubSaveLog(logList).then(() => {
-                        this._logger.info(`Activities logs from ${data.user_id!} successful published!`)
+                        this._logger.info(`Activities logs from ${userId} successful published!`)
                     })
                 }
 
                 // Finally, the last sync variable from user needs to be updated
 
-                if (!lastSync) lastSync = moment().toISOString()
-                await this.updateLastSync(userId, lastSync)
+                if (!lastSync) lastSync = moment().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                this.updateLastSync(userId, lastSync)
+                    .then(res => {
+                        if (res) this.publishLastSync(userId, lastSync)
+                    })
+                    .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
                 return resolve()
             } catch (err) {
                 if (err.type) {
@@ -185,14 +189,16 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     if (err.type === 'expired_token') {
                         if (calls === this.max_calls_refresh_token) {
                             await this.updateTokenValidate(userId)
-                            await this.publishFitbitAuthError(new OAuthException(
+                            const err: OAuthException = new OAuthException(
                                 'invalid_token',
                                 `The access token could not be refresh: ${data.access_token}`,
                                 'Probably, this access token or the refresh token was invalid. Please make a ' +
-                                'new request.'), userId)
+                                'new request.')
+                            await this.publishFitbitAuthError(err, userId)
+                            return reject(err)
                         }
                         try {
-                            this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
+                            await this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
                         } catch (err) {
                             this._logger.error(`Error at update token validate: ${err.message}`)
                             await this.publishFitbitAuthError(this.fitbitClientErrorListener(err, data.access_token), userId)
@@ -233,6 +239,12 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 await this.syncLastFitbitUserActivity(data, userId, date)
                 await this.syncLastFitbitUserActivityLogs(data, userId, date)
             } else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
+            const lastSync: string = moment().format('YYYY-MM-DDTHH:mm:ss[Z]')
+            this.updateLastSync(userId, lastSync)
+                .then(res => {
+                    if (res) this.publishLastSync(userId, lastSync)
+                })
+                .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
             this.updateLastSync(userId, moment().toISOString())
             return Promise.resolve()
         } catch (err) {
@@ -339,11 +351,11 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             // Publish list of weights
                             this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
                                 .then(() => {
-                                    this._logger.info(`Weight Measurements from ${data.user_id!} successful published!`)
+                                    this._logger.info(`Weight Measurements from ${userId} successful published!`)
                                     this.saveResourceList(resources, data.user_id!)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
-                                            this._logger.info(`Weight logs from ${data.user_id} saved successful!`)
+                                            this._logger.info(`Weight logs from ${userId} saved successful!`)
                                         })
                                         .catch(err => {
                                             this._logger.error(`Error at save weight: ${err.message}`)
@@ -370,11 +382,11 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             // Publish list of activities
                             this._eventBus.bus.pubSavePhysicalActivity(activityList.map(item => item.toJSON()))
                                 .then(() => {
-                                    this._logger.info(`Physical activities from ${data.user_id!} successful published!`)
+                                    this._logger.info(`Physical activities from ${userId} successful published!`)
                                     this.saveResourceList(resources, data.user_id!)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
-                                            this._logger.info(`Physical activities from ${data.user_id} saved successful!`)
+                                            this._logger.info(`Physical activities from ${userId} saved successful!`)
                                         })
                                         .catch(err => {
                                             this._logger.error(`Error at save physical activities: ${err.message}`)
@@ -430,11 +442,11 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             // Publish list of sleep.
                             this._eventBus.bus.pubSavePhysicalActivity(sleepList.map(item => item.toJSON()))
                                 .then(() => {
-                                    this._logger.info(`Sleep from ${data.user_id!} successful published!`)
+                                    this._logger.info(`Sleep from ${userId} successful published!`)
                                     this.saveResourceList(resources, data.user_id!)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
-                                            this._logger.info(`Sleep logs from ${data.user_id} saved successful!`)
+                                            this._logger.info(`Sleep logs from ${userId} saved successful!`)
                                         })
                                         .catch(err => {
                                             this._logger.error(`Error at save sleep: ${err.message}`)
