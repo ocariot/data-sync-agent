@@ -139,7 +139,8 @@ export class UserAuthDataService implements IUserAuthDataService {
             const scopes: Array<string> = data.fitbit!.scope!.split(' ')
             if (!scopes.includes('rwei') || !scopes.includes('ract') || !scopes.includes('rsle')) {
                 throw new ValidationException(
-                    ''
+                    'The token must have permission for at least one of the features that are synced by the API.',
+                    'The features that are mapped are: rwei (weight), ract (activity), rsle (sleep).'
                 )
             }
             if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
