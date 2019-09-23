@@ -30,13 +30,15 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
 
         this._userAuthDataRepo
             .find(query)
-            .then((usersData: Array<UserAuthData>) => {
-                for (const data of usersData) {
+            .then(async (usersData: Array<UserAuthData>) => {
+                usersData.forEach(item => {
                     this._fitbitAuthDataRepo
-                        .syncFitbitUserData(data.fitbit!, data.fitbit!.last_sync!, 1, data.user_id!)
-                        .then(() => this._logger.info(`Fitbit sync task for child ${data.user_id} finished!`))
-                        .catch(err => this._logger.error(err.message))
-                }
+                        .syncFitbitUserData(item.fitbit!, item.fitbit!.last_sync!, 1, item.user_id!)
+                        .then(() => this._logger.info(`Fitbit sync task for child ${item.user_id} finished!`))
+                        .catch(err => {
+                            this._logger.error(`Error at sync fitbit data task from ${item.user_id}: ${err.message}`)
+                        })
+                })
             })
             .catch(err => {
                 this._logger.error(`An error occurred while performing Fitbit sync. ${err.message}`)

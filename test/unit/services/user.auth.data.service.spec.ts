@@ -160,7 +160,7 @@ describe('Services: UserAuthDataService', () => {
             it('should return void', () => {
                 return service.syncFitbitUserData(data.user_id!)
                     .then(res => {
-                        assert.isUndefined(res)
+                        assert.isEmpty(res)
                     })
             })
         })

@@ -64,7 +64,9 @@ export class UserFitbitAuthController {
             }
             return res.status(HttpStatus.OK).send({
                 access_token: result.access_token,
-                refresh_token: result.refresh_token
+                refresh_token: result.refresh_token,
+                is_valid: result.is_valid,
+                expires_in: result.expires_in
             })
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)

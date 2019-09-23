@@ -12,6 +12,7 @@ import { EventBusException } from '../domain/exception/eventbus.exception'
 import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 import { ObjectIdValidator } from '../domain/validator/object.id.validator'
 import { ILogger } from '../../utils/custom.logger'
+import { DataSync } from '../domain/model/data.sync'
 
 @injectable()
 export class UserAuthDataService implements IUserAuthDataService {
@@ -27,6 +28,7 @@ export class UserAuthDataService implements IUserAuthDataService {
             CreateUserAuthDataValidator.validate(item)
             const newItem: UserAuthData = await this.manageFitbitAuthData(item)
             newItem.fitbit!.is_valid = true
+            await this.subscribeFitbitEvents(item)
             const exists: boolean = await this._userAuthDataRepo.checkUserExists(newItem.user_id!)
             if (!exists) throw new ValidationException(`The user does not have register on platform: ${newItem.user_id!}`)
             const alreadySaved: UserAuthData =
@@ -34,15 +36,9 @@ export class UserAuthDataService implements IUserAuthDataService {
             if (alreadySaved) {
                 newItem.id = alreadySaved.id
                 const result: UserAuthData = await this._userAuthDataRepo.update(newItem)
-                this.subscribeFitbitEvents(result)
-                    .then()
-                    .catch(err => Promise.reject(err))
                 return Promise.resolve(result)
             }
             const authData: UserAuthData = await this._userAuthDataRepo.create(newItem)
-            this.subscribeFitbitEvents(authData)
-                .then()
-                .catch(err => Promise.reject(err))
             return Promise.resolve(authData)
         } catch (err) {
             if (err.message.indexOf('rpc') !== -1) {
@@ -98,7 +94,7 @@ export class UserAuthDataService implements IUserAuthDataService {
         }
     }
 
-    public async syncFitbitUserData(userId: string): Promise<void> {
+    public async syncFitbitUserData(userId: string): Promise<DataSync> {
         try {
             const authData: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
@@ -106,10 +102,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                 throw new ValidationException(
                     'User does not have authentication data. Please, submit authentication data and try again.')
             }
-            this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
-                .then()
-                .catch(err => this._logger.error(err.message))
-            return Promise.resolve()
+            return this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
         } catch (err) {
             return Promise.reject(err)
         }
@@ -144,6 +137,11 @@ export class UserAuthDataService implements IUserAuthDataService {
     private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
         try {
             const scopes: Array<string> = data.fitbit!.scope!.split(' ')
+            if (!scopes.includes('rwei') || !scopes.includes('ract') || !scopes.includes('rsle')) {
+                throw new ValidationException(
+                    ''
+                )
+            }
             if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
             }

@@ -2,10 +2,10 @@ import HttpStatus from 'http-status-codes'
 import { controller, httpPost, request, response } from 'inversify-express-utils'
 import { Request, Response } from 'express'
 import { ApiExceptionManager } from '../exception/api.exception.manager'
-import moment from 'moment'
 import { inject } from 'inversify'
 import { Identifier } from '../../di/identifiers'
 import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
+import { DataSync } from '../../application/domain/model/data.sync'
 
 /**
  * Controller that implements User Fitbit Sync feature operations.
@@ -29,9 +29,8 @@ export class UserFitbitSyncController {
     @httpPost('/')
     public async requestDataSync(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            await this._userAuthDataService.syncFitbitUserData(req.params.user_id).then()
-            return res.status(HttpStatus.ACCEPTED)
-                .send({ status: 'pending', completion_estimate: moment().add('5', 'minute').toISOString() })
+            const result: DataSync = await this._userAuthDataService.syncFitbitUserData(req.params.user_id)
+            return res.status(HttpStatus.ACCEPTED).send(result.toJSON())
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())

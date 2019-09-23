@@ -23,6 +23,8 @@ import { IResourceRepository } from '../../application/port/resource.repository.
 import { Query } from './query/query'
 import { Resource } from '../../application/domain/model/resource'
 import { IEventBus } from '../port/eventbus.interface'
+import { DataSync } from '../../application/domain/model/data.sync'
+import { LogSync } from '../../application/domain/model/log.sync'
 
 @injectable()
 export class FitbitDataRepository implements IFitbitDataRepository {
@@ -82,8 +84,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
     }
 
-    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
+    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<DataSync> {
+        return new Promise<DataSync>(async (resolve, reject) => {
             try {
                 if (data.is_valid === false) {
                     throw new OAuthException(
@@ -93,24 +95,30 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 }
 
                 const scopes: Array<string> = data.scope!.split(' ')
-                const syncWeights: Array<any> = scopes.includes('rwei') ?
-                    await this.syncWeightData(data, lastSync) : []
-                const syncSleep: Array<any> = scopes.includes('rsle') ?
-                    await this.syncSleepData(data, lastSync) : []
-                const syncActivities: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivities(data, lastSync) : []
-                const stepsLogs: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivitiesLogs(data, lastSync, 'steps') : []
-                const caloriesLogs: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivitiesLogs(data, lastSync, 'calories') : []
-                const minutesSedentaryLogs: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivitiesLogs(data, lastSync, 'minutesSedentary') : []
-                const minutesLightlyActiveLogs: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivitiesLogs(data, lastSync, 'minutesLightlyActive') : []
-                const minutesFairlyActiveLogs: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivitiesLogs(data, lastSync, 'minutesFairlyActive') : []
-                const minutesVeryActiveLogs: Array<any> = scopes.includes('ract') ?
-                    await this.syncUserActivitiesLogs(data, lastSync, 'minutesVeryActive') : []
+
+                const promises: Array<Promise<any>> = []
+
+                if (scopes.includes('rwei')) promises.push(this.syncWeightData(data, lastSync))
+                if (scopes.includes('rsle')) promises.push(this.syncSleepData(data, lastSync))
+                if (scopes.includes('ract')) {
+                    promises.push(this.syncUserActivities(data, lastSync))
+                    promises.push(this.syncUserActivitiesLogs(data, lastSync, 'steps'))
+                    promises.push(this.syncUserActivitiesLogs(data, lastSync, 'calories'))
+                    promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesSedentary'))
+                    promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesLightlyActive'))
+                    promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesFairlyActive'))
+                    promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesVeryActive'))
+                }
+                const result = await Promise.all(promises)
+                const syncWeights: Array<any> = result[0]
+                const syncSleep: Array<any> = result[1]
+                const syncActivities: Array<any> = result[2]
+                const stepsLogs: Array<any> = result[3]
+                const caloriesLogs: Array<any> = result[4]
+                const minutesSedentaryLogs: Array<any> = result[5]
+                const minutesLightlyActiveLogs: Array<any> = result[6]
+                const minutesFairlyActiveLogs: Array<any> = result[7]
+                const minutesVeryActiveLogs: Array<any> = result[8]
 
                 // Filter list of data for does not sync data that was saved
                 const weights: Array<any> = await this.filterDataAlreadySync(syncWeights)
@@ -170,14 +178,25 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 }
 
                 // Finally, the last sync variable from user needs to be updated
-
-                if (!lastSync) lastSync = moment().format('YYYY-MM-DDTHH:mm:ss[Z]')
+                if (!lastSync) lastSync = moment.utc().format()
                 this.updateLastSync(userId, lastSync)
                     .then(res => {
                         if (res) this.publishLastSync(userId, lastSync)
-                    })
-                    .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
-                return resolve()
+                    }).catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
+
+                // Build Object to return
+                const dataSync: DataSync = new DataSync()
+                dataSync.activities = activitiesList.length || 0
+                dataSync.weights = weightList.length || 0
+                dataSync.sleep = sleepList.length || 0
+                dataSync.logs = new LogSync().fromJSON({
+                    steps: userLog.steps.length || 0,
+                    calories: userLog.calories.length || 0,
+                    active_minutes: userLog.active_minutes.length || 0,
+                    lightly_active_minutes: userLog.lightly_active_minutes.length || 0,
+                    sedentary_minutes: userLog.sedentary_minutes.length || 0
+                })
+                return resolve(dataSync)
             } catch (err) {
                 if (err.type) {
                     /*
@@ -194,20 +213,25 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                                 `The access token could not be refresh: ${data.access_token}`,
                                 'Probably, this access token or the refresh token was invalid. Please make a ' +
                                 'new request.')
-                            await this.publishFitbitAuthError(err, userId)
+                            this.publishFitbitAuthError(err, userId)
                             return reject(err)
                         }
                         try {
-                            await this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
+                            await this.refreshToken(userId, data.access_token!, data.refresh_token!)
                         } catch (err) {
-                            this._logger.error(`Error at update token validate: ${err.message}`)
-                            await this.publishFitbitAuthError(this.fitbitClientErrorListener(err, data.access_token), userId)
+                            this._logger.error(`Error at refresh token from ${userId}: ${err.message}`)
+                            await this.updateTokenValidate(userId)
+                            const error = this.fitbitClientErrorListener(err, data.access_token)
+                            this.publishFitbitAuthError(error, userId)
+                            return reject(error)
                         }
-                        setTimeout(() => this.syncFitbitUserData(data, lastSync, calls + 1, userId), 1000)
+                        this.syncFitbitUserData(data, lastSync, calls + 1, userId)
+                            .then()
+                            .catch(err => reject(err))
                     } else if (err.type === 'invalid_token') {
                         await this.updateTokenValidate(userId)
                     }
-                    await this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
+                    this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
                 }
                 return reject(this.fitbitClientErrorListener(err))
             }
@@ -239,46 +263,49 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 await this.syncLastFitbitUserActivity(data, userId, date)
                 await this.syncLastFitbitUserActivityLogs(data, userId, date)
             } else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
-            const lastSync: string = moment().format('YYYY-MM-DDTHH:mm:ss[Z]')
+            const lastSync: string = moment.utc().format()
             this.updateLastSync(userId, lastSync)
                 .then(res => {
                     if (res) this.publishLastSync(userId, lastSync)
-                })
-                .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
-            this.updateLastSync(userId, moment().toISOString())
+                }).catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
             return Promise.resolve()
         } catch (err) {
             if (err.type) {
                 /*
-                * If the token was expired, it will try refresh the token and make a new data request.
-                * If the token or refresh token was invalid, the method reject an error for invalid token/refresh token.
-                * Otherwise, the method will reject the respective error.
-                */
+                    * If the token was expired, it will try refresh the token and make a new data request.
+                    * If the token or refresh token was invalid, the method reject an error for invalid token/refresh token.
+                    * Otherwise, the method will reject the respective error.
+                    *
+                    */
                 if (err.type === 'expired_token') {
                     if (calls === this.max_calls_refresh_token) {
-                        try {
-                            await this.updateTokenValidate(userId)
-                        } catch (err) {
-                            return Promise.reject(err)
-                        }
-                        await this.publishFitbitAuthError(new OAuthException(
+                        await this.updateTokenValidate(userId)
+                        const err: OAuthException = new OAuthException(
                             'invalid_token',
                             `The access token could not be refresh: ${data.access_token}`,
                             'Probably, this access token or the refresh token was invalid. Please make a ' +
-                            'new request.'), userId)
-                    }
-                    try {
-                        await this.refreshToken(data.user_id!, data.access_token!, data.refresh_token!)
-                    } catch (err) {
+                            'new request.')
+                        this.publishFitbitAuthError(err, userId)
                         return Promise.reject(err)
                     }
-                    setTimeout(() => this.syncLastFitbitUserData(data, userId, type, date, calls + 1), 1000)
+                    try {
+                        await this.refreshToken(userId, data.access_token!, data.refresh_token!)
+                    } catch (err) {
+                        this._logger.error(`Error at refresh token from ${userId}: ${err.message}`)
+                        await this.updateTokenValidate(userId)
+                        const error = this.fitbitClientErrorListener(err, data.access_token)
+                        this.publishFitbitAuthError(error, userId)
+                        return Promise.reject(error)
+                    }
+                    this.syncLastFitbitUserData(data, userId, type, date, calls + 1)
+                        .then()
+                        .catch(err => Promise.reject(err))
                 } else if (err.type === 'invalid_token') {
                     await this.updateTokenValidate(userId)
                 }
             }
-            await this.publishFitbitAuthError(err, userId)
-            return Promise.reject(err)
+            this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
+            return Promise.reject(this.fitbitClientErrorListener(err))
         }
     }
 
@@ -314,7 +341,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         const itemUp: any = this._fitbitAuthEntityMapper.transform(token)
         return new Promise<FitbitAuthData>((resolve, reject) => {
             this._userAuthRepoModel.findOneAndUpdate(
-                { 'fitbit.user_id': userId },
+                { user_id: userId },
                 { fitbit: itemUp },
                 { new: true })
                 .then(res => {
@@ -468,7 +495,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 for await (const item of resources) {
                     const resource: Resource = await this._resourceRepo.create(new Resource().fromJSON({
                         resource_id: item.logId,
-                        date_sync: new Date().toISOString(),
+                        date_sync: moment().utc().format(),
                         user_id: userId,
                         provider: 'Fitbit'
                     }))
@@ -623,7 +650,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         if (!item) return item
         return new Weight().fromJSON({
             type: MeasurementType.WEIGHT,
-            timestamp: moment(item.date.concat('T').concat(item.time)).format('YYYY-MM-DDTHH:mm:ss[Z]'),
+            timestamp: moment(item.date.concat('T').concat(item.time)).utc().format(),
             value: item.weight,
             unit: 'kg',
             body_fat: item.fat,
@@ -640,8 +667,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         if (!item) return item
         return new PhysicalActivity().fromJSON({
             type: 'physical_activity',
-            start_time: moment(item.startTime).format('YYYY-MM-DDTHH:mm:ss[Z]'),
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+            start_time: moment(item.startTime).utc().format(),
+            end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
             duration: item.duration,
             child_id: userId,
             name: item.activityName,
@@ -684,14 +711,14 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     private parseSleep(item: any, userId: string): Sleep {
         if (!item) return item
         return new Sleep().fromJSON({
-            start_time: moment(item.startTime).format('YYYY-MM-DDTHH:mm:ss[Z]'),
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').format('YYYY-MM-DDTHH:mm:ss[Z]'),
+            start_time: moment(item.startTime).utc().format(),
+            end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
             duration: item.duration,
             type: item.type,
             pattern: {
                 data_set: item.levels.data.map(value => {
                     return {
-                        start_time: moment(item.startTime).format('YYYY-MM-DDTHH:mm:ss[Z]'),
+                        start_time: moment(item.startTime).utc().format(),
                         name: value.level,
                         duration: `${parseInt(value.seconds, 10) * 1000}`
                     }
@@ -786,8 +813,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
 
         this._eventBus.bus.pubFitbitAuthError(fitbit)
-            .then(() => this._logger.info(`Error message about ${error.type} successful published!`))
-            .catch(err => this._logger.error(`Error at publish error message: ${err.message}`))
+            .then(() => this._logger.info(`Error message about ${error.type} from ${userId} successful published!`))
+            .catch(err => this._logger.error(`Error at publish error message from ${userId}: ${err.message}`))
     }
 
     private fitbitClientErrorListener(err: any, accessToken?: string, refreshToken?: string, userId?: string):

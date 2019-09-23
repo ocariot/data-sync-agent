@@ -55,11 +55,11 @@ describe('Repositories: FitbitDataRepository', () => {
                     .mock(modelFake)
                     .expects('findOneAndUpdate')
                     .withArgs(
-                        { 'fitbit.user_id': data.fitbit!.user_id! },
+                        { user_id: data.user_id! },
                         { fitbit: data.fitbit! },
                         { new: true })
                     .resolves(data.fitbit!)
-                return repo.refreshToken(data.fitbit!.user_id!, data.fitbit!.access_token!, data.fitbit!.refresh_token!)
+                return repo.refreshToken(data.user_id!, data.fitbit!.access_token!, data.fitbit!.refresh_token!)
                     .then(res => {
                         assert.deepEqual(res, data.fitbit)
                     })
@@ -75,7 +75,7 @@ describe('Repositories: FitbitDataRepository', () => {
         })
         context('when a error occurs', () => {
             it('should reject an error', () => {
-                return repo.refreshToken(data.fitbit!.user_id!, 'error', data.fitbit!.refresh_token!)
+                return repo.refreshToken(data.user_id!, 'error', data.fitbit!.refresh_token!)
                     .catch(err => {
                         assert.propertyVal(err, 'message', 'An error occurs!')
                     })
@@ -207,24 +207,6 @@ describe('Repositories: FitbitDataRepository', () => {
                     })
             })
         })
-        context('when token is expired for the second time', () => {
-            it('should reject an error', () => {
-                data.fitbit!.access_token = 'expired'
-                sinon
-                    .mock(modelFake)
-                    .expects('findOneAndUpdate')
-                    .withArgs(
-                        { user_id: data.user_id },
-                        { 'fitbit.is_valid': false },
-                        { new: true })
-                    .resolves(data.fitbit!)
-                return repo.syncFitbitUserData(data.fitbit!, data.fitbit!.last_sync!, 2, data.user_id!)
-                    .catch(err => {
-                        assert.propertyVal(err, 'type', 'expired_token')
-                        assert.propertyVal(err, 'message', 'Access token expired.')
-                    })
-            })
-        })
         context('when the token is not valid', () => {
             it('should reject an error', () => {
                 data.fitbit!.is_valid = false
@@ -258,12 +240,13 @@ describe('Repositories: FitbitDataRepository', () => {
                         { 'fitbit.is_valid': false },
                         { new: true })
                     .resolves(data.fitbit!)
-                return repo.syncLastFitbitUserData(data.fitbit!, data.user_id!, 'body', '2019-09-18', 1)
+                return repo.syncLastFitbitUserData(data.fitbit!, data.user_id!, 'body', '2019-09-18', 2)
                     .catch(err => {
-                        assert.propertyVal(err, 'type', 'expired_token')
-                        assert.propertyVal(err, 'message', 'Access token expired.')
-                        assert.propertyVal(err, 'description', 'The access token expired has ' +
-                            'been expired and needs to be refreshed.')
+                        assert.propertyVal(err, 'type', 'invalid_token')
+                        assert.propertyVal(err, 'message', 'The access token could not be refresh: expired')
+                        assert.propertyVal(err, 'description', 'Probably, this access token or the ' +
+                            'refresh token was invalid. Please make a new request.')
+                        data.fitbit!.access_token = DefaultEntityMock.FITBIT_AUTH_DATA.access_token
                     })
             })
         })
@@ -278,11 +261,12 @@ describe('Repositories: FitbitDataRepository', () => {
                         { 'fitbit.is_valid': false },
                         { new: true })
                     .resolves(data.fitbit!)
-                return repo.syncLastFitbitUserData(data.fitbit!, data.user_id!, 'body', '2019-09-18', 2)
+                return repo.syncLastFitbitUserData(data.fitbit!, data.user_id!, 'body', '2019-09-18', 1)
                     .catch(err => {
                         assert.propertyVal(err, 'type', 'invalid_token')
-                        assert.propertyVal(err, 'message', `The access token is invalid: ${data.fitbit!.access_token}`)
-                        assert.propertyVal(err, 'description', 'Please make a new Fitbit Auth data and try again.')
+                        assert.propertyVal(err, 'message', 'Access token invalid.')
+                        assert.propertyVal(err, 'description', 'The access token undefined is invalid. ' +
+                            'Please make a new Fitbit Auth Data request and try again.')
                         data.fitbit!.is_valid = true
                     })
             })

@@ -1,6 +1,7 @@
 import { IFitbitDataRepository } from '../../../src/application/port/fitbit.auth.data.repository.interface'
 import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.auth.data'
 import { DefaultEntityMock } from '../models/default.entity.mock'
+import { DataSync } from '../../../src/application/domain/model/data.sync'
 
 const authData: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA)
 
@@ -30,8 +31,8 @@ export class FitbitDataRepositoryMock implements IFitbitDataRepository {
         return Promise.resolve()
     }
 
-    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<void> {
-        return Promise.resolve()
+    public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<DataSync> {
+        return Promise.resolve(new DataSync())
     }
 
     public syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string, calls: number):
