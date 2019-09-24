@@ -87,17 +87,22 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     public syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<DataSync> {
         return new Promise<DataSync>(async (resolve, reject) => {
             try {
-                if (data.is_valid === false) {
+                if (data.status === 'invalid_token') {
                     throw new OAuthException(
                         'invalid_token',
                         'The access token is invalid.',
                         'Please make a new Fitbit Auth data and try again.')
                 }
 
+                if (this.isExpiredToken(data.expires_in!)) {
+                    throw new OAuthException(
+                        'expired_token',
+                        'The access token is expired.',
+                        'It is necessary refresh token before continue.')
+                }
+
                 const scopes: Array<string> = data.scope!.split(' ')
-
                 const promises: Array<Promise<any>> = []
-
                 if (scopes.includes('rwei')) promises.push(this.syncWeightData(data, lastSync))
                 if (scopes.includes('rsle')) promises.push(this.syncSleepData(data, lastSync))
                 if (scopes.includes('ract')) {
@@ -108,6 +113,12 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesLightlyActive'))
                     promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesFairlyActive'))
                     promises.push(this.syncUserActivitiesLogs(data, lastSync, 'minutesVeryActive'))
+                }
+                if (!(promises.length > 0)) {
+                    throw new ValidationException(
+                        'The token must have permission for at least one of the features that are synced by the API.',
+                        'The features that are mapped are: rwei (weight), ract (activity), rsle (sleep).'
+                    )
                 }
                 const result = await Promise.all(promises)
                 const syncWeights: Array<any> = result[0]
@@ -207,7 +218,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     */
                     if (err.type === 'expired_token') {
                         if (calls === this.max_calls_refresh_token) {
-                            await this.updateTokenValidate(userId)
+                            await this.updateTokenStatus(userId, 'invalid_token')
                             const err: OAuthException = new OAuthException(
                                 'invalid_token',
                                 `The access token could not be refresh: ${data.access_token}`,
@@ -217,25 +228,29 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             return reject(err)
                         }
                         try {
-                            await this.refreshToken(userId, data.access_token!, data.refresh_token!)
+                            const newToken: FitbitAuthData =
+                                await this.refreshToken(userId, data.access_token!, data.refresh_token!)
+                            await this.syncFitbitUserData(newToken, lastSync, calls + 1, userId)
                         } catch (err) {
                             this._logger.error(`Error at refresh token from ${userId}: ${err.message}`)
-                            await this.updateTokenValidate(userId)
+                            await this.updateTokenStatus(userId, err.type)
                             const error = this.fitbitClientErrorListener(err, data.access_token, data.refresh_token)
                             this.publishFitbitAuthError(error, userId)
                             return reject(error)
                         }
-                        this.syncFitbitUserData(data, lastSync, calls + 1, userId)
-                            .then()
-                            .catch(err => reject(err))
                     } else if (err.type === 'invalid_token') {
-                        await this.updateTokenValidate(userId)
+                        await this.updateTokenStatus(userId, 'invalid_token')
                     }
                     this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
+                    return reject(this.fitbitClientErrorListener(err))
                 }
-                return reject(this.fitbitClientErrorListener(err))
+                return reject(err)
             }
         })
+    }
+
+    private isExpiredToken(exp: number): boolean {
+        return moment(new Date()).isBefore(new Date(exp))
     }
 
     public updateLastSync(userId: string, lastSync: string): Promise<boolean> {
@@ -252,11 +267,18 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     public async syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string, calls: number):
         Promise<void> {
         try {
-            if (data.is_valid === false) {
+            if (data.status === 'invalid_token') {
                 throw new OAuthException(
                     'invalid_token',
                     `The access token is invalid: ${data.access_token}`,
                     'Please make a new Fitbit Auth data and try again.')
+            }
+
+            if (this.isExpiredToken(data.expires_in!)) {
+                throw new OAuthException(
+                    'expired_token',
+                    'The access token is expired.',
+                    'It is necessary refresh token before continue.')
             }
             if (type === ResourceDataType.BODY) await this.syncLastFitbitUserWeight(data, userId, date)
             else if (type === ResourceDataType.ACTIVITIES) {
@@ -279,7 +301,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     */
                 if (err.type === 'expired_token') {
                     if (calls === this.max_calls_refresh_token) {
-                        await this.updateTokenValidate(userId)
+                        await this.updateTokenStatus(userId, 'invalid_token')
                         const err: OAuthException = new OAuthException(
                             'invalid_token',
                             `The access token could not be refresh: ${data.access_token}`,
@@ -289,19 +311,18 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         return Promise.reject(err)
                     }
                     try {
-                        await this.refreshToken(userId, data.access_token!, data.refresh_token!)
+                        const newToken: FitbitAuthData =
+                            await this.refreshToken(userId, data.access_token!, data.refresh_token!)
+                        await this.syncLastFitbitUserData(newToken, userId, type, date, calls + 1)
                     } catch (err) {
                         this._logger.error(`Error at refresh token from ${userId}: ${err.message}`)
-                        await this.updateTokenValidate(userId)
+                        await this.updateTokenStatus(userId, err.type)
                         const error = this.fitbitClientErrorListener(err, data.access_token)
                         this.publishFitbitAuthError(error, userId)
                         return Promise.reject(error)
                     }
-                    this.syncLastFitbitUserData(data, userId, type, date, calls + 1)
-                        .then()
-                        .catch(err => Promise.reject(err))
                 } else if (err.type === 'invalid_token') {
-                    await this.updateTokenValidate(userId)
+                    await this.updateTokenStatus(userId, 'invalid_token')
                 }
             }
             this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
@@ -324,11 +345,11 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
     }
 
-    private updateTokenValidate(userId: string): Promise<FitbitAuthData> {
+    private updateTokenStatus(userId: string, status: string): Promise<FitbitAuthData> {
         return new Promise<FitbitAuthData>((resolve, reject) => {
             this._userAuthRepoModel.findOneAndUpdate(
                 { user_id: userId },
-                { 'fitbit.is_valid': false },
+                { 'fitbit.status': status },
                 { new: true })
                 .then(res => {
                     if (!res) return resolve(undefined)

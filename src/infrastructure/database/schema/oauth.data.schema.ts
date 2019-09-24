@@ -16,7 +16,7 @@ const userAuthSchema = new Mongoose.Schema({
             ...oauthSchema,
             user_id: { type: String },
             last_sync: { type: String },
-            is_valid: { type: Boolean }
+            status: { type: String }
         }
 
     },

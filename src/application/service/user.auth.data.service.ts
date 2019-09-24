@@ -27,7 +27,7 @@ export class UserAuthDataService implements IUserAuthDataService {
         try {
             CreateUserAuthDataValidator.validate(item)
             const newItem: UserAuthData = await this.manageFitbitAuthData(item)
-            newItem.fitbit!.is_valid = true
+            newItem.fitbit!.status = 'valid_token'
             await this.subscribeFitbitEvents(item)
             const exists: boolean = await this._userAuthDataRepo.checkUserExists(newItem.user_id!)
             if (!exists) throw new ValidationException(`The user does not have register on platform: ${newItem.user_id!}`)

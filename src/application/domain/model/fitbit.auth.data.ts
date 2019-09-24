@@ -11,7 +11,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
     private _token_type?: string
     private _user_id?: string
     private _last_sync?: string
-    private _is_valid?: boolean
+    private _status?: string
 
     constructor() {
         super()
@@ -73,12 +73,12 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         this._last_sync = value
     }
 
-    get is_valid(): boolean | undefined {
-        return this._is_valid
+    get status(): string | undefined {
+        return this._status
     }
 
-    set is_valid(value: boolean | undefined) {
-        this._is_valid = value
+    set status(value: string | undefined) {
+        this._status = value
     }
 
     public fromJSON(json: any): FitbitAuthData {
@@ -94,7 +94,8 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
         if (json.scope !== undefined) this.scope = json.scope
         if (json.token_type !== undefined) this.token_type = json.token_type
         if (json.last_sync !== undefined) this.last_sync = json.last_sync
-        if (json.is_valid !== undefined) this.is_valid = json.is_valid
+        if (json.status !== undefined) this.status = json.is_valid
+
         return this
     }
 
@@ -107,7 +108,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
             token_type: this.token_type,
             last_sync: this.last_sync,
             user_id: this.user_id,
-            is_valid: this.is_valid
+            status: this.status
         }
     }
 }

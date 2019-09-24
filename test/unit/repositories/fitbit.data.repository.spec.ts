@@ -209,7 +209,7 @@ describe('Repositories: FitbitDataRepository', () => {
         })
         context('when the token is not valid', () => {
             it('should reject an error', () => {
-                data.fitbit!.is_valid = false
+                data.fitbit!.status = false
                 sinon
                     .mock(modelFake)
                     .expects('findOneAndUpdate')
@@ -222,7 +222,7 @@ describe('Repositories: FitbitDataRepository', () => {
                     .catch(err => {
                         assert.propertyVal(err, 'type', 'invalid_token')
                         assert.propertyVal(err, 'message', 'Access token invalid.')
-                        data.fitbit!.is_valid = true
+                        data.fitbit!.status = true
                     })
             })
         })
@@ -252,7 +252,7 @@ describe('Repositories: FitbitDataRepository', () => {
         })
         context('when the token is not valid', () => {
             it('should reject an error', () => {
-                data.fitbit!.is_valid = false
+                data.fitbit!.status = false
                 sinon
                     .mock(modelFake)
                     .expects('findOneAndUpdate')
@@ -267,7 +267,7 @@ describe('Repositories: FitbitDataRepository', () => {
                         assert.propertyVal(err, 'message', 'Access token invalid.')
                         assert.propertyVal(err, 'description', 'The access token undefined is invalid. ' +
                             'Please make a new Fitbit Auth Data request and try again.')
-                        data.fitbit!.is_valid = true
+                        data.fitbit!.status = true
                     })
             })
         })

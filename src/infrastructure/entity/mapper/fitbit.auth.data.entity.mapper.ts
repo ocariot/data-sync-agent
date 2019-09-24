@@ -20,7 +20,7 @@ export class FitbitAuthDataEntityMapper implements IEntityMapper<FitbitAuthData,
         if (item.token_type !== undefined) result.token_type = item.token_type
         if (item.user_id !== undefined) result.user_id = item.user_id
         if (item.last_sync !== undefined) result.last_sync = item.last_sync
-        if (item.is_valid !== undefined) result.is_valid = item.is_valid
+        if (item.status !== undefined) result.status = item.status
 
         return result
     }
@@ -40,7 +40,7 @@ export class FitbitAuthDataEntityMapper implements IEntityMapper<FitbitAuthData,
         if (json.token_type !== undefined) result.token_type = json.token_type
         if (json.user_id !== undefined) result.user_id = json.user_id
         if (json.last_sync !== undefined) result.last_sync = json.last_sync
-        if (json.is_valid !== undefined) result.is_valid = json.is_valid
+        if (json.status !== undefined) result.status = json.status
 
         return result
     }
