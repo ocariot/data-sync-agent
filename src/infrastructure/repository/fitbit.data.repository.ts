@@ -178,7 +178,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 }
 
                 // Finally, the last sync variable from user needs to be updated
-                if (!lastSync) lastSync = moment.utc().format()
+                lastSync = moment.utc().format()
                 this.updateLastSync(userId, lastSync)
                     .then(res => {
                         if (res) this.publishLastSync(userId, lastSync)
@@ -221,7 +221,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         } catch (err) {
                             this._logger.error(`Error at refresh token from ${userId}: ${err.message}`)
                             await this.updateTokenValidate(userId)
-                            const error = this.fitbitClientErrorListener(err, data.access_token)
+                            const error = this.fitbitClientErrorListener(err, data.access_token, data.refresh_token)
                             this.publishFitbitAuthError(error, userId)
                             return reject(error)
                         }
