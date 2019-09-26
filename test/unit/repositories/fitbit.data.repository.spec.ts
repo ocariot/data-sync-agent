@@ -19,6 +19,7 @@ describe('Repositories: FitbitDataRepository', () => {
     const repo: IFitbitDataRepository = new FitbitDataRepository(
         modelFake,
         new EntityMapperMock(),
+        new EntityMapperMock(),
         new FitbitClientRepositoryMock(),
         new ResourceRepositoryMock(),
         new EventBusRabbitMQMock(),

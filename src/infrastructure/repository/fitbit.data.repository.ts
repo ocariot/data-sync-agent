@@ -25,6 +25,8 @@ import { Resource } from '../../application/domain/model/resource'
 import { IEventBus } from '../port/eventbus.interface'
 import { DataSync } from '../../application/domain/model/data.sync'
 import { LogSync } from '../../application/domain/model/log.sync'
+import { UserAuthData } from '../../application/domain/model/user.auth.data'
+import { UserAuthDataEntity } from '../entity/user.auth.data.entity'
 
 @injectable()
 export class FitbitDataRepository implements IFitbitDataRepository {
@@ -33,6 +35,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     constructor(
         @inject(Identifier.USER_AUTH_REPO_MODEL) private readonly _userAuthRepoModel: any,
+        @inject(Identifier.USER_AUTH_DATA_ENTITY_MAPPER)
+        private readonly _userAuthDataEntityMapper: IEntityMapper<UserAuthData, UserAuthDataEntity>,
         @inject(Identifier.FITBIT_AUTH_DATA_ENTITY_MAPPER)
         private readonly _fitbitAuthEntityMapper: IEntityMapper<FitbitAuthData, FitbitAuthDataEntity>,
         @inject(Identifier.FITBIT_CLIENT_REPOSITORY) private readonly _fitbitClientRepo: IFitbitClientRepository,
@@ -56,8 +60,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 .then(async tokenData => {
                     if (!tokenData) return resolve(undefined)
                     const authData: FitbitAuthData = await this.manageAuthData(tokenData)
-                    const newTokenData: FitbitAuthData = await this.updateRefreshToken(userId, authData)
-                    return resolve(newTokenData)
+                    const newTokenData: UserAuthData = await this.updateRefreshToken(userId, authData)
+                    return resolve(newTokenData.fitbit)
                 }).catch(err => {
                 if (err.type) return reject((this.fitbitClientErrorListener(err, accessToken, refreshToken)))
                 return reject(err)
@@ -72,6 +76,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             if (payload.sub) result.user_id = payload.sub
             if (payload.scopes) result.scope = payload.scopes
             if (payload.exp) result.expires_in = payload.exp
+            result.access_token = authData.access_token
             result.refresh_token = authData.refresh_token
             result.token_type = 'Bearer'
             result.status = 'valid_token'
@@ -240,7 +245,12 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         try {
                             const newToken: FitbitAuthData =
                                 await this.refreshToken(userId, data.access_token!, data.refresh_token!)
-                            await this.syncFitbitUserData(newToken, lastSync, calls + 1, userId)
+                            this.syncFitbitUserData(newToken, lastSync, calls + 1, userId)
+                                .then(res => resolve(res))
+                                .catch(err => {
+                                    this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
+                                    return reject(this.fitbitClientErrorListener(err))
+                                })
                         } catch (err) {
                             this._logger.error(`Error at refresh token from ${userId}: ${err.message}`)
                             await this.updateTokenStatus(userId, err.type)
@@ -250,9 +260,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         }
                     } else if (err.type === 'invalid_token') {
                         await this.updateTokenStatus(userId, 'invalid_token')
+                        this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
                     }
-                    this.publishFitbitAuthError(this.fitbitClientErrorListener(err), userId)
-                    return reject(this.fitbitClientErrorListener(err))
                 }
                 return reject(err)
             }
@@ -372,21 +381,21 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 { new: true })
                 .then(res => {
                     if (!res) return resolve(undefined)
-                    return resolve(this._fitbitAuthEntityMapper.transform(res))
+                    return resolve(this._userAuthDataEntityMapper.transform(res))
                 }).catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }
 
-    private updateRefreshToken(userId: string, token: FitbitAuthData): Promise<FitbitAuthData> {
+    private updateRefreshToken(userId: string, token: FitbitAuthData): Promise<UserAuthData> {
         const itemUp: any = this._fitbitAuthEntityMapper.transform(token)
-        return new Promise<FitbitAuthData>((resolve, reject) => {
+        return new Promise<UserAuthData>((resolve, reject) => {
             this._userAuthRepoModel.findOneAndUpdate(
                 { user_id: userId },
                 { fitbit: itemUp },
                 { new: true })
                 .then(res => {
                     if (!res) return resolve(undefined)
-                    return resolve(this._fitbitAuthEntityMapper.transform(res))
+                    return resolve(this._userAuthDataEntityMapper.transform(res))
                 }).catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }
