@@ -139,7 +139,7 @@ export class UserAuthDataService implements IUserAuthDataService {
     private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
         try {
             const scopes: Array<string> = data.fitbit!.scope!.split(' ')
-            if (!scopes.includes('rwei') || !scopes.includes('ract') || !scopes.includes('rsle')) {
+            if (!(scopes.includes('rwei') || scopes.includes('ract') || scopes.includes('rsle'))) {
                 throw new ValidationException(
                     'The token must have permission for at least one of the features that are synced by the API.',
                     'The features that are mapped are: rwei (weight), ract (activity), rsle (sleep).'
