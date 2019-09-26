@@ -87,8 +87,10 @@ export class UserAuthDataService implements IUserAuthDataService {
             ObjectIdValidator.validate(userId)
             const authData: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
-            if (authData) await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
-            return Promise.resolve(!!authData)
+            if (!authData) return Promise.resolve(false)
+            await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
+            const deleted: boolean = await this._userAuthDataRepo.deleteByQuery(new Query().fromJSON({ user_id: userId }))
+            return Promise.resolve(deleted)
         } catch (err) {
             return Promise.reject(err)
         }

@@ -21,7 +21,7 @@ export abstract class DefaultEntityMock {
         token_type: 'Bearer',
         user_id: 'ABC123',
         last_sync: '2019-09-12T13:36:49.741Z',
-        is_valid: true
+        status: 'valid_token'
     }
 
     public static USER_AUTH_DATA: any = {

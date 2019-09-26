@@ -15,7 +15,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.FITBIT_AUTH_DATA.user_id)
                 assert.propertyVal(res, 'last_sync', DefaultEntityMock.FITBIT_AUTH_DATA.last_sync)
-                assert.propertyVal(res, 'is_valid', DefaultEntityMock.FITBIT_AUTH_DATA.is_valid)
+                assert.propertyVal(res, 'status', DefaultEntityMock.FITBIT_AUTH_DATA.status)
             })
         })
         context('when convert a json string into a model', () => {
@@ -29,7 +29,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.FITBIT_AUTH_DATA.user_id)
                 assert.propertyVal(res, 'last_sync', DefaultEntityMock.FITBIT_AUTH_DATA.last_sync)
-                assert.propertyVal(res, 'is_valid', DefaultEntityMock.FITBIT_AUTH_DATA.is_valid)
+                assert.propertyVal(res, 'status', DefaultEntityMock.FITBIT_AUTH_DATA.status)
             })
         })
         context('when json is invalid', () => {
@@ -43,7 +43,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
                 assert.propertyVal(res, 'last_sync', undefined)
-                assert.propertyVal(res, 'is_valid', undefined)
+                assert.propertyVal(res, 'status', undefined)
             })
             it('should return undefined parameters for empty json', () => {
                 const res: FitbitAuthData = new FitbitAuthData().fromJSON({})
@@ -55,7 +55,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
                 assert.propertyVal(res, 'last_sync', undefined)
-                assert.propertyVal(res, 'is_valid', undefined)
+                assert.propertyVal(res, 'status', undefined)
             })
             it('should return undefined parameters for empty json string', () => {
                 const res: FitbitAuthData = new FitbitAuthData().fromJSON('')
@@ -67,7 +67,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
                 assert.propertyVal(res, 'last_sync', undefined)
-                assert.propertyVal(res, 'is_valid', undefined)
+                assert.propertyVal(res, 'status', undefined)
             })
             it('should return undefined parameters for invalid json string', () => {
                 const res: FitbitAuthData = new FitbitAuthData().fromJSON('invalid')
@@ -79,7 +79,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
                 assert.propertyVal(res, 'last_sync', undefined)
-                assert.propertyVal(res, 'is_valid', undefined)
+                assert.propertyVal(res, 'status', undefined)
             })
         })
     })
@@ -103,7 +103,7 @@ describe('Models: FitbitAuthData', () => {
                 assert.propertyVal(res, 'token_type', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
                 assert.propertyVal(res, 'last_sync', undefined)
-                assert.propertyVal(res, 'is_valid', undefined)
+                assert.propertyVal(res, 'status', undefined)
             })
         })
     })

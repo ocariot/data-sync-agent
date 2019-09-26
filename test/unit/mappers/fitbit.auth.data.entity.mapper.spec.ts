@@ -19,7 +19,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.FITBIT_AUTH_DATA.user_id)
                 assert.propertyVal(res, 'last_sync', DefaultEntityMock.FITBIT_AUTH_DATA.last_sync)
-                assert.propertyVal(res, 'is_valid', DefaultEntityMock.FITBIT_AUTH_DATA.is_valid)
+                assert.propertyVal(res, 'status', DefaultEntityMock.FITBIT_AUTH_DATA.status)
             })
             context('when the json is empty', () => {
                 it('should return a model with undefined parameters', () => {
@@ -32,7 +32,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                     assert.propertyVal(res, 'token_type', undefined)
                     assert.propertyVal(res, 'user_id', undefined)
                     assert.propertyVal(res, 'last_sync', undefined)
-                    assert.propertyVal(res, 'is_valid', undefined)
+                    assert.propertyVal(res, 'status', undefined)
                 })
             })
             context('when the json is undefined', () => {
@@ -46,7 +46,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                     assert.propertyVal(res, 'token_type', undefined)
                     assert.propertyVal(res, 'user_id', undefined)
                     assert.propertyVal(res, 'last_sync', undefined)
-                    assert.propertyVal(res, 'is_valid', undefined)
+                    assert.propertyVal(res, 'status', undefined)
                 })
             })
         })
@@ -61,7 +61,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.FITBIT_AUTH_DATA.user_id)
                 assert.propertyVal(res, 'last_sync', DefaultEntityMock.FITBIT_AUTH_DATA.last_sync)
-                assert.propertyVal(res, 'is_valid', DefaultEntityMock.FITBIT_AUTH_DATA.is_valid)
+                assert.propertyVal(res, 'status', DefaultEntityMock.FITBIT_AUTH_DATA.status)
             })
             context('when the model is empty', () => {
                 it('should return a entity with undefined parameters', () => {
@@ -79,7 +79,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                     assert.propertyVal(res, 'token_type', undefined)
                     assert.propertyVal(res, 'user_id', undefined)
                     assert.propertyVal(res, 'last_sync', undefined)
-                    assert.propertyVal(res, 'is_valid', undefined)
+                    assert.propertyVal(res, 'status', undefined)
                 })
             })
         })

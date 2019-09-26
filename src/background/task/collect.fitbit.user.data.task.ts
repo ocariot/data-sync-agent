@@ -26,7 +26,7 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
 
     private getFitbitUsersData(): void {
         const query = new Query()
-        query.filters = { 'fitbit.is_valid': true }
+        query.filters = { 'fitbit.status': 'valid_token' }
 
         this._userAuthDataRepo
             .find(query)
