@@ -4,7 +4,7 @@ import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 
 export class Resource extends Entity implements IJSONSerializable, IJSONDeserializable<Resource> {
-    private _resource_id?: string
+    private _resource?: any
     private _date_sync?: string
     private _user_id?: string
     private _provider?: string
@@ -13,12 +13,12 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
         super()
     }
 
-    get resource_id(): string | undefined {
-        return this._resource_id
+    get resource(): any | undefined {
+        return this._resource
     }
 
-    set resource_id(value: string | undefined) {
-        this._resource_id = value
+    set resource(value: any | undefined) {
+        this._resource = value
     }
 
     get date_sync(): string | undefined {
@@ -52,7 +52,7 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
         }
 
         if (json.id) super.id = json.id
-        if (json.resource_id !== undefined) this.resource_id = json.resource_id
+        if (json.resource !== undefined) this.resource = json.resource
         if (json.user_id !== undefined) this.user_id = json.user_id
         if (json.date_sync !== undefined) this.date_sync = json.date_sync
         if (json.provider !== undefined) this.provider = json.provider
@@ -63,7 +63,7 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
     public toJSON(): any {
         return {
             id: super.id,
-            resource_id: this.resource_id,
+            resource: this.resource,
             user_id: this.user_id,
             date_sync: this.date_sync,
             provider: this.provider

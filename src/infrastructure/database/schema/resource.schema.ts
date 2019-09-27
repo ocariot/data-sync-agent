@@ -5,7 +5,7 @@ interface IResourceSchemaModel extends Mongoose.Document {
 
 const resourceSchema = new Mongoose.Schema({
         user_id: { type: String },
-        resource_id: { type: String },
+        resource: { type: Object },
         date_sync: { type: String },
         provider: { type: String }
     },

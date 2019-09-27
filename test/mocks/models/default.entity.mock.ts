@@ -106,7 +106,7 @@ export abstract class DefaultEntityMock {
 
     public static RESOURCE: any = {
         id: '5d7a9fc8d3f5bbb30e0d6a1e',
-        resource_id: '171847684',
+        resource: { logId: '171847684' },
         date_sync: '2019-09-12T13:36:49.741Z',
         user_id: '5d7a4a95c292db05e4f765a8',
         provider: 'Fitbit'

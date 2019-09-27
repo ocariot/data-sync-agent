@@ -12,7 +12,6 @@ describe('Mappers: ResourceEntityMapper', () => {
             it('should return a model', () => {
                 const res: Resource = mapper.transform(DefaultEntityMock.RESOURCE)
                 assert.propertyVal(res, 'id', DefaultEntityMock.RESOURCE.id)
-                assert.propertyVal(res, 'resource_id', DefaultEntityMock.RESOURCE.resource_id)
                 assert.propertyVal(res, 'date_sync', DefaultEntityMock.RESOURCE.date_sync)
                 assert.propertyVal(res, 'provider', DefaultEntityMock.RESOURCE.provider)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.RESOURCE.user_id)
@@ -21,7 +20,7 @@ describe('Mappers: ResourceEntityMapper', () => {
                 it('should return a model with undefined parameters', () => {
                     const res: Resource = mapper.transform({})
                     assert.propertyVal(res, 'id', undefined)
-                    assert.propertyVal(res, 'resource_id', undefined)
+                    assert.propertyVal(res, 'resource', undefined)
                     assert.propertyVal(res, 'date_sync', undefined)
                     assert.propertyVal(res, 'provider', undefined)
                     assert.propertyVal(res, 'user_id', undefined)
@@ -31,7 +30,7 @@ describe('Mappers: ResourceEntityMapper', () => {
                 it('should return a model with undefined parameters', () => {
                     const res: Resource = mapper.transform(undefined)
                     assert.propertyVal(res, 'id', undefined)
-                    assert.propertyVal(res, 'resource_id', undefined)
+                    assert.propertyVal(res, 'resource', undefined)
                     assert.propertyVal(res, 'date_sync', undefined)
                     assert.propertyVal(res, 'provider', undefined)
                     assert.propertyVal(res, 'user_id', undefined)
@@ -42,7 +41,7 @@ describe('Mappers: ResourceEntityMapper', () => {
             it('should return a entity', () => {
                 const res: ResourceEntity =
                     mapper.transform(new Resource().fromJSON(DefaultEntityMock.RESOURCE))
-                assert.propertyVal(res, 'resource_id', DefaultEntityMock.RESOURCE.resource_id)
+                assert.propertyVal(res, 'resource', DefaultEntityMock.RESOURCE.resource)
                 assert.propertyVal(res, 'date_sync', DefaultEntityMock.RESOURCE.date_sync)
                 assert.propertyVal(res, 'provider', DefaultEntityMock.RESOURCE.provider)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.RESOURCE.user_id)
@@ -56,7 +55,7 @@ describe('Mappers: ResourceEntityMapper', () => {
             context('when the model is undefined', () => {
                 it('should return a entity with undefined parameters', () => {
                     const res: ResourceEntity = mapper.transform(undefined)
-                    assert.propertyVal(res, 'resource_id', undefined)
+                    assert.propertyVal(res, 'resource', undefined)
                     assert.propertyVal(res, 'date_sync', undefined)
                     assert.propertyVal(res, 'provider', undefined)
                     assert.propertyVal(res, 'user_id', undefined)

@@ -8,7 +8,7 @@ describe('Models: Resource', () => {
             it('should return a model', () => {
                 const res: Resource = new Resource().fromJSON(DefaultEntityMock.RESOURCE)
                 assert.propertyVal(res, 'id', DefaultEntityMock.RESOURCE.id)
-                assert.propertyVal(res, 'resource_id', DefaultEntityMock.RESOURCE.resource_id)
+                assert.deepPropertyVal(res, 'resource', DefaultEntityMock.RESOURCE.resource)
                 assert.propertyVal(res, 'date_sync', DefaultEntityMock.RESOURCE.date_sync)
                 assert.propertyVal(res, 'provider', DefaultEntityMock.RESOURCE.provider)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.RESOURCE.user_id)
@@ -18,7 +18,7 @@ describe('Models: Resource', () => {
             it('should return a model', () => {
                 const res: Resource = new Resource().fromJSON(JSON.stringify(DefaultEntityMock.RESOURCE))
                 assert.propertyVal(res, 'id', DefaultEntityMock.RESOURCE.id)
-                assert.propertyVal(res, 'resource_id', DefaultEntityMock.RESOURCE.resource_id)
+                assert.deepPropertyVal(res, 'resource', DefaultEntityMock.RESOURCE.resource)
                 assert.propertyVal(res, 'date_sync', DefaultEntityMock.RESOURCE.date_sync)
                 assert.propertyVal(res, 'provider', DefaultEntityMock.RESOURCE.provider)
                 assert.propertyVal(res, 'user_id', DefaultEntityMock.RESOURCE.user_id)
@@ -28,7 +28,7 @@ describe('Models: Resource', () => {
             it('should return undefined parameters for undefined json', () => {
                 const res: Resource = new Resource().fromJSON(undefined)
                 assert.propertyVal(res, 'id', undefined)
-                assert.propertyVal(res, 'resource_id', undefined)
+                assert.propertyVal(res, 'resource', undefined)
                 assert.propertyVal(res, 'date_sync', undefined)
                 assert.propertyVal(res, 'provider', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
@@ -36,7 +36,7 @@ describe('Models: Resource', () => {
             it('should return undefined parameters for empty json', () => {
                 const res: Resource = new Resource().fromJSON({})
                 assert.propertyVal(res, 'id', undefined)
-                assert.propertyVal(res, 'resource_id', undefined)
+                assert.propertyVal(res, 'resource', undefined)
                 assert.propertyVal(res, 'date_sync', undefined)
                 assert.propertyVal(res, 'provider', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
@@ -44,7 +44,7 @@ describe('Models: Resource', () => {
             it('should return undefined parameters for empty json string', () => {
                 const res: Resource = new Resource().fromJSON('')
                 assert.propertyVal(res, 'id', undefined)
-                assert.propertyVal(res, 'resource_id', undefined)
+                assert.propertyVal(res, 'resource', undefined)
                 assert.propertyVal(res, 'date_sync', undefined)
                 assert.propertyVal(res, 'provider', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
@@ -52,7 +52,7 @@ describe('Models: Resource', () => {
             it('should return undefined parameters for invalid json string', () => {
                 const res: Resource = new Resource().fromJSON('invalid')
                 assert.propertyVal(res, 'id', undefined)
-                assert.propertyVal(res, 'resource_id', undefined)
+                assert.propertyVal(res, 'resource', undefined)
                 assert.propertyVal(res, 'date_sync', undefined)
                 assert.propertyVal(res, 'provider', undefined)
                 assert.propertyVal(res, 'user_id', undefined)
@@ -73,7 +73,7 @@ describe('Models: Resource', () => {
                 const model: Resource = new Resource().fromJSON({})
                 const res: any = model.toJSON()
                 assert.propertyVal(res, 'id', undefined)
-                assert.propertyVal(res, 'resource_id', undefined)
+                assert.propertyVal(res, 'resource', undefined)
                 assert.propertyVal(res, 'date_sync', undefined)
                 assert.propertyVal(res, 'provider', undefined)
                 assert.propertyVal(res, 'user_id', undefined)

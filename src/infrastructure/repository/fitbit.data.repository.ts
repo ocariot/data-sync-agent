@@ -142,9 +142,9 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             minutesVeryActiveLogs = result[6] || []
 
             // Filter list of data for does not sync data that was saved
-            const weights: Array<any> = await this.filterDataAlreadySync(syncWeights)
-            const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep)
-            const activities: Array<any> = await this.filterDataAlreadySync(syncActivities)
+            const weights: Array<any> = await this.filterDataAlreadySync(syncWeights, ResourceDataType.BODY)
+            const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep, ResourceDataType.SLEEP)
+            const activities: Array<any> = await this.filterDataAlreadySync(syncActivities, ResourceDataType.ACTIVITIES)
 
             const weightList: Array<Weight> = await this.parseWeightList(weights, userId)
             const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, userId)
@@ -281,12 +281,13 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private async filterDataAlreadySync(data: Array<any>): Promise<Array<any>> {
+    private async filterDataAlreadySync(data: Array<any>, type: string): Promise<Array<any>> {
         try {
             const resources: Array<any> = []
             if (!data || !data.length) return resources
             for await(const item of data) {
-                const query: Query = new Query().fromJSON({ filters: { resource_id: item.logId } })
+                const query: Query = new Query().fromJSON({ filters: { 'resource.logId': item.logId } })
+                if (type === ResourceDataType.BODY) query.addFilter({ 'resource.weight': item.weight })
                 const exists: boolean = await this._resourceRepo.checkExists(query)
                 if (!exists) resources.push(item)
             }
@@ -301,7 +302,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this.getUserBodyDataFromInterval(data.access_token!, date, date)
                 .then(async weights => {
                     if (weights && weights.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(weights)
+                        const resources: Array<any> = await this.filterDataAlreadySync(weights, ResourceDataType.BODY)
 
                         // Parse list of weights
                         const weightList: Array<Weight> = this.parseWeightList(resources, userId)
@@ -332,7 +333,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this.getUserActivities(data.access_token!, 100, date)
                 .then(async activities => {
                     if (activities && activities.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(activities)
+                        const resources: Array<any> =
+                            await this.filterDataAlreadySync(activities, ResourceDataType.ACTIVITIES)
 
                         // Parse list of activities
                         const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
@@ -392,7 +394,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this.getUserSleep(data.access_token!, 1, date)
                 .then(async sleeps => {
                     if (sleeps && sleeps.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(sleeps)
+                        const resources: Array<any> = await this.filterDataAlreadySync(sleeps, ResourceDataType.SLEEP)
 
                         // Parse list of sleep
                         const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
@@ -425,7 +427,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             try {
                 for await (const item of resources) {
                     const resource: Resource = await this._resourceRepo.create(new Resource().fromJSON({
-                        resource_id: item.logId,
+                        resource: item,
                         date_sync: moment().utc().format(),
                         user_id: userId,
                         provider: 'Fitbit'
