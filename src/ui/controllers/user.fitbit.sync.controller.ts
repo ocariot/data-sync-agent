@@ -29,7 +29,7 @@ export class UserFitbitSyncController {
     @httpPost('/')
     public async requestDataSync(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            const result: DataSync = await this._userAuthDataService.syncFitbitUserData(req.params.user_id)
+            const result: DataSync = await this._userAuthDataService.syncFitbitDataFromUser(req.params.user_id)
             return res.status(HttpStatus.ACCEPTED).send(result.toJSON())
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)

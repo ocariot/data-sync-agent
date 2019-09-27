@@ -13,12 +13,15 @@ import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 import { ObjectIdValidator } from '../domain/validator/object.id.validator'
 import { ILogger } from '../../utils/custom.logger'
 import { DataSync } from '../domain/model/data.sync'
+import { VerifyFitbitAuthValidator } from '../domain/validator/verify.fitbit.auth.validator'
+import { IEventBus } from '../../infrastructure/port/eventbus.interface'
 
 @injectable()
 export class UserAuthDataService implements IUserAuthDataService {
     constructor(
         @inject(Identifier.USER_AUTH_DATA_REPOSITORY) private readonly _userAuthDataRepo: IUserAuthDataRepository,
         @inject(Identifier.FITBIT_DATA_REPOSITORY) private readonly _fitbitAuthDataRepo: IFitbitDataRepository,
+        @inject(Identifier.RABBITMQ_EVENT_BUS) private readonly _eventBus: IEventBus,
         @inject(Identifier.LOGGER) private readonly _logger: ILogger
     ) {
     }
@@ -51,11 +54,11 @@ export class UserAuthDataService implements IUserAuthDataService {
     }
 
     public getAll(query: IQuery): Promise<Array<UserAuthData>> {
-        throw Error('Not implemented!')
+        return this._userAuthDataRepo.find(query)
     }
 
     public getById(id: string, query: IQuery): Promise<UserAuthData> {
-        throw Error('Not implemented!')
+        return this._userAuthDataRepo.findOne(query)
     }
 
     public remove(id: string): Promise<boolean> {
@@ -66,13 +69,20 @@ export class UserAuthDataService implements IUserAuthDataService {
         throw Error('Not implemented!')
     }
 
+    public getByUserId(userId: string): Promise<UserAuthData> {
+        try {
+            ObjectIdValidator.validate(userId)
+        } catch (err) {
+            return Promise.reject(err)
+        }
+        return this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
+    }
+
     public async addFitbitAuthData(data: UserAuthData, initSync: string): Promise<UserAuthData> {
         try {
             const result: UserAuthData = await this.add(data)
             if (initSync !== 'false') {
-                this._fitbitAuthDataRepo.syncFitbitUserData(result.fitbit!, result.fitbit!.last_sync!, 3, result.user_id!)
-                    .then()
-                    .catch(err => Promise.reject(err))
+                await this.syncFitbitData(result.fitbit!, result.user_id!)
             } else if (initSync === 'false' && result.fitbit!.last_sync) {
                 this._fitbitAuthDataRepo.publishLastSync(result.user_id!, result.fitbit!.last_sync)
             }
@@ -89,50 +99,114 @@ export class UserAuthDataService implements IUserAuthDataService {
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
             if (!authData) return Promise.resolve(false)
             await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
-            const deleted: boolean = await this._userAuthDataRepo.deleteByQuery(new Query().fromJSON({ user_id: userId }))
+            const deleted: boolean =
+                await this._userAuthDataRepo.deleteByQuery(new Query().fromJSON({ user_id: userId }))
             return Promise.resolve(deleted)
         } catch (err) {
             return Promise.reject(err)
         }
     }
 
-    public async syncFitbitUserData(userId: string): Promise<DataSync> {
+    private async syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
         try {
-            const authData: UserAuthData =
-                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
-            if (!authData || !authData.fitbit) {
-                throw new ValidationException(
-                    'User does not have authentication data. Please, submit authentication data and try again.')
-            }
-            return this._fitbitAuthDataRepo.syncFitbitUserData(authData.fitbit!, authData.fitbit!.last_sync!, 1, userId)
+            VerifyFitbitAuthValidator.validate(data)
+            const result: DataSync = await this._fitbitAuthDataRepo.syncFitbitData(data, userId)
+            return Promise.resolve(result)
         } catch (err) {
             return Promise.reject(err)
         }
+    }
+
+    public async syncFitbitDataFromUser(userId: string): Promise<DataSync> {
+        return new Promise<DataSync>((resolve, reject) => {
+            try {
+                ObjectIdValidator.validate(userId)
+                this._userAuthDataRepo.getUserAuthDataByUserId(userId)
+                    .then(async data => {
+                        if (!data || !data.fitbit) {
+                            throw new ValidationException(
+                                'User does not have authentication data. Please, submit authentication data ' +
+                                'and try again.')
+                        }
+                        try {
+                            const result: DataSync = await this.syncFitbitData(data.fitbit!, userId)
+                            return resolve(result)
+                        } catch (err) {
+                            if (err.type) {
+                                if (err.type === 'expired_token') {
+                                    this._fitbitAuthDataRepo
+                                        .refreshToken(userId, data.fitbit!.access_token!, data.fitbit!.refresh_token!)
+                                        .then(async newToken => {
+                                            const result: DataSync = await this.syncFitbitData(newToken, userId)
+                                            return resolve(result)
+                                        }).catch(err => {
+                                        this.updateTokenStatus(userId, err.type)
+                                        this.publishFitbitAuthError(err, userId)
+                                        return reject(err)
+                                    })
+                                } else {
+                                    this.updateTokenStatus(userId, err.type)
+                                    this.publishFitbitAuthError(err, userId)
+                                    return reject(err)
+                                }
+                            } else {
+                                return reject(err)
+                            }
+                        }
+                    }).catch(err => reject(err))
+            } catch (err) {
+                return Promise.reject(err)
+            }
+        })
     }
 
     public async syncLastFitbitUserData(fitbitUserId: string, type: string, date: string): Promise<void> {
         try {
             const authData: UserAuthData =
-                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { 'fitbit.user_id': fitbitUserId } }))
-            if (authData) {
-                this._fitbitAuthDataRepo.syncLastFitbitUserData(authData.fitbit!, authData.user_id!, type, date, 1)
-                    .then()
-                    .catch(err => this._logger.error(err.message))
-            }
-            return Promise.resolve()
+                await this._userAuthDataRepo
+                    .findOne(new Query().fromJSON({ filters: { 'fitbit.user_id': fitbitUserId } }))
+            if (!authData) return await Promise.resolve()
+            this.syncLastFitbitData(authData.fitbit!, authData.user_id!, type, date)
+                .then()
+                .catch(err => this._logger.error(`The resource ${type} from ${authData.user_id} could note be sync: ` +
+                    err.message))
+            return await Promise.resolve()
         } catch (err) {
-            return Promise.reject(err)
+            return await Promise.reject(err)
         }
     }
 
-    public async getFitbitAuthDataByUserId(userId: string): Promise<FitbitAuthData> {
+    private async syncLastFitbitData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
         try {
-            ObjectIdValidator.validate(userId)
-            const result = await this._userAuthDataRepo.getUserAuthDataByUserId(userId)
-            if (result && result.fitbit) return Promise.resolve(result.fitbit)
-            return Promise.resolve(new FitbitAuthData())
+            VerifyFitbitAuthValidator.validate(data)
+            const result = await this._fitbitAuthDataRepo.syncLastFitbitData(data, userId, type, date)
+            return result
         } catch (err) {
-            return Promise.reject(err)
+            if (err.type) {
+                if (err.type === 'expired_token') {
+                    try {
+                        const newToken: FitbitAuthData =
+                            await this._fitbitAuthDataRepo.refreshToken(userId, data.access_token!, data.refresh_token!)
+                        this.syncLastFitbitData(newToken, userId, type, date)
+                            .then()
+                            .catch(err => {
+                                this.updateTokenStatus(userId, err.type)
+                                this.publishFitbitAuthError(err, userId)
+                                return Promise.reject(err)
+                            })
+                    } catch (err) {
+                        this.updateTokenStatus(userId, err.type)
+                        this.publishFitbitAuthError(err, userId)
+                        return Promise.reject(err)
+                    }
+                } else {
+                    this.updateTokenStatus(userId, err.type)
+                    this.publishFitbitAuthError(err, userId)
+                    return Promise.reject(err)
+                }
+            } else {
+                return await Promise.reject(err)
+            }
         }
     }
 
@@ -170,5 +244,55 @@ export class UserAuthDataService implements IUserAuthDataService {
         } catch (err) {
             return Promise.reject(err)
         }
+    }
+
+    private updateTokenStatus(userId: string, status: string): void {
+        this._fitbitAuthDataRepo.updateTokenStatus(userId, status)
+            .then()
+            .catch(err => this._logger.error(`Error at update token status from ${userId}: ${err.message}`))
+    }
+
+    /*
+   * Publish Error according to the type.
+   * Mapped Error Codes:
+   *
+   * 1011 - Expired Token
+   * 1012 - Invalid Token
+   * 1021 - Invalid Refresh Token
+   * 1401 - Invalid Client Credentials
+   * 1429 - Too Many Requests
+   * 1500 - Generic Error
+   *
+   */
+    private publishFitbitAuthError(error: any, userId: string): void {
+        const fitbit: any = {
+            child_id: userId,
+            error: { code: 0, message: error.message, description: error.description }
+        }
+
+        switch (error.type) {
+            case 'expired_token':
+                fitbit.error.code = 1011
+                break
+            case 'invalid_token':
+                fitbit.error.code = 1012
+                break
+            case 'invalid_grant':
+                fitbit.error.code = 1021
+                break
+            case 'invalid_client':
+                fitbit.error.code = 1401
+                break
+            case 'system':
+                fitbit.error.code = 1429
+                break
+            default:
+                fitbit.error.code = 1500
+                break
+        }
+
+        this._eventBus.bus.pubFitbitAuthError(fitbit)
+            .then(() => this._logger.info(`Error message about ${error.type} from ${userId} successful published!`))
+            .catch(err => this._logger.error(`Error at publish error message from ${userId}: ${err.message}`))
     }
 }

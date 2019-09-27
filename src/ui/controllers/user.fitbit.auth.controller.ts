@@ -6,7 +6,6 @@ import { inject } from 'inversify'
 import { Identifier } from '../../di/identifiers'
 import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
 import { UserAuthData } from '../../application/domain/model/user.auth.data'
-import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
 import { ApiException } from '../exception/api.exception'
 import { Strings } from '../../utils/strings'
 
@@ -57,8 +56,8 @@ export class UserFitbitAuthController {
     @httpGet('/')
     public async getFitbitAuthData(@request() req: Request, @response() res: Response): Promise<Response> {
         try {
-            const result: FitbitAuthData = await this._userAuthDataService.getFitbitAuthDataByUserId(req.params.user_id)
-            if (!result || !result.access_token) {
+            const result: UserAuthData = await this._userAuthDataService.getByUserId(req.params.user_id)
+            if (!result || !result.fitbit) {
                 return res.status(HttpStatus.NOT_FOUND).send(
                     new ApiException(
                         HttpStatus.NOT_FOUND,
@@ -67,11 +66,7 @@ export class UserFitbitAuthController {
                     ).toJson()
                 )
             }
-            return res.status(HttpStatus.OK).send({
-                access_token: result.access_token,
-                refresh_token: result.refresh_token,
-                status: result.status
-            })
+            return res.status(HttpStatus.OK).send(this.toJsonView(result))
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())
@@ -91,6 +86,14 @@ export class UserFitbitAuthController {
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
             return res.status(handlerError.code).send(handlerError.toJson())
+        }
+    }
+
+    private toJsonView(data: UserAuthData): any {
+        return {
+            access_token: data.fitbit!.access_token,
+            refresh_token: data.fitbit!.refresh_token,
+            status: data.fitbit!.status
         }
     }
 }

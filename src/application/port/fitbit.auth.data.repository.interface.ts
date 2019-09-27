@@ -4,15 +4,17 @@ import { DataSync } from '../domain/model/data.sync'
 export interface IFitbitDataRepository {
     updateLastSync(userId: string, lastSync: string): Promise<boolean>
 
+    updateTokenStatus(userId: string, status: string): Promise<boolean>
+
     publishLastSync(userId: string, lastSync: string): void
 
     revokeToken(accessToken: string): Promise<boolean>
 
     refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number): Promise<FitbitAuthData>
 
-    syncFitbitUserData(data: FitbitAuthData, lastSync: string, calls: number, userId: string): Promise<DataSync>
+    syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync>
 
-    syncLastFitbitUserData(data: FitbitAuthData, userId: string, type: string, date: string, calls: number): Promise<void>
+    syncLastFitbitData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void>
 
     subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
 

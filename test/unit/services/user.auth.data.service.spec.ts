@@ -9,12 +9,17 @@ import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.aut
 import { Query } from '../../../src/infrastructure/repository/query/query'
 import moment = require('moment')
 import { CustomLoggerMock } from '../../mocks/custom.logger.mock'
+import { EventBusRabbitMQMock } from '../../mocks/eventbus/eventbus.rabbitmq.mock'
 
 describe('Services: UserAuthDataService', () => {
     const data: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA)
     const fitbit: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA.fitbit)
     const service: IUserAuthDataService =
-        new UserAuthDataService(new UserAuthDataRepositoryMock(), new FitbitDataRepositoryMock(), new CustomLoggerMock())
+        new UserAuthDataService(
+            new UserAuthDataRepositoryMock(),
+            new FitbitDataRepositoryMock(),
+            new EventBusRabbitMQMock(),
+            new CustomLoggerMock())
 
     describe('add()', () => {
         context('when save a data', () => {
@@ -97,16 +102,6 @@ describe('Services: UserAuthDataService', () => {
         })
     })
     describe('addFitbitAuthData()', () => {
-        context('when save a user auth data and sync the data', () => {
-            it('should return the data', () => {
-                return service.addFitbitAuthData(data, 'true')
-                    .then(res => {
-                        assert.propertyVal(res, 'id', DefaultEntityMock.USER_AUTH_DATA.id)
-                        assert.propertyVal(res, 'user_id', DefaultEntityMock.USER_AUTH_DATA.user_id)
-                        assert.deepPropertyVal(res, 'fitbit', fitbit)
-                    })
-            })
-        })
         context('when save a user auth data and no sync the data', () => {
             it('should return the data', () => {
                 return service.addFitbitAuthData(data, 'false')
@@ -155,46 +150,7 @@ describe('Services: UserAuthDataService', () => {
             })
         })
     })
-    describe('syncFitbitUserData()', () => {
-        context('when sync the fitbit user data', () => {
-            it('should return void', () => {
-                return service.syncFitbitUserData(data.user_id!)
-                    .then(res => {
-                        assert.isEmpty(res)
-                    })
-            })
-        })
-
-        context('when the user does not exists', () => {
-            it('should throw an error', () => {
-                return service.syncFitbitUserData(DefaultEntityMock.USER_IDS.does_not_saved)
-                    .catch(err => {
-                        assert.propertyVal(err, 'message', 'User does not have authentication data. ' +
-                            'Please, submit authentication data and try again.')
-                    })
-            })
-        })
-        context('when there are validation errors', () => {
-            it('should reject an error', () => {
-                return service.syncFitbitUserData('123')
-                    .catch(err => {
-                        assert.propertyVal(err, 'message', 'Some ID provided does not have a valid format!')
-                        assert.propertyVal(err, 'description',
-                            'A 24-byte hex ID similar to this: 507f191e810c19729de860ea is expected.')
-                    })
-            })
-        })
-    })
     describe('syncLastFitbitUserData()', () => {
-        context('when sync the last fitbit user data', () => {
-            it('should return undefined', () => {
-                return service
-                    .syncLastFitbitUserData(data.fitbit!.user_id!, 'weight', moment().format('YYYY-MM-DD'))
-                    .then(res => {
-                        assert.isUndefined(res)
-                    })
-            })
-        })
         context('when user does not exists', () => {
             it('should return undefined', () => {
                 return service
