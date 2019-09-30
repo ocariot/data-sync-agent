@@ -5,6 +5,7 @@ import { ApiException } from './api.exception'
 import { ConflictException } from '../../application/domain/exception/conflict.exception'
 import { RepositoryException } from '../../application/domain/exception/repository.exception'
 import { OAuthException } from '../../application/domain/exception/oauth.exception'
+import { FitbitClientException } from '../../application/domain/exception/fitbit.client.exception'
 
 /**
  * Treats the exception types of the application and converts
@@ -28,6 +29,8 @@ export abstract class ApiExceptionManager {
             return new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, err.message, err.description)
         } else if (err instanceof OAuthException) {
             return new ApiException(HttpStatus.BAD_REQUEST, err.message, err.description)
+        } else if (err instanceof FitbitClientException) {
+            return new ApiException(HttpStatus.SERVICE_UNAVAILABLE, err.message, err.description)
         }
         return new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, err.message, err.description)
     }

@@ -27,6 +27,7 @@ import { DataSync } from '../../application/domain/model/data.sync'
 import { LogSync } from '../../application/domain/model/log.sync'
 import { UserAuthData } from '../../application/domain/model/user.auth.data'
 import { UserAuthDataEntity } from '../entity/user.auth.data.entity'
+import { FitbitClientException } from '../../application/domain/exception/fitbit.client.exception'
 
 @injectable()
 export class FitbitDataRepository implements IFitbitDataRepository {
@@ -718,7 +719,13 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     }
 
     private fitbitClientErrorListener(err: any, accessToken?: string, refreshToken?: string, userId?: string):
-        OAuthException | undefined {
+        OAuthException | FitbitClientException | undefined {
+        if (err.type === 'client_error') {
+            return new FitbitClientException(
+                'client_error',
+                'Could not connect with the Fitbit Server',
+                'Please try again later.')
+        }
         if (err.type === 'expired_token') {
             return new OAuthException(
                 'expired_token',
@@ -744,6 +751,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 'invalid_client',
                 'Invalid Fitbit Client data.',
                 'The Fitbit Client credentials are invalid. The operation cannot be performed.')
+        } else if (err.type === 'internal_error') {
+            return new OAuthException('internal_error', 'A internal error occurs. Please, try again later.')
         }
         return new OAuthException(err.type, err.message)
     }

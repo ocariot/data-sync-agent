@@ -144,6 +144,12 @@ export class UserAuthDataService implements IUserAuthDataService {
                                         this.publishFitbitAuthError(err, userId)
                                         return reject(err)
                                     })
+                                } else if (err.type === 'client_error') {
+                                    try {
+                                        await this.syncFitbitData(data.fitbit, userId)
+                                    } catch (err) {
+                                        return reject(err)
+                                    }
                                 } else {
                                     this.updateTokenStatus(userId, err.type)
                                     this.publishFitbitAuthError(err, userId)
@@ -197,6 +203,12 @@ export class UserAuthDataService implements IUserAuthDataService {
                     } catch (err) {
                         this.updateTokenStatus(userId, err.type)
                         this.publishFitbitAuthError(err, userId)
+                        return Promise.reject(err)
+                    }
+                } else if (err.type === 'client_error') {
+                    try {
+                        await this.syncFitbitData(data, userId)
+                    } catch (err) {
                         return Promise.reject(err)
                     }
                 } else {

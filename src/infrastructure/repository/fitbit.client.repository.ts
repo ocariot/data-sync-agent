@@ -3,6 +3,7 @@ import { OAuthException } from '../../application/domain/exception/oauth.excepti
 import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
 import { injectable } from 'inversify'
 import { IFitbitClientRepository } from '../../application/port/fitbit.client.repository.interface'
+import { FitbitClientException } from '../../application/domain/exception/fitbit.client.exception'
 
 @injectable()
 export class FitbitClientRepository implements IFitbitClientRepository {
@@ -77,8 +78,9 @@ export class FitbitClientRepository implements IFitbitClientRepository {
         })
     }
 
-    private fitbitClientErrorListener(err: any): OAuthException | undefined {
+    private fitbitClientErrorListener(err: any): OAuthException | FitbitClientException | undefined {
         if (err.context) return new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)
+        else if (err.code === 'EAI_AGAIN') return new FitbitClientException('client_error', err.message)
         return new OAuthException(err.errorType, err.message)
     }
 }
