@@ -100,6 +100,7 @@ export abstract class DefaultEntityMock {
         name: 'Walk',
         calories: 200,
         steps: 1000,
+        distance: 1000,
         levels: [DefaultEntityMock.PHYSICAL_ACTIVITY_LEVEL],
         heart_rate: DefaultEntityMock.PHYSICAL_ACTIVITY_HEART_RATE
     }
@@ -178,5 +179,20 @@ export abstract class DefaultEntityMock {
         scopes: 'rwei ract rsle',
         exp: 1568162400,
         iat: 1568133600
+    }
+
+    public static LOG_SYNC: any = {
+        calories: 1,
+        steps: 1,
+        active_minutes: 1,
+        lightly_active_minutes: 1,
+        sedentary_minutes: 1
+    }
+
+    public static DATA_SYNC: any = {
+        activities: 1,
+        sleep: 1,
+        weights: 1,
+        logs: DefaultEntityMock.LOG_SYNC
     }
 }

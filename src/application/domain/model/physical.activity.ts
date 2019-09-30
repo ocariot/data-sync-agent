@@ -15,6 +15,7 @@ export class PhysicalActivity extends Activity implements IJSONSerializable, IJS
     private _name?: string // Name of physical physicalactivity.
     private _calories?: number // Calories spent during physical physicalactivity.
     private _steps?: number // Number of steps taken during the physical physicalactivity.
+    private _distance?: number // Distance traveled during physical activity in meters.
     private _levels?: Array<PhysicalActivityLevel> // PhysicalActivity levels (sedentary, light, fair or very).
     private _heart_rate?: PhysicalActivityHeartRate // PhysicalActivity heart rate
 
@@ -46,6 +47,14 @@ export class PhysicalActivity extends Activity implements IJSONSerializable, IJS
         this._steps = value
     }
 
+    get distance(): number | undefined {
+        return this._distance
+    }
+
+    set distance(value: number | undefined) {
+        this._distance = value
+    }
+
     get levels(): Array<PhysicalActivityLevel> | undefined {
         return this._levels
     }
@@ -72,6 +81,7 @@ export class PhysicalActivity extends Activity implements IJSONSerializable, IJS
         if (json.name !== undefined) this.name = json.name
         if (json.calories !== undefined) this.calories = json.calories
         if (json.steps !== undefined) this.steps = json.steps
+        if (json.distance !== undefined) this.distance = json.distance
         if (json.levels !== undefined && json.levels instanceof Array) {
             this.levels = json.levels.map(level => new PhysicalActivityLevel().fromJSON(level))
         }
@@ -87,6 +97,7 @@ export class PhysicalActivity extends Activity implements IJSONSerializable, IJS
                 name: this.name,
                 calories: this.calories,
                 steps: this.steps,
+                distance: this.distance,
                 levels: this.levels ? this.levels.map(item => item.toJSON()) : this.levels,
                 heart_rate: this.heart_rate ? this.heart_rate.toJSON() : this.heart_rate
             }

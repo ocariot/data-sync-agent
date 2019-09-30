@@ -608,6 +608,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             name: item.activityName,
             calories: item.calories,
             steps: item.steps,
+            distance: item.distance ? item.distance * 1000 : undefined,
             levels: item.activityLevel.map(level => {
                 return { duration: level.minutes * 60000, name: level.name }
             }),
