@@ -10,10 +10,12 @@ import { Query } from '../../../src/infrastructure/repository/query/query'
 import moment = require('moment')
 import { CustomLoggerMock } from '../../mocks/custom.logger.mock'
 import { EventBusRabbitMQMock } from '../../mocks/eventbus/eventbus.rabbitmq.mock'
+import { DataSync } from '../../../src/application/domain/model/data.sync'
 
 describe('Services: UserAuthDataService', () => {
     const data: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA)
     const fitbit: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA.fitbit)
+    const dataSync: DataSync = new DataSync().fromJSON(DefaultEntityMock.DATA_SYNC)
     const service: IUserAuthDataService =
         new UserAuthDataService(
             new UserAuthDataRepositoryMock(),
@@ -101,6 +103,28 @@ describe('Services: UserAuthDataService', () => {
             }
         })
     })
+    describe('getByUserId()', () => {
+        context('when get a data by user id', () => {
+            it('should return the data', () => {
+                return service.getByUserId(data.user_id!)
+                    .then(res => {
+                        assert.propertyVal(res, 'id', DefaultEntityMock.USER_AUTH_DATA.id)
+                        assert.propertyVal(res, 'user_id', DefaultEntityMock.USER_AUTH_DATA.user_id)
+                        assert.deepPropertyVal(res, 'fitbit', fitbit)
+                    })
+            })
+        })
+        context('when there are validation errors', () => {
+            it('should reject an error', () => {
+                return service.getByUserId('123')
+                    .catch(err => {
+                        assert.propertyVal(err, 'message', 'Some ID provided does not have a valid format!')
+                        assert.propertyVal(err, 'description',
+                            'A 24-byte hex ID similar to this: 507f191e810c19729de860ea is expected.')
+                    })
+            })
+        })
+    })
     describe('addFitbitAuthData()', () => {
         context('when save a user auth data and no sync the data', () => {
             it('should return the data', () => {
@@ -146,6 +170,61 @@ describe('Services: UserAuthDataService', () => {
                         assert.propertyVal(err, 'message', 'Some ID provided does not have a valid format!')
                         assert.propertyVal(err, 'description',
                             'A 24-byte hex ID similar to this: 507f191e810c19729de860ea is expected.')
+                    })
+            })
+        })
+    })
+    describe('syncFitbitDataFromUser()', () => {
+        context('when sync fitbit data from user', () => {
+            it('should return the data sync', () => {
+                return service.syncFitbitDataFromUser(data.user_id!)
+                    .then(res => {
+                        assert.deepEqual(res, dataSync)
+                    })
+            })
+        })
+        context('when the user data does not exists', () => {
+            it('should reject an error', () => {
+                return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.does_not_exists)
+                    .catch(err => {
+                        assert.propertyVal(err, 'message', 'User does not have authentication data. ' +
+                            'Please, submit authentication data and try again.')
+                    })
+            })
+        })
+        context('when the token has expired', () => {
+            it('should reject an error', () => {
+                return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.expired_token)
+                    .catch(err => {
+                        assert.propertyVal(err, 'type', 'expired_token')
+                        assert.propertyVal(err, 'message', 'The token has expired')
+                    })
+            })
+        })
+        context('when the token is invalid', () => {
+            it('should reject an error', () => {
+                return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.invalid_token)
+                    .catch(err => {
+                        assert.propertyVal(err, 'type', 'invalid_token')
+                        assert.property(err, 'message')
+                        assert.propertyVal(err, 'description', 'Please make a new Fitbit Auth data and try again.')
+                    })
+            })
+        })
+        context('when the client us unavailable', () => {
+            it('should reject an error', () => {
+                return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.client_error)
+                    .catch(err => {
+                        assert.propertyVal(err, 'type', 'client_error')
+                        assert.propertyVal(err, 'message', 'The Fitbit Client is unavailable')
+                    })
+            })
+        })
+        context('when another fitbit error occurs', () => {
+            it('should reject an error', () => {
+                return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.any_fitbit_error)
+                    .catch(err => {
+                        assert.propertyVal(err, 'message', 'Any error occurs')
                     })
             })
         })

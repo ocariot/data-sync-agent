@@ -608,7 +608,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             name: item.activityName,
             calories: item.calories,
             steps: item.steps,
-            distance: item.distance ? item.distance * 1000 : undefined,
+            distance: item.distance ? this.convertDistanceToMetter(item.distance, item.distanceUnit) : undefined,
             levels: item.activityLevel.map(level => {
                 return { duration: level.minutes * 60000, name: level.name }
             }),
@@ -636,6 +636,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 })[0]
             } : undefined
         })
+    }
+
+    private convertDistanceToMetter(distance: number, unit: string): number {
+        return unit === 'Kilometer' ? distance * 1000 : distance * 1609.344
     }
 
     private parseSleepList(sleep: Array<any>, userId: string): Array<Sleep> {

@@ -1,6 +1,8 @@
 import { LogType } from '../../../src/application/domain/model/log'
 import { ActivityLevelType } from '../../../src/application/domain/model/physical.activity.level'
 import { SleepType } from '../../../src/application/domain/model/sleep'
+import moment from 'moment'
+import { TokenManager } from '../utils/token.manager'
 
 export abstract class DefaultEntityMock {
     public static ACTIVITY: any = {
@@ -11,11 +13,19 @@ export abstract class DefaultEntityMock {
         child_id: '5d7a4a95c292db05e4f765a8'
     }
 
+    public static PAYLOAD: any = {
+        aud: 'A1B23C',
+        sub: 'ABC123',
+        iss: 'Fitbit',
+        typ: 'access_token',
+        scopes: 'ract rsle rwei',
+        exp: parseInt(`${moment().add(1, 'hour').valueOf() / 1000}`, 10),
+        iat: parseInt(`${moment().subtract(7, 'hour').valueOf() / 1000}`, 10)
+    }
+
     public static FITBIT_AUTH_DATA: any = {
-        access_token: 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJBMUIyM0MiLCJzdWIiOiJBQkMxMjMiLCJpc3MiOiJGaXRiaXQiLCJ0eXAiOiJhY2Nl' +
-            'c3NfdG9rZW4iLCJzY29wZXMiOiJyd2VpIHJhY3QgcnNsZSIsImV4cCI6MTU2ODE2MjQwMCwiaWF0IjoxNTY4MTMzNjAwfQ.QAMpCmHE6hJk' +
-            '94a0UBOeqWWFXaOQpg4sZz08y89gmV0',
-        expires_in: 1568162400,
+        access_token: TokenManager.generateToken(DefaultEntityMock.PAYLOAD),
+        expires_in: DefaultEntityMock.PAYLOAD.exp,
         refresh_token: 'd6ccf77f84d342267f9f011d2e16fb9e',
         scope: 'ract rsle rwei',
         token_type: 'Bearer',
@@ -156,6 +166,10 @@ export abstract class DefaultEntityMock {
     public static USER_IDS: any = {
         does_not_exists: '5d7fb75ae48591c21a793f70',
         does_not_saved: '5d7fd15c3e86dd635cc12767',
+        expired_token: '5d926e4ebb567ba877a0ee5e',
+        invalid_token: '5d9270f07d06332a5541d8aa',
+        client_error: '5d927225f8f8b947e0766bb6',
+        any_fitbit_error: '5d9272ba888cb686ed99d952',
         child_id: '5d7a4a95c292db05e4f765a8'
     }
 
@@ -169,16 +183,6 @@ export abstract class DefaultEntityMock {
         institution_id: '5d7bb0c519cc1c00126ca689',
         gender: 'male',
         age: 9
-    }
-
-    public static PAYLOAD: any = {
-        aud: 'A1B23C',
-        sub: 'ABC123',
-        iss: 'Fitbit',
-        typ: 'access_token',
-        scopes: 'rwei ract rsle',
-        exp: 1568162400,
-        iat: 1568133600
     }
 
     public static LOG_SYNC: any = {

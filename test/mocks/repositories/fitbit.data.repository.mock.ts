@@ -2,20 +2,14 @@ import { IFitbitDataRepository } from '../../../src/application/port/fitbit.auth
 import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.auth.data'
 import { DefaultEntityMock } from '../models/default.entity.mock'
 import { DataSync } from '../../../src/application/domain/model/data.sync'
+import { OAuthException } from '../../../src/application/domain/exception/oauth.exception'
 
 const authData: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA)
+const dataSync: DataSync = new DataSync().fromJSON(DefaultEntityMock.DATA_SYNC)
 
 export class FitbitDataRepositoryMock implements IFitbitDataRepository {
     public getTokenPayload(token: string): Promise<any> {
-        return Promise.resolve({
-            aud: 'A1B23C',
-            sub: 'ABC123',
-            iss: 'Fitbit',
-            typ: 'access_token',
-            scopes: 'ract rsle rwei',
-            exp: 1568162400,
-            iat: 1568133600
-        })
+        return Promise.resolve(DefaultEntityMock.PAYLOAD)
     }
 
     public refreshToken(userId: string, accessToken: string, refreshToken: string, expiresIn?: number):
@@ -53,7 +47,16 @@ export class FitbitDataRepositoryMock implements IFitbitDataRepository {
     }
 
     public syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
-        return Promise.resolve(new DataSync())
+        if (userId === DefaultEntityMock.USER_IDS.expired_token) {
+            return Promise.reject(new OAuthException('expired_token', 'The token has expired'))
+        } else if (userId === DefaultEntityMock.USER_IDS.invalid_token) {
+            return Promise.reject(new OAuthException('invalid_token', 'The token is invalid'))
+        } else if (userId === DefaultEntityMock.USER_IDS.client_error) {
+            return Promise.reject(new OAuthException('client_error', 'The Fitbit Client is unavailable'))
+        } else if (userId === DefaultEntityMock.USER_IDS.any_fitbit_error) {
+            return Promise.reject(new Error('Any error occurs'))
+        }
+        return Promise.resolve(dataSync)
     }
 
     public updateTokenStatus(userId: string, status: string): Promise<boolean> {

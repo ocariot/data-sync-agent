@@ -8,8 +8,8 @@ import { OAuthException } from '../../application/domain/exception/oauth.excepti
 import { FitbitClientException } from '../../application/domain/exception/fitbit.client.exception'
 
 /**
- * Treats the exception types of the application and converts
- * to api exception which should be returned in json format for the client.
+ * Treats the exceptions types of the application and converts
+ * to api exceptions which should be returned in json format for the client.
  *
  * @abstract
  */

@@ -44,7 +44,16 @@ export class UserAuthDataRepositoryMock implements IUserAuthDataRepository {
     }
 
     public getUserAuthDataByUserId(userId: string): Promise<UserAuthData> {
+        if (userId === DefaultEntityMock.USER_IDS.does_not_exists) return Promise.resolve(undefined!)
+        else if (userId === DefaultEntityMock.USER_IDS.expired_token) {
+            const result: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA)
+            result.fitbit!.status = 'expired_token'
+            return Promise.resolve(result)
+        } else if (userId === DefaultEntityMock.USER_IDS.invalid_token) {
+            const result: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA)
+            result.fitbit!.status = 'invalid_token'
+            return Promise.resolve(result)
+        }
         return Promise.resolve(data)
     }
-
 }

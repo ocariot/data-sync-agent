@@ -1,7 +1,7 @@
 import { Exception } from './exception'
 
 /**
- * Conflict data exception.
+ * Conflict data exceptions.
  * 
  * @extends {Exception}
  */

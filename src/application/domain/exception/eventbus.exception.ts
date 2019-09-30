@@ -1,7 +1,7 @@
 import { Exception } from './exception'
 
 /**
- * Event bus exception.
+ * Event bus exceptions.
  *
  * @extends {Exception}
  */

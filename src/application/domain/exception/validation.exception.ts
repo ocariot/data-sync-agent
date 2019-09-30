@@ -1,7 +1,7 @@
 import { Exception } from './exception'
 
 /**
- * Validation exception.
+ * Validation exceptions.
  * 
  * @extends {Exception}
  */
