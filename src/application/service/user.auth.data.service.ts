@@ -140,7 +140,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                                             const result: DataSync = await this.syncFitbitData(newToken, userId)
                                             return resolve(result)
                                         }).catch(err => {
-                                        this.updateTokenStatus(userId, err.type)
+                                        if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                                         this.publishFitbitAuthError(err, userId)
                                         return reject(err)
                                     })
@@ -151,7 +151,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                                         return reject(err)
                                     }
                                 } else {
-                                    this.updateTokenStatus(userId, err.type)
+                                    if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                                     this.publishFitbitAuthError(err, userId)
                                     return reject(err)
                                 }
@@ -201,7 +201,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                                 return Promise.reject(err)
                             })
                     } catch (err) {
-                        this.updateTokenStatus(userId, err.type)
+                        if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                         this.publishFitbitAuthError(err, userId)
                         return Promise.reject(err)
                     }
@@ -212,7 +212,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                         return Promise.reject(err)
                     }
                 } else {
-                    this.updateTokenStatus(userId, err.type)
+                    if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                     this.publishFitbitAuthError(err, userId)
                     return Promise.reject(err)
                 }

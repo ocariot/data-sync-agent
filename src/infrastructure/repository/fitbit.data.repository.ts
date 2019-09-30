@@ -743,8 +743,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 `The refresh token ${refreshToken} is invalid. Please make a new Fitbit Auth Data request and try again.`)
         } else if (err.type === 'system') {
             return new OAuthException(
-                'invalid_grant',
-                `Data request limit for user ${userId} has expired. .`,
+                'system',
+                `Data request limit for access token ${accessToken} has expired.`,
                 'Please wait a minimum of one hour and try make the operation again.')
         } else if (err.type === 'invalid_client') {
             return new OAuthException(
