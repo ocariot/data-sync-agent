@@ -13,7 +13,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                 const res: FitbitAuthData = mapper.transform(DefaultEntityMock.FITBIT_AUTH_DATA)
                 assert.propertyVal(res, 'id', DefaultEntityMock.FITBIT_AUTH_DATA.id)
                 assert.propertyVal(res, 'access_token', DefaultEntityMock.FITBIT_AUTH_DATA.access_token)
-                assert.propertyVal(res, 'expires_in', DefaultEntityMock.FITBIT_AUTH_DATA.expires_in)
+                assert.property(res, 'expires_in')
                 assert.propertyVal(res, 'refresh_token', DefaultEntityMock.FITBIT_AUTH_DATA.refresh_token)
                 assert.propertyVal(res, 'scope', DefaultEntityMock.FITBIT_AUTH_DATA.scope)
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
@@ -55,7 +55,7 @@ describe('Mappers: FitbitAuthDataEntityMapper', () => {
                 const res: FitbitAuthDataEntity =
                     mapper.transform(new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA))
                 assert.propertyVal(res, 'access_token', DefaultEntityMock.FITBIT_AUTH_DATA.access_token)
-                assert.propertyVal(res, 'expires_in', DefaultEntityMock.FITBIT_AUTH_DATA.expires_in)
+                assert.property(res, 'expires_in')
                 assert.propertyVal(res, 'refresh_token', DefaultEntityMock.FITBIT_AUTH_DATA.refresh_token)
                 assert.propertyVal(res, 'scope', DefaultEntityMock.FITBIT_AUTH_DATA.scope)
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)

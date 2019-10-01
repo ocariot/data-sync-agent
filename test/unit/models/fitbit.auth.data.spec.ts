@@ -9,7 +9,7 @@ describe('Models: FitbitAuthData', () => {
                 const res: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA)
                 assert.propertyVal(res, 'id', DefaultEntityMock.FITBIT_AUTH_DATA.id)
                 assert.propertyVal(res, 'access_token', DefaultEntityMock.FITBIT_AUTH_DATA.access_token)
-                assert.propertyVal(res, 'expires_in', DefaultEntityMock.FITBIT_AUTH_DATA.expires_in)
+                assert.property(res, 'expires_in')
                 assert.propertyVal(res, 'refresh_token', DefaultEntityMock.FITBIT_AUTH_DATA.refresh_token)
                 assert.propertyVal(res, 'scope', DefaultEntityMock.FITBIT_AUTH_DATA.scope)
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
@@ -23,7 +23,7 @@ describe('Models: FitbitAuthData', () => {
                 const res: FitbitAuthData = new FitbitAuthData().fromJSON(JSON.stringify(DefaultEntityMock.FITBIT_AUTH_DATA))
                 assert.propertyVal(res, 'id', DefaultEntityMock.FITBIT_AUTH_DATA.id)
                 assert.propertyVal(res, 'access_token', DefaultEntityMock.FITBIT_AUTH_DATA.access_token)
-                assert.propertyVal(res, 'expires_in', DefaultEntityMock.FITBIT_AUTH_DATA.expires_in)
+                assert.property(res, 'expires_in')
                 assert.propertyVal(res, 'refresh_token', DefaultEntityMock.FITBIT_AUTH_DATA.refresh_token)
                 assert.propertyVal(res, 'scope', DefaultEntityMock.FITBIT_AUTH_DATA.scope)
                 assert.propertyVal(res, 'token_type', DefaultEntityMock.FITBIT_AUTH_DATA.token_type)
@@ -89,7 +89,7 @@ describe('Models: FitbitAuthData', () => {
             it('should return a json', () => {
                 const model: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock.FITBIT_AUTH_DATA)
                 const res: any = model.toJSON()
-                assert.deepEqual(res, DefaultEntityMock.FITBIT_AUTH_DATA)
+                assert.deepEqual(res, DefaultEntityMock.FITBIT_AUTH_DATA_BEFORE)
             })
         })
         context('when the model parameters are undefined', () => {

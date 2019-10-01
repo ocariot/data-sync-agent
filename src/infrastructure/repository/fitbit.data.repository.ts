@@ -118,14 +118,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             let minutesFairlyActiveLogs: Array<any>
             let minutesVeryActiveLogs: Array<any>
 
-            if (scopes.includes('rwei')) {
-                syncWeights = await this.syncWeightData(data, data.last_sync!)
-            }
-            if (scopes.includes('rsle')) {
-                syncSleep = await this.syncSleepData(data, data.last_sync!)
-            }
+            if (scopes.includes('rwei')) syncWeights = await this.syncWeightData(data)
+            if (scopes.includes('rsle')) syncSleep = await this.syncSleepData(data)
             if (scopes.includes('ract')) {
-                promises.push(this.syncUserActivities(data, data.last_sync!))
+                promises.push(this.syncUserActivities(data))
                 promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'steps'))
                 promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'calories'))
                 promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesSedentary'))
@@ -442,12 +438,12 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private async syncWeightData(data: FitbitAuthData, lastSync: string): Promise<Array<any>> {
+    private async syncWeightData(data: FitbitAuthData): Promise<Array<any>> {
         try {
-            const result: Array<any> = lastSync ?
+            const result: Array<any> = data.last_sync ?
                 await this.getUserBodyDataFromInterval(
                     data.access_token!,
-                    moment(lastSync).format('YYYY-MM-DD'),
+                    moment(data.last_sync).format('YYYY-MM-DD'),
                     moment().format('YYYY-MM-DD'))
                 : [
                     ...await this.getUserBodyDataFromInterval(
@@ -481,26 +477,50 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
     }
 
-    private async syncSleepData(data: FitbitAuthData, lastSync: string): Promise<Array<any>> {
+    private async syncSleepData(data: FitbitAuthData): Promise<Array<any>> {
         try {
-            const result: Array<any> = await this.getUserSleep(
-                data.access_token!,
-                100,
-                lastSync ? moment(lastSync).format('YYYY-MM-DD') :
-                    moment().subtract(6, 'month').format('YYYY-MM-DD'))
+            const result: Array<any> = data.last_sync ?
+                await this.getUserSleep(
+                    data.access_token!,
+                    100,
+                    moment(data.last_sync).format('YYYY-MM-DD')) :
+                [
+                    ...await this.getUserSleepFromInterval(
+                        data.access_token!,
+                        moment().subtract(1, 'month').format('YYYY-MM-DD'),
+                        moment().format('YYYY-MM-DD')),
+                    ...await this.getUserSleepFromInterval(
+                        data.access_token!,
+                        moment().subtract(2, 'month').format('YYYY-MM-DD'),
+                        moment().subtract(1, 'month').format('YYYY-MM-DD')),
+                    ...await this.getUserSleepFromInterval(
+                        data.access_token!,
+                        moment().subtract(3, 'month').format('YYYY-MM-DD'),
+                        moment().subtract(2, 'month').format('YYYY-MM-DD')),
+                    ...await this.getUserSleepFromInterval(
+                        data.access_token!,
+                        moment().subtract(4, 'month').format('YYYY-MM-DD'),
+                        moment().subtract(3, 'month').format('YYYY-MM-DD')),
+                    ...await this.getUserSleepFromInterval(
+                        data.access_token!,
+                        moment().subtract(5, 'month').format('YYYY-MM-DD'),
+                        moment().subtract(4, 'month').format('YYYY-MM-DD')),
+                    ...await this.getUserSleepFromInterval(
+                        data.access_token!,
+                        moment().subtract(6, 'month').format('YYYY-MM-DD'),
+                        moment().subtract(5, 'month').format('YYYY-MM-DD'))
+                ]
             return Promise.resolve(result)
         } catch (err) {
             return Promise.reject(err)
         }
     }
 
-    private async syncUserActivities(data: FitbitAuthData, lastSync: string): Promise<Array<any>> {
+    private async syncUserActivities(data: FitbitAuthData): Promise<Array<any>> {
         try {
-            const result: Array<any> = await this.getUserActivities(
-                data.access_token!,
-                100,
-                lastSync ? moment(lastSync).format('YYYY-MM-DD') :
-                    moment().subtract(6, 'month').format('YYYY-MM-DD'))
+            const result: Array<any> = data.last_sync ?
+                await this.getUserActivities(data.access_token!, 100, moment(data.last_sync).format('YYYY-MM-DD')) :
+                await this.getLastUserActivities(data.access_token!)
             return Promise.resolve(result)
         } catch (err) {
             return Promise.reject(err)
@@ -540,11 +560,30 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
+    private async getLastUserActivities(token: string): Promise<any> {
+        const now: string = moment().format('YYYY-MM-DD')
+        const path: string = `/activities/list.json?beforeDate=${now}&sort=desc&offset=0&limit=100`
+        return new Promise<any>((resolve, reject) => {
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.activities))
+                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
+        })
+    }
+
     private async getUserActivities(token: string, limit: number, afterDate: string): Promise<any> {
         const path: string = `/activities/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
         return new Promise<any>((resolve, reject) => {
             this._fitbitClientRepo.getDataFromPath(path, token)
                 .then(result => resolve(result.activities))
+                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
+        })
+    }
+
+    private getUserSleepFromInterval(token: string, baseDate: string, endDate: string): Promise<any> {
+        const path: string = `/sleep/date/${baseDate}/${endDate}.json`
+        return new Promise<any>((resolve, reject) => {
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.sleep))
                 .catch(err => reject(this.fitbitClientErrorListener(err, token)))
         })
     }
@@ -657,7 +696,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             pattern: {
                 data_set: item.levels.data.map(value => {
                     return {
-                        start_time: moment(item.startTime).utc().format(),
+                        start_time: moment(value.dateTime).utc().format(),
                         name: value.level,
                         duration: `${parseInt(value.seconds, 10) * 1000}`
                     }

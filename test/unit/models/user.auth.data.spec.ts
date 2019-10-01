@@ -56,7 +56,7 @@ describe('Models: UserAuthData', () => {
             it('should return a json', () => {
                 const model: UserAuthData = new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA)
                 const res: any = model.toJSON()
-                assert.deepEqual(res, DefaultEntityMock.USER_AUTH_DATA)
+                assert.deepEqual(res, DefaultEntityMock.USER_AUTH_DATA_BEFORE)
             })
         })
         context('when the model parameters are undefined', () => {

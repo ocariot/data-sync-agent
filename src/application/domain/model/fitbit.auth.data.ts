@@ -89,7 +89,7 @@ export class FitbitAuthData extends Entity implements IJSONSerializable, IJSONDe
 
         if (json.user_id !== undefined) this.user_id = json.user_id
         if (json.access_token !== undefined) this.access_token = json.access_token
-        if (json.expires_in !== undefined) this.expires_in = json.expires_in
+        if (json.expires_in !== undefined) this.expires_in = (json.expires_in - 300)
         if (json.refresh_token !== undefined) this.refresh_token = json.refresh_token
         if (json.scope !== undefined) this.scope = json.scope
         if (json.token_type !== undefined) this.token_type = json.token_type

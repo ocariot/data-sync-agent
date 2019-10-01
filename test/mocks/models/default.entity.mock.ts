@@ -34,10 +34,27 @@ export abstract class DefaultEntityMock {
         status: 'valid_token'
     }
 
+    public static FITBIT_AUTH_DATA_BEFORE: any = {
+        access_token: TokenManager.generateToken(DefaultEntityMock.PAYLOAD),
+        expires_in: (DefaultEntityMock.PAYLOAD.exp - 300),
+        refresh_token: 'd6ccf77f84d342267f9f011d2e16fb9e',
+        scope: 'ract rsle rwei',
+        token_type: 'Bearer',
+        user_id: 'ABC123',
+        last_sync: '2019-09-12T13:36:49.741Z',
+        status: 'valid_token'
+    }
+
     public static USER_AUTH_DATA: any = {
         id: '5d7aa5125b593e3f113d190f',
         user_id: '5d7a4a95c292db05e4f765a8',
         fitbit: DefaultEntityMock.FITBIT_AUTH_DATA
+    }
+
+    public static USER_AUTH_DATA_BEFORE: any = {
+        id: '5d7aa5125b593e3f113d190f',
+        user_id: '5d7a4a95c292db05e4f765a8',
+        fitbit: DefaultEntityMock.FITBIT_AUTH_DATA_BEFORE
     }
 
     public static LOG: any = {

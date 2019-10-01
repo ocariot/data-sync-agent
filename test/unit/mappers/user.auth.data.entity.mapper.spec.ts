@@ -38,7 +38,7 @@ describe('Mappers: UserAuthDataEntityMapper', () => {
             it('should return a entity', () => {
                 const res: UserAuthDataEntity =
                     mapper.transform(new UserAuthData().fromJSON(DefaultEntityMock.USER_AUTH_DATA))
-                assert.deepEqual(res, DefaultEntityMock.USER_AUTH_DATA)
+                assert.deepEqual(res, DefaultEntityMock.USER_AUTH_DATA_BEFORE)
             })
             context('when the model is empty', () => {
                 it('should return a entity with undefined parameters', () => {
