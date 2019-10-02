@@ -39,8 +39,7 @@ export class UserFitbitAuthController {
                     token_type: 'Bearer'
                 }
             })
-            if (!!req.query.filters.last_sync) userAuth.fitbit!.last_sync! = req.query.filters.last_sync
-            await this._userAuthDataService.addFitbitAuthData(userAuth, req.query.filters.init_sync)
+            await this._userAuthDataService.add(userAuth)
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)

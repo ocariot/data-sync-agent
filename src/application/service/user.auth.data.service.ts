@@ -78,20 +78,6 @@ export class UserAuthDataService implements IUserAuthDataService {
         return this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
     }
 
-    public async addFitbitAuthData(data: UserAuthData, initSync: string): Promise<UserAuthData> {
-        try {
-            const result: UserAuthData = await this.add(data)
-            if (initSync !== 'false') {
-                await this.syncFitbitData(result.fitbit!, result.user_id!)
-            } else if (initSync === 'false' && result.fitbit!.last_sync) {
-                this._fitbitAuthDataRepo.publishLastSync(result.user_id!, result.fitbit!.last_sync)
-            }
-            return Promise.resolve(result)
-        } catch (err) {
-            return Promise.reject(err)
-        }
-    }
-
     public async revokeFitbitAccessToken(userId: string): Promise<boolean> {
         try {
             ObjectIdValidator.validate(userId)

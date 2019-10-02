@@ -125,27 +125,6 @@ describe('Services: UserAuthDataService', () => {
             })
         })
     })
-    describe('addFitbitAuthData()', () => {
-        context('when save a user auth data and no sync the data', () => {
-            it('should return the data', () => {
-                return service.addFitbitAuthData(data, 'false')
-                    .then(res => {
-                        assert.propertyVal(res, 'id', DefaultEntityMock.USER_AUTH_DATA.id)
-                        assert.propertyVal(res, 'user_id', DefaultEntityMock.USER_AUTH_DATA.user_id)
-                        assert.deepPropertyVal(res, 'fitbit', fitbit)
-                    })
-            })
-        })
-        context('when there are validation errors', () => {
-            it('should reject an error', () => {
-                return service.addFitbitAuthData(new UserAuthData(), 'false')
-                    .catch(err => {
-                        assert.propertyVal(err, 'message', 'Required fields were not provided...')
-                        assert.propertyVal(err, 'description', 'User Auth Validation: user_id required!')
-                    })
-            })
-        })
-    })
     describe('revokeFitbitAccessToken()', () => {
         context('when revoke the fitbit access token by user id', () => {
             it('should return true', () => {
