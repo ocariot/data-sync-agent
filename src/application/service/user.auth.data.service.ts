@@ -84,9 +84,9 @@ export class UserAuthDataService implements IUserAuthDataService {
             const authData: UserAuthData =
                 await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
             if (!authData) return Promise.resolve(false)
+            await this.unsubscribeFitbitEvents(authData)
             await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
-            const deleted: boolean =
-                await this._userAuthDataRepo.deleteByQuery(new Query().fromJSON({ user_id: userId }))
+            const deleted: boolean = await this._fitbitAuthDataRepo.removeFitbitAuthData(userId)
             return Promise.resolve(deleted)
         } catch (err) {
             return Promise.reject(err)
@@ -225,6 +225,23 @@ export class UserAuthDataService implements IUserAuthDataService {
             }
             if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
+            }
+        } catch (err) {
+            return Promise.reject(err)
+        }
+    }
+
+    private async unsubscribeFitbitEvents(data: UserAuthData): Promise<void> {
+        try {
+            const scopes: Array<string> = data.fitbit!.scope!.split(' ')
+            if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
+                await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'body', 'BODY')
+            }
+            if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
+                await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
+            }
+            if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
+                await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
             }
         } catch (err) {
             return Promise.reject(err)

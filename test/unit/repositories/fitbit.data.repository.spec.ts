@@ -30,6 +30,43 @@ describe('Repositories: FitbitDataRepository', () => {
         sinon.restore()
     })
 
+    describe('removeFitbitAuthData()', () => {
+        context('when remove a fitbit data', () => {
+            it('should return true', () => {
+                sinon
+                    .mock(modelFake)
+                    .expects('updateOne')
+                    .withArgs(
+                        { user_id: data.user_id },
+                        { $unset: { fitbit: '' } })
+                    .resolves(data.fitbit!)
+                return repo.removeFitbitAuthData(data.user_id!)
+                    .then(res => {
+                        assert.isTrue(res)
+                    })
+            })
+        })
+        context('when a error occurs', () => {
+            it('should reject an error', () => {
+                sinon
+                    .mock(modelFake)
+                    .expects('updateOne')
+                    .withArgs(
+                        { user_id: data.user_id },
+                        { $unset: { fitbit: '' } })
+                    .rejects({
+                        message: 'An internal error has occurred in the database!',
+                        description: 'Please try again later...'
+                    })
+                return repo.removeFitbitAuthData(data.user_id!)
+                    .catch(err => {
+                        assert.propertyVal(err, 'message', 'An internal error has occurred in the database!')
+                        assert.propertyVal(err, 'description', 'Please try again later...')
+                    })
+            })
+        })
+    })
+
     describe('revokeToken()', () => {
         context('when revoke a access token', () => {
             it('should return true', () => {

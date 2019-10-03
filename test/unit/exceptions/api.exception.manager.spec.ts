@@ -5,6 +5,7 @@ import { ConflictException } from '../../../src/application/domain/exception/con
 import { RepositoryException } from '../../../src/application/domain/exception/repository.exception'
 import { OAuthException } from '../../../src/application/domain/exception/oauth.exception'
 import { FitbitClientException } from '../../../src/application/domain/exception/fitbit.client.exception'
+import { EventBusException } from '../../../src/application/domain/exception/eventbus.exception'
 
 class ExceptionTest extends ApiExceptionManager {
 }
@@ -43,6 +44,11 @@ describe('Exception: ApiExceptionManager', () => {
         })
         it('should return a internal error for repository exceptions', () => {
             const res = ExceptionTest.build(new Error('message'))
+            assert.propertyVal(res, 'code', 500)
+            assert.propertyVal(res, 'message', 'message')
+        })
+        it('should return a internal error for eventbus exceptions', () => {
+            const res = ExceptionTest.build(new EventBusException('message'))
             assert.propertyVal(res, 'code', 500)
             assert.propertyVal(res, 'message', 'message')
         })

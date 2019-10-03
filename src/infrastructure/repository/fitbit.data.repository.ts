@@ -44,6 +44,15 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     ) {
     }
 
+    public removeFitbitAuthData(userId: string): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            this._userAuthRepoModel
+                .updateOne({ user_id: userId }, { $unset: { fitbit: '' } })
+                .then(res => resolve(!!res))
+                .catch(err => reject(this.mongoDBErrorListener(err)))
+        })
+    }
+
     public revokeToken(accessToken: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
             this._fitbitClientRepo.revokeToken(accessToken)

@@ -8,6 +8,10 @@ const authData: FitbitAuthData = new FitbitAuthData().fromJSON(DefaultEntityMock
 const dataSync: DataSync = new DataSync().fromJSON(DefaultEntityMock.DATA_SYNC)
 
 export class FitbitDataRepositoryMock implements IFitbitDataRepository {
+    public removeFitbitAuthData(userId: string): Promise<boolean> {
+        return Promise.resolve(true)
+    }
+
     public getTokenPayload(token: string): Promise<any> {
         return Promise.resolve(DefaultEntityMock.PAYLOAD)
     }
