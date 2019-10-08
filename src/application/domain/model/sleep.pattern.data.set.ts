@@ -53,7 +53,7 @@ export class SleepPatternDataSet implements IJSONSerializable, IJSONDeserializab
     public toJSON(): any {
         return {
             start_time: this.start_time ? this.start_time : this.start_time,
-            name: this.name,
+            name: this.name === 'wake' ? 'awake' : this.name,
             duration: this.duration
         }
     }
