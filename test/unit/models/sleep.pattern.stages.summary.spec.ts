@@ -73,7 +73,7 @@ describe('Models: SleepPatternStagesSummary', () => {
                 const model: SleepPatternStagesSummary = new SleepPatternStagesSummary()
                     .fromJSON(DefaultEntityMock.SLEEP_PATTERN_STAGES_SUMMARY)
                 const res: any = model.toJSON()
-                assert.deepEqual(res, DefaultEntityMock.SLEEP_PATTERN_STAGES_SUMMARY)
+                assert.deepEqual(res, DefaultEntityMock.SLEEP_PATTERN_STAGES_SUMMARY_JSON)
             })
         })
     })

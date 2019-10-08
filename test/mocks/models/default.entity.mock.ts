@@ -145,6 +145,13 @@ export abstract class DefaultEntityMock {
         duration: 10000
     }
 
+    public static SLEEP_PATTERN_STAGES_SUMMARY_JSON: any = {
+        deep: DefaultEntityMock.SLEEP_PATTERN_SUMMARY_DATA,
+        light: DefaultEntityMock.SLEEP_PATTERN_SUMMARY_DATA,
+        rem: DefaultEntityMock.SLEEP_PATTERN_SUMMARY_DATA,
+        awake: DefaultEntityMock.SLEEP_PATTERN_SUMMARY_DATA
+    }
+
     public static SLEEP_PATTERN_STAGES_SUMMARY: any = {
         deep: DefaultEntityMock.SLEEP_PATTERN_SUMMARY_DATA,
         light: DefaultEntityMock.SLEEP_PATTERN_SUMMARY_DATA,
