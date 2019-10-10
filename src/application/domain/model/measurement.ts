@@ -24,7 +24,7 @@ export class Measurement extends Entity implements IJSONSerializable, IJSONDeser
     }
 
     set type(value: string | undefined) {
-        if (value !== undefined) this._type = value.toLowerCase().trim()
+        this._type = value
     }
 
     get timestamp(): string | undefined {
@@ -66,7 +66,7 @@ export class Measurement extends Entity implements IJSONSerializable, IJSONDeser
         }
 
         if (json.id !== undefined) super.id = json.id
-        if (json.type !== undefined) this.type = json.type
+        if (json.type !== undefined) this.type = json.type.toLowerCase().trim()
         if (json.timestamp !== undefined) this.timestamp = json.timestamp
         if (json.value !== undefined) this.value = json.value
         if (json.unit !== undefined) this.unit = json.unit

@@ -147,7 +147,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                         }
                     }).catch(err => reject(err))
             } catch (err) {
-                return Promise.reject(err)
+                return reject(err)
             }
         })
     }

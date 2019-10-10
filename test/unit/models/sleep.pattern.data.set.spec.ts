@@ -58,6 +58,22 @@ describe('Models: SleepPatternDataSet', () => {
                 const res: any = model.toJSON()
                 assert.deepEqual(res, DefaultEntityMock.SLEEP_PATTERN_DATA_SET)
             })
+            it('should return a json', () => {
+                const wake = {
+                    start_time: '2019-09-12T13:36:49.741Z',
+                    name: 'wake',
+                    duration: 10000
+                }
+                const awake = {
+                    start_time: '2019-09-12T13:36:49.741Z',
+                    name: 'awake',
+                    duration: 10000
+                }
+                const model: SleepPatternDataSet =
+                    new SleepPatternDataSet().fromJSON(wake)
+                const res: any = model.toJSON()
+                assert.deepEqual(res, awake)
+            })
         })
         context('when the model parameters are undefined', () => {
             it('should return a json with undefined parameters', () => {
