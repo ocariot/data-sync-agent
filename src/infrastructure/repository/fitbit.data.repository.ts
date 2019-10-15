@@ -449,7 +449,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private async syncWeightData(data: FitbitAuthData): Promise<Array<any>> {
         try {
-            const result: Array<any> = data.last_sync && moment(data.last_sync).diff(moment()) < 2 ?
+            const result: Array<any> = (data.last_sync && moment().diff(moment(data.last_sync), 'days') <= 31) ?
                 await this.getUserBodyDataFromInterval(
                     data.access_token!,
                     moment(data.last_sync).format('YYYY-MM-DD'),
