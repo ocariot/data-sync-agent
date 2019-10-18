@@ -166,7 +166,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
             // The sync data must be published to the message bus.
             if (activitiesList.length) {
-                this._eventBus.bus.pubSavePhysicalActivity(activitiesList.map(item => item.toJSON()))
+                this._eventBus.bus.pubSyncPhysicalActivity(activitiesList.map(item => item.toJSON()))
                     .then(() => {
                         this._logger.info(`Physical activities from ${userId} successful published!`)
                         this.saveResourceList(activities, data.user_id!)
@@ -176,7 +176,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                     .catch(err => this._logger.error(`Error at publish physical activities logs: ${err.message}`))
             }
             if (weightList.length) {
-                this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
+                this._eventBus.bus.pubSyncWeight(weightList.map(item => item.toJSON()))
                     .then(() => {
                         this._logger.info(`Weight Measurements from ${userId} successful published!`)
                         this.saveResourceList(weights, data.user_id!)
@@ -187,7 +187,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             }
 
             if (sleepList.length) {
-                this._eventBus.bus.pubSaveSleep(sleepList.map(item => item.toJSON()))
+                this._eventBus.bus.pubSyncSleep(sleepList.map(item => item.toJSON()))
                     .then(() => {
                         this._logger.info(`Sleep from ${userId} successful published!`)
                         this.saveResourceList(sleep, data.user_id!)
@@ -199,7 +199,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
             const logList: Array<any> = userLog.toJSONList()
             if (logList && logList.length) {
-                this._eventBus.bus.pubSaveLog(logList).then(() => {
+                this._eventBus.bus.pubSyncLog(logList).then(() => {
                     this._logger.info(`Activities logs from ${userId} successful published!`)
                 })
             }
@@ -314,7 +314,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         const weightList: Array<Weight> = this.parseWeightList(resources, userId)
                         if (weightList.length) {
                             // Publish list of weights
-                            this._eventBus.bus.pubSaveWeight(weightList.map(item => item.toJSON()))
+                            this._eventBus.bus.pubSyncWeight(weightList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Weight Measurements from ${userId} successful published!`)
                                     this.saveResourceList(resources, data.user_id!)
@@ -346,7 +346,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
                         if (activityList.length) {
                             // Publish list of activities
-                            this._eventBus.bus.pubSavePhysicalActivity(activityList.map(item => item.toJSON()))
+                            this._eventBus.bus.pubSyncPhysicalActivity(activityList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Physical activities from ${userId} successful published!`)
                                     this.saveResourceList(resources, data.user_id!)
@@ -384,7 +384,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 userId
             )
 
-            this._eventBus.bus.pubSaveLog(userLog.toJSONList())
+            this._eventBus.bus.pubSyncLog(userLog.toJSONList())
                 .then(() => {
                     this._logger.info(`Activities logs from ${userId} successful published!`)
                 })
@@ -406,7 +406,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
                         if (sleepList.length) {
                             // Publish list of sleep.
-                            this._eventBus.bus.pubSavePhysicalActivity(sleepList.map(item => item.toJSON()))
+                            this._eventBus.bus.pubSyncSleep(sleepList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Sleep from ${userId} successful published!`)
                                     this.saveResourceList(resources, data.user_id!)
