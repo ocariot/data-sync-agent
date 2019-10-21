@@ -6,6 +6,7 @@ import { Query } from '../../infrastructure/repository/query/query'
 import { UserAuthData } from '../../application/domain/model/user.auth.data'
 import cron from 'node-cron'
 import { IUserAuthDataService } from '../../application/port/user.auth.data.service.interface'
+import { Default } from '../../utils/default'
 
 @injectable()
 export class CollectFitbitUserDataTask implements IBackgroundTask {
@@ -15,7 +16,8 @@ export class CollectFitbitUserDataTask implements IBackgroundTask {
         @inject(Identifier.USER_AUTH_DATA_SERVICE) private readonly _userAuthDataService: IUserAuthDataService,
         @inject(Identifier.LOGGER) private readonly _logger: ILogger
     ) {
-        this.schedule = cron.schedule(`${process.env.EXPRESSION_AUTO_SYNC}`, () => this.getFitbitUsersData())
+        this.schedule = cron.schedule(`${process.env.EXPRESSION_AUTO_SYNC || Default.EXPRESSION_AUTO_SYNC}`,
+            () => this.getFitbitUsersData())
     }
 
     public async run(): Promise<void> {

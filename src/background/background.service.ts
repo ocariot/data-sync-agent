@@ -32,7 +32,7 @@ export class BackgroundService {
             const rabbitUri = process.env.RABBITMQ_URI || Default.RABBITMQ_URI
             const rabbitOptions: any = { sslOptions: { ca: [] } }
             if (rabbitUri.indexOf('amqps') === 0) {
-                rabbitOptions.sslOptions.ca = [fs.readFileSync(process.env.RABBIMQ_CA_PATH || Default.RABBIMQ_CA_PATH)]
+                rabbitOptions.sslOptions.ca = [fs.readFileSync(process.env.RABBITMQ_CA_PATH || Default.RABBITMQ_CA_PATH)]
             }
             await this._eventBus.initialize(rabbitUri, rabbitOptions)
             this.initializeBusEvents()

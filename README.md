@@ -32,7 +32,7 @@ Application settings are defined by environment variables. To define the setting
 | `MONGODB_URI` | Database connection URI used if the application is running in development or production environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent` |
 | `MONGODB_URI_TEST` | Database connection URI used if the application is running in test environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent-test` |
 | `RABBITMQ_URI` | URI containing the parameters for connection to the message channel RabbitMQ. The [URI specifications ](https://www.rabbitmq.com/uri-spec.html) defined by RabbitMQ are accepted. For example: `amqp://user:pass@host:port` | `amqp://guest:guest`<br/>`@127.0.0.1:5672` |
-| `RABBITMQ_CA_PATH` | CA certificate. | `.certs/ca.crt` |
+| `RABBITMQ_CA_PATH` | RabbitMQ CA file location. Must always be provided when using `amqps` protocol. | `.certs/rabbitmqca.crt` |
 | `FITBIT_CLIENT_ID` | Client Id for Fitbit Application resposible to manage user data. | `CIENT_ID_HERE` |
 | `FITBIT_CLIENT_SECRET` | Client Secret for Fitbit Application resposible to manage user data. | `CIENT_SECRET_HERE` |
 | `FITBIT_CLIENT_SUBSCRIBER` | Client Subscriber code for automatically get notification from new sync data. | `CLIENT_SUBSCRIBER_HERE` |
