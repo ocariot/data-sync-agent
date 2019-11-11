@@ -11,10 +11,6 @@ RUN npm install
 # Copy app source
 COPY . /usr/src/ds
 
-# Create self-signed certificates
-RUN chmod +x ./create-self-signed-certs.sh
-RUN ./create-self-signed-certs.sh
-
 # Build app
 RUN npm run build
 

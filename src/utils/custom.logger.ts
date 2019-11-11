@@ -8,18 +8,14 @@ import DailyRotateFile from 'winston-daily-rotate-file'
 export class CustomLogger implements ILogger {
     private readonly _logger: Logger
     private readonly _logDir = process.env.LOG_DIR || Default.LOG_DIR
-    private _options: any = {}
     private readonly _moduleName: string
+    private _options: any = {}
 
     constructor() {
         if (!fs.existsSync(this._logDir)) fs.mkdirSync(this._logDir) // create directory if it does not exist
         this.initOptions() // initialize options logger
         this._logger = this.internalCreateLogger()
-        this._moduleName = 'data.sync.app'
-    }
-
-    get logger(): Logger {
-        return this._logger
+        this._moduleName = 'ds.app'
     }
 
     private internalCreateLogger(): Logger {
@@ -42,25 +38,16 @@ export class CustomLogger implements ILogger {
                 format.colorize(),
                 format.splat(),
                 format.timestamp(),
-                format.printf(
-                    info => `${info.timestamp} ${info.level}: ${info.message}`
-                )
+                format.printf(log => `${log.module} @ ${log.timestamp} ${log.level}: ${log.message}`)
             )
         }
 
-        switch ((process.env.NODE_ENV || Default.NODE_ENV)) {
-            case 'production':
-                this._options.level = 'warning'
-                this._options.silent = false
-                break
-            case 'test':
-                this._options.level = 'none'
-                this._options.silent = true
-                break
-            default: // development or other
-                this._options.level = 'debug'
-                this._options.silent = false
-                break
+        if ((process.env.NODE_ENV || Default.NODE_ENV) === 'test') {
+            this._options.level = 'none'
+            this._options.silent = true
+        } else {
+            this._options.level = 'debug'
+            this._options.silent = false
         }
     }
 
@@ -116,8 +103,6 @@ export class CustomLogger implements ILogger {
  * @see {@link https://github.com/winstonjs/winston#using-logging-levels} for further information.
  */
 export interface ILogger {
-    logger: Logger
-
     error(message: string): void
 
     warn(message: string): void
