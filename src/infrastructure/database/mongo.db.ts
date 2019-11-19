@@ -60,8 +60,8 @@ export class MongoDB implements IDatabase {
                 this._connection = undefined
                 this._eventConnection.emit('disconnected')
                 this._logger.warn(`Error trying to connect for the first time with mongoDB: ${err.message}`)
-                setTimeout(async () => {
-                    _this.connect(uri, options).then()
+                setTimeout(() => {
+                    _this.connect(uri, options)
                 }, 2000)
             })
     }
