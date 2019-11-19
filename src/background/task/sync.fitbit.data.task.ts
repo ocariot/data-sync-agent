@@ -9,7 +9,7 @@ import { IUserAuthDataService } from '../../application/port/user.auth.data.serv
 import { Default } from '../../utils/default'
 
 @injectable()
-export class CollectFitbitUserDataTask implements IBackgroundTask {
+export class SyncFitbitDataTask implements IBackgroundTask {
     private schedule: any
 
     constructor(

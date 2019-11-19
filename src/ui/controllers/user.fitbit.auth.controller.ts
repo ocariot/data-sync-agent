@@ -36,7 +36,8 @@ export class UserFitbitAuthController {
                 fitbit: {
                     access_token: req.body.access_token,
                     refresh_token: req.body.refresh_token,
-                    token_type: 'Bearer'
+                    token_type: 'Bearer',
+                    last_sync: req.query.filters.last_sync
                 }
             })
             await this._userAuthDataService.add(userAuth)
