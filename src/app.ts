@@ -141,7 +141,7 @@ export class App {
                 customfavIcon: Default.LOGO_URI,
                 customSiteTitle: `API Reference | ${Strings.APP.TITLE}`
             }
-            this.express.use('/v1/reference', swaggerUi.serve, swaggerUi.setup(null, options))
+            this.express.use('/v1/reference', swaggerUi.serve, swaggerUi.setup({}, options))
         }
     }
 

@@ -8,7 +8,6 @@ import { IFitbitDataRepository } from '../port/fitbit.auth.data.repository.inter
 import { IUserAuthDataService } from '../port/user.auth.data.service.interface'
 import { Query } from '../../infrastructure/repository/query/query'
 import { ValidationException } from '../domain/exception/validation.exception'
-import { EventBusException } from '../domain/exception/eventbus.exception'
 import { FitbitAuthData } from '../domain/model/fitbit.auth.data'
 import { ObjectIdValidator } from '../domain/validator/object.id.validator'
 import { ILogger } from '../../utils/custom.logger'
@@ -29,26 +28,26 @@ export class UserAuthDataService implements IUserAuthDataService {
     public async add(item: UserAuthData): Promise<UserAuthData> {
         try {
             CreateUserAuthDataValidator.validate(item)
-            const newItem: UserAuthData = await this.manageFitbitAuthData(item)
-            newItem.fitbit!.status = 'valid_token'
+            const authData: UserAuthData = await this.manageFitbitAuthData(item)
+            authData.fitbit!.status = 'valid_token'
+
             await this.subscribeFitbitEvents(item)
-            const exists: boolean = await this._userAuthDataRepo.checkUserExists(newItem.user_id!)
-            if (!exists) throw new ValidationException(`The user does not have register on platform: ${newItem.user_id!}`)
+
             const alreadySaved: UserAuthData =
-                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: newItem.user_id! } }))
+                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: authData.user_id! } }))
             if (alreadySaved) {
-                newItem.id = alreadySaved.id
-                const result: UserAuthData = await this._userAuthDataRepo.update(newItem)
+                authData.id = alreadySaved.id
+                const result: UserAuthData = await this._userAuthDataRepo.update(authData)
                 return Promise.resolve(result)
             }
-            const authData: UserAuthData = await this._userAuthDataRepo.create(newItem)
-            return Promise.resolve(authData)
-        } catch (err) {
-            if (err.message.indexOf('rpc') !== -1) {
-                return Promise.reject(new EventBusException(
-                    'Communication with the message bus cannot be performed.',
-                    'Probably, the message service is unavailable.'))
+
+            if (authData.fitbit && authData.fitbit.last_sync) {
+                this._eventBus.bus.pubFitbitLastSync({ child_id: authData.user_id, last_sync: authData.fitbit.last_sync })
+                    .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
+                    .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
             }
+            return this._userAuthDataRepo.create(authData)
+        } catch (err) {
             return Promise.reject(err)
         }
     }
@@ -86,18 +85,16 @@ export class UserAuthDataService implements IUserAuthDataService {
             if (!authData) return Promise.resolve(false)
             await this.unsubscribeFitbitEvents(authData)
             await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
-            const deleted: boolean = await this._fitbitAuthDataRepo.removeFitbitAuthData(userId)
-            return Promise.resolve(deleted)
+            return this._fitbitAuthDataRepo.removeFitbitAuthData(userId)
         } catch (err) {
             return Promise.reject(err)
         }
     }
 
-    private async syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
+    private syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
         try {
             VerifyFitbitAuthValidator.validate(data)
-            const result: DataSync = await this._fitbitAuthDataRepo.syncFitbitData(data, userId)
-            return Promise.resolve(result)
+            return this._fitbitAuthDataRepo.syncFitbitData(data, userId)
         } catch (err) {
             return Promise.reject(err)
         }
@@ -171,8 +168,8 @@ export class UserAuthDataService implements IUserAuthDataService {
     private async syncLastFitbitData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
         try {
             VerifyFitbitAuthValidator.validate(data)
-            const result = await this._fitbitAuthDataRepo.syncLastFitbitData(data, userId, type, date)
-            return result
+            await this._fitbitAuthDataRepo.syncLastFitbitData(data, userId, type, date)
+            return Promise.resolve()
         } catch (err) {
             if (err.type) {
                 if (err.type === 'expired_token') {
