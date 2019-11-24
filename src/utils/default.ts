@@ -21,6 +21,9 @@ export abstract class Default {
     public static readonly MONGODB_URI: string = 'mongodb://127.0.0.1:27017/data-sync-agent-service'
     public static readonly MONGODB_URI_TEST: string = 'mongodb://127.0.0.1:27017/data-sync-agent-service-test'
 
+    // Redis database
+    public static readonly REDIS_URI: string = 'redis://127.0.0.1:6379'
+
     // RabbitMQ
     public static readonly RABBITMQ_URI: string = 'amqp://guest:guest@127.0.0.1:5672/ocariot'
 

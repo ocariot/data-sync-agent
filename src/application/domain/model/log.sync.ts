@@ -9,6 +9,10 @@ export class LogSync implements IJSONSerializable, IJSONDeserializable<LogSync> 
     private _lightly_active_minutes?: number
     private _sedentary_minutes?: number
 
+    constructor() {
+        // not implemented!
+    }
+
     get calories(): number | undefined {
         return this._calories
     }

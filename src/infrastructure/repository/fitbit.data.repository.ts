@@ -213,6 +213,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
             // Build Object to return
             const dataSync: DataSync = new DataSync()
+            dataSync.user_id = userId
             dataSync.activities = activitiesList.length || 0
             dataSync.weights = weightList.length || 0
             dataSync.sleep = sleepList.length || 0

@@ -31,6 +31,7 @@ Application settings are defined by environment variables. To define the setting
 | `SSL_CERT_PATH` | SSL/TLS certificate. | `.certs/server.crt` |
 | `MONGODB_URI` | Database connection URI used if the application is running in development or production environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent` |
 | `MONGODB_URI_TEST` | Database connection URI used if the application is running in test environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent-test` |
+| `REDIS_URI` | Redis database connection URI. Using for sync jobs. | `redis://127.0.0.1:6379` |
 | `RABBITMQ_URI` | URI containing the parameters for connection to the message channel RabbitMQ. The [URI specifications ](https://www.rabbitmq.com/uri-spec.html) defined by RabbitMQ are accepted. For example: `amqp://user:pass@host:port` | `amqp://guest:guest`<br/>`@127.0.0.1:5672` |
 | `RABBITMQ_CA_PATH` | RabbitMQ CA file location. Must always be provided when using `amqps` protocol. | `.certs/rabbitmqca.crt` |
 | `FITBIT_CLIENT_ID` | Client Id for Fitbit Application resposible to manage user data. | `CIENT_ID_HERE` |
@@ -117,6 +118,7 @@ docker run --rm \
   -e SSL_CERT_PATH=.certs/server.crt \
   -e RABBITMQ_URI="amqp://guest:guest@192.168.0.1:5672" \
   -e MONGODB_URI="mongodb://192.168.0.2:27017/ocariot-ds-agent" \
+  -e REDIS_URI="redis://127.0.0.1:6379" \
   -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
   -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
@@ -130,6 +132,7 @@ docker run --rm \
   --net=host \
   -e RABBITMQ_URI="amqp://guest:guest@localhost:5672" \
   -e MONGODB_URI="mongodb://localhost:27017/ocariot-ds-agent" \
+  -e REDIS_URI="redis://127.0.0.1:6379" \
   -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
   -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \

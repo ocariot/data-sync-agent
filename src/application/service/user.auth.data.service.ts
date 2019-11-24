@@ -129,7 +129,8 @@ export class UserAuthDataService implements IUserAuthDataService {
                                     })
                                 } else if (err.type === 'client_error') {
                                     try {
-                                        await this.syncFitbitData(data.fitbit, userId)
+                                        const result: DataSync = await this.syncFitbitData(data.fitbit, userId)
+                                        return resolve(result)
                                     } catch (err) {
                                         return reject(err)
                                     }
@@ -142,7 +143,8 @@ export class UserAuthDataService implements IUserAuthDataService {
                                 return reject(err)
                             }
                         }
-                    }).catch(err => reject(err))
+                    })
+                    .catch(reject)
             } catch (err) {
                 return reject(err)
             }

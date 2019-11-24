@@ -16,6 +16,9 @@ services:
   - rabbitmq
   - mongodb
 sudo: false
+cache:
+  directories:
+    - node_modules
 before_script:
   - sudo rabbitmqctl add_vhost ocariot
   - sudo rabbitmqctl set_permissions -p ocariot guest ".*" ".*" ".*"
