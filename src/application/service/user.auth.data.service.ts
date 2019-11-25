@@ -77,18 +77,39 @@ export class UserAuthDataService implements IUserAuthDataService {
         return this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
     }
 
-    public async revokeFitbitAccessToken(userId: string): Promise<boolean> {
-        try {
-            ObjectIdValidator.validate(userId)
-            const authData: UserAuthData =
-                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: userId } }))
-            if (!authData) return Promise.resolve(false)
-            await this.unsubscribeFitbitEvents(authData)
-            await this._fitbitAuthDataRepo.revokeToken(authData.fitbit!.access_token!)
-            return this._fitbitAuthDataRepo.removeFitbitAuthData(userId)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+    public revokeFitbitAccessToken(userId: string): Promise<boolean> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                ObjectIdValidator.validate(userId)
+
+                // 1. Check if user has authorization data saved.
+                const authData: UserAuthData = await this._userAuthDataRepo
+                    .findOne(new Query().fromJSON({ filters: { user_id: userId } }))
+                if (!authData || !authData.fitbit || !authData.fitbit.access_token) {
+                    return resolve(false)
+                }
+
+                // 2. Unsubscribe from Fitbit events.
+                await this.unsubscribeFitbitEvents(authData)
+
+                // 3. Revokes Fitbit access token.
+                // 4. Remove Fitbit authorization data from local database.
+                if (await this._fitbitAuthDataRepo.revokeToken(authData.fitbit.access_token) &&
+                    await this._fitbitAuthDataRepo.removeFitbitAuthData(userId)) {
+                    // 5. Publish the Fitbit revoke event on the bus.
+                    this._eventBus.bus
+                        .pubFitbitRevoke({ child_id: userId })
+                        .then(() => this._logger.info(`Fitbit revoke event for child ${userId} successfully published!`))
+                        .catch((err) => this._logger.error(`There was an error publishing Fitbit revoke event for child ${userId}. ${err.message}`))
+
+                    return resolve(true)
+                } else {
+                    return resolve(false)
+                }
+            } catch (err) {
+                return reject(err)
+            }
+        })
     }
 
     private syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
@@ -209,7 +230,9 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
         try {
-            const scopes: Array<string> = data.fitbit!.scope!.split(' ')
+            if (!data || !data.fitbit || !data.fitbit.scope) return
+
+            const scopes: Array<string> = data.fitbit.scope.split(' ')
             if (!(scopes.includes('rwei') || scopes.includes('ract') || scopes.includes('rsle'))) {
                 throw new ValidationException(
                     'The token must have permission for at least one of the features that are synced by the API.',
@@ -232,7 +255,9 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     private async unsubscribeFitbitEvents(data: UserAuthData): Promise<void> {
         try {
-            const scopes: Array<string> = data.fitbit!.scope!.split(' ')
+            if (!data || !data.fitbit || !data.fitbit.scope) return
+
+            const scopes: Array<string> = data.fitbit.scope.split(' ')
             if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
                 await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'body', 'BODY')
             }
