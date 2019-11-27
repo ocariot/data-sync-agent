@@ -14,6 +14,7 @@ Microservice responsible for data synchronization of FitBit and CVE platform wit
 ## Prerequisites
 - [Node 8.0.0+](https://nodejs.org/en/download/)
 - [MongoDB Server 3.0.0+](https://www.mongodb.com/download-center/community)
+- [Redis Server 5.0.0+](https://redis.io/download)
 - [RabbitMQ 3.7.0+](https://www.rabbitmq.com/download.html)
 
 ---
