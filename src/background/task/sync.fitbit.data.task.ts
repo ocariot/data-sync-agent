@@ -10,7 +10,7 @@ import { Default } from '../../utils/default'
 import { DataSync } from '../../application/domain/model/data.sync'
 import Bull, { Job } from 'bull'
 import url, { UrlWithStringQuery } from 'url'
-import shell from 'shelljs'
+import net from 'net'
 
 @injectable()
 export class SyncFitbitDataTask implements IBackgroundTask {
@@ -43,14 +43,14 @@ export class SyncFitbitDataTask implements IBackgroundTask {
             this.initRedisListeners()
             this.syncQueue!
                 .process(job => this._userAuthDataService.syncFitbitDataFromUser(job.data.user_id!))
-                .catch(e => this._logger.error(`An error occurred processing queue for Fitbit synchronization. ${e.message}`))
+                .catch(e => this._logger.error(`An error occurred processing queue for Fitbit sync. ${e.message}`))
 
             // Initialize crontab
             this.schedule.start()
 
-            this._logger.debug('Fitbit data synchronization task started successfully!')
+            this._logger.debug('Fitbit data sync task started successfully!')
         } catch (e) {
-            this._logger.error(`An error occurred initializing the Fitbit data synchronization task. ${e.message}`)
+            this._logger.error(`An error occurred initializing the Fitbit data sync task. ${e.message}`)
         }
     }
 
@@ -64,14 +64,22 @@ export class SyncFitbitDataTask implements IBackgroundTask {
      * Function to block flow until Redis instance is available.
      */
     private waitRedis(): Promise<void> {
-        return new Promise<void>(resolve => {
+        return new Promise<void>(async (resolve) => {
             const redisCheck = () => {
-                this._logger.warn(`Waiting for instance of Redis (${this.redisURI.host}) to become available`)
                 setTimeout(() => {
-                    const check = !(Number(shell.exec(`nc -vz -w 1 ${this.redisURI.hostname} ${this.redisURI.port}; echo $?`,
-                        { silent: true }).stdout))
-                    if (check) return resolve()
-                    redisCheck()
+                    const socket = new net.Socket()
+                    const onError = () => {
+                        this._logger.warn(`Waiting for instance of Redis (${this.redisURI.host}) to become available`)
+                        socket.destroy()
+                        redisCheck()
+                    }
+                    socket.setTimeout(500)
+                    socket.once('error', onError)
+                    socket.once('timeout', onError)
+                    socket.connect(Number(this.redisURI.port!), this.redisURI.hostname!, () => {
+                        socket.end()
+                        return resolve()
+                    })
                 }, 2000)
             }
             redisCheck()
@@ -104,7 +112,7 @@ export class SyncFitbitDataTask implements IBackgroundTask {
 
         this.syncQueue
             .on('completed', (job: Job, result: DataSync) => {
-                this._logger.info(`Fitbit data sync for child ${result.user_id} is finished!`)
+                this._logger.debug(`Fitbit data sync job for child ${result.user_id} has been executed!`)
             })
             .on('failed', (job: Job, err: Error) => {
                 this._logger.error(
@@ -131,7 +139,9 @@ export class SyncFitbitDataTask implements IBackgroundTask {
                     return
                 }
                 // Create jobs and add them to queue to process later
-                usersData.forEach(item => this.syncQueue!.add(item))
+                for (const item of usersData) {
+                    await this.syncQueue!.add(item)
+                }
             })
             .catch(err => {
                 this._logger.error(`An error occurred while trying to retrieve data for Fitbit sync. ${err.message}`)

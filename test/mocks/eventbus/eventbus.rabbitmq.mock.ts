@@ -27,6 +27,9 @@ export class EventBusRabbitMQMock implements IEventBus, IDisposable {
             },
             pubSaveWeight: (resource: any): Promise<any> => {
                 return Promise.resolve()
+            },
+            pubFitbitRevoke: (resource: any): Promise<any> => {
+                return Promise.resolve()
             }
         }
     }
