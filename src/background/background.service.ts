@@ -49,6 +49,7 @@ export class BackgroundService {
         try {
             await this._mongodb.dispose()
             await this._eventBus.dispose()
+            await this._subscribeTask.stop()
         } catch (err) {
             return Promise.reject(new Error(`Error stopping MongoDB! ${err.message}`))
         }

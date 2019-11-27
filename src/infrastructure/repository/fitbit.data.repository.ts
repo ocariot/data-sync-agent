@@ -166,42 +166,48 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
             // The sync data must be published to the message bus.
             if (activitiesList.length) {
-                this._eventBus.bus.pubSyncPhysicalActivity(activitiesList.map(item => item.toJSON()))
+                this._eventBus.bus
+                    .pubSyncPhysicalActivity(activitiesList.map(item => item.toJSON()))
                     .then(() => {
                         this._logger.info(`Physical activities from ${userId} successful published!`)
                         this.saveResourceList(activities, data.user_id!)
                             .then(() => this._logger.info(`Physical Activity logs from ${userId} saved successful!`))
                             .catch(err => this._logger.error(`Error at save physical activities logs: ${err.message}`))
                     })
-                    .catch(err => this._logger.error(`Error at publish physical activities logs: ${err.message}`))
+                    .catch(err => this._logger.error(`Error publishing physical activities: ${err.message}`))
             }
             if (weightList.length) {
-                this._eventBus.bus.pubSyncWeight(weightList.map(item => item.toJSON()))
+                this._eventBus.bus
+                    .pubSyncWeight(weightList.map(item => item.toJSON()))
                     .then(() => {
                         this._logger.info(`Weight Measurements from ${userId} successful published!`)
                         this.saveResourceList(weights, data.user_id!)
                             .then(() => this._logger.info(`Weight logs from ${data.user_id} saved successful!`))
                             .catch(err => this._logger.error(`Error at save weight logs: ${err.message}`))
                     })
-                    .catch(err => this._logger.error(`Error at publish weight logs: ${err.message}`))
+                    .catch(err => this._logger.error(`Error publishing weights: ${err.message}`))
             }
 
             if (sleepList.length) {
-                this._eventBus.bus.pubSyncSleep(sleepList.map(item => item.toJSON()))
+                this._eventBus.bus
+                    .pubSyncSleep(sleepList.map(item => item.toJSON()))
                     .then(() => {
                         this._logger.info(`Sleep from ${userId} successful published!`)
                         this.saveResourceList(sleep, data.user_id!)
                             .then(() => this._logger.info(`Sleep logs from ${userId} saved successful!`))
                             .catch(err => this._logger.error(`Error at save sleep logs: ${err.message}`))
                     })
-                    .catch(err => this._logger.error(`Error at publish sleep logs: ${err.message}`))
+                    .catch(err => this._logger.error(`Error publishing sleep: ${err.message}`))
             }
 
             const logList: Array<any> = userLog.toJSONList()
             if (logList && logList.length) {
-                this._eventBus.bus.pubSyncLog(logList).then(() => {
-                    this._logger.info(`Activities logs from ${userId} successful published!`)
-                })
+                this._eventBus.bus
+                    .pubSyncLog(logList)
+                    .then(() => {
+                        this._logger.info(`Activities logs from ${userId} successful published!`)
+                    })
+                    .catch(err => this._logger.error(`Error publishing logs: ${err.message}`))
             }
 
             // Finally, the last sync variable from user needs to be updated
@@ -209,7 +215,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this.updateLastSync(userId, lastSync)
                 .then(res => {
                     if (res) this.publishLastSync(userId, lastSync)
-                }).catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
+                })
+                .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
 
             // Build Object to return
             const dataSync: DataSync = new DataSync()
