@@ -71,6 +71,7 @@
     "node-cron": "^2.0.3",
     "query-strings-parser": "^2.1.3",
     "reflect-metadata": "^0.1.13",
+    "shelljs": "^0.8.3",
     "swagger-ui-express": "^4.1.2",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.2.1"
