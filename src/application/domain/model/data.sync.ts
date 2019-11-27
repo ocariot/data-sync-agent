@@ -8,6 +8,19 @@ export class DataSync implements IJSONSerializable, IJSONDeserializable<DataSync
     private _sleep?: number
     private _weights?: number
     private _logs?: LogSync
+    private _user_id?: string
+
+    constructor() {
+        // not implemented!
+    }
+
+    get user_id(): string | undefined {
+        return this._user_id
+    }
+
+    set user_id(value: string | undefined) {
+        this._user_id = value
+    }
 
     get activities(): number | undefined {
         return this._activities

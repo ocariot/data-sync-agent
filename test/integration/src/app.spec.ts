@@ -4,7 +4,6 @@ import { App } from '../../../src/app'
 import { expect } from 'chai'
 import { IDatabase } from '../../../src/infrastructure/port/database.interface'
 import { Default } from '../../../src/utils/default'
-import ipAllowed from 'ip-allowed'
 
 const dbConnection: IDatabase = DIContainer.get(Identifier.MONGODB_CONNECTION)
 const app: App = DIContainer.get(Identifier.APP)
