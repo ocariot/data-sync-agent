@@ -3,53 +3,57 @@ import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 
 export class LogSync implements IJSONSerializable, IJSONDeserializable<LogSync> {
-    private _calories?: number
-    private _steps?: number
-    private _active_minutes?: number
-    private _lightly_active_minutes?: number
-    private _sedentary_minutes?: number
+    private _steps: number
+    private _calories: number
+    private _active_minutes: number
+    private _lightly_active_minutes: number
+    private _sedentary_minutes: number
 
     constructor() {
-        // not implemented!
+        this._steps = 0
+        this._calories = 0
+        this._active_minutes = 0
+        this._lightly_active_minutes = 0
+        this._sedentary_minutes = 0
     }
 
-    get calories(): number | undefined {
-        return this._calories
-    }
-
-    set calories(value: number | undefined) {
-        this._calories = value
-    }
-
-    get steps(): number | undefined {
+    get steps(): number {
         return this._steps
     }
 
-    set steps(value: number | undefined) {
+    set steps(value: number) {
         this._steps = value
     }
 
-    get active_minutes(): number | undefined {
+    get calories(): number {
+        return this._calories
+    }
+
+    set calories(value: number) {
+        this._calories = value
+    }
+
+    get active_minutes(): number {
         return this._active_minutes
     }
 
-    set active_minutes(value: number | undefined) {
+    set active_minutes(value: number) {
         this._active_minutes = value
     }
 
-    get lightly_active_minutes(): number | undefined {
+    get lightly_active_minutes(): number {
         return this._lightly_active_minutes
     }
 
-    set lightly_active_minutes(value: number | undefined) {
+    set lightly_active_minutes(value: number) {
         this._lightly_active_minutes = value
     }
 
-    get sedentary_minutes(): number | undefined {
+    get sedentary_minutes(): number {
         return this._sedentary_minutes
     }
 
-    set sedentary_minutes(value: number | undefined) {
+    set sedentary_minutes(value: number) {
         this._sedentary_minutes = value
     }
 

@@ -38,7 +38,9 @@ export class FitbitClientRepository implements IFitbitClientRepository {
         return new Promise<any>((resolve, reject) => {
             this.fitbit_client.get(path, accessToken)
                 .then(data => {
-                    if (data[0].errors) return reject(this.fitbitClientErrorListener(data[0].errors[0]))
+                    if (data[0].errors) {
+                        return reject(this.fitbitClientErrorListener(data[0].errors[0]))
+                    }
                     return resolve(data[0])
                 })
                 .catch(err => reject(this.fitbitClientErrorListener(err)))
@@ -56,7 +58,9 @@ export class FitbitClientRepository implements IFitbitClientRepository {
                     { 'X-Fitbit-Subscriber-Id': process.env.FITBIT_SUBSCRIBER_ID } // Extra Header
                 )
                 .then(res => {
-                    if (res[0].errors) reject(this.fitbitClientErrorListener(res[0].errors[0]))
+                    if (res[0].errors) {
+                        return reject(this.fitbitClientErrorListener(res[0].errors[0]))
+                    }
                     return resolve()
                 }).catch(err => reject(this.fitbitClientErrorListener(err)))
         })
@@ -72,7 +76,9 @@ export class FitbitClientRepository implements IFitbitClientRepository {
                     { 'X-Fitbit-Subscriber-Id': process.env.FITBIT_SUBSCRIBER_ID } // Extra Header
                 )
                 .then(res => {
-                    if (res[0] && res[0].errors) reject(this.fitbitClientErrorListener(res[0].errors[0]))
+                    if (res[0] && res[0].errors) {
+                        return reject(this.fitbitClientErrorListener(res[0].errors[0]))
+                    }
                     return resolve()
                 }).catch(err => reject(this.fitbitClientErrorListener(err)))
         })
