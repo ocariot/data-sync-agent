@@ -27,10 +27,10 @@ export class UserAuthDataService implements IUserAuthDataService {
 
     public async add(item: UserAuthData): Promise<UserAuthData> {
         try {
-            CreateUserAuthDataValidator.validate(item)
             const authData: UserAuthData = await this.manageFitbitAuthData(item)
-            authData.fitbit!.status = 'valid_token'
+            CreateUserAuthDataValidator.validate(item)
 
+            authData.fitbit!.status = 'valid_token'
             await this.subscribeFitbitEvents(item)
 
             const alreadySaved: UserAuthData =
@@ -233,12 +233,7 @@ export class UserAuthDataService implements IUserAuthDataService {
             if (!data || !data.fitbit || !data.fitbit.scope) return
 
             const scopes: Array<string> = data.fitbit.scope.split(' ')
-            if (!(scopes.includes('rwei') || scopes.includes('ract') || scopes.includes('rsle'))) {
-                throw new ValidationException(
-                    'The token must have permission for at least one of the features that are synced by the API.',
-                    'The features that are mapped are: rwei (weight), ract (activity), rsle (sleep).'
-                )
-            }
+
             if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
             }
@@ -248,6 +243,7 @@ export class UserAuthDataService implements IUserAuthDataService {
             if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
                 await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
             }
+            return Promise.resolve()
         } catch (err) {
             return Promise.reject(err)
         }
@@ -273,16 +269,21 @@ export class UserAuthDataService implements IUserAuthDataService {
     }
 
     private async manageFitbitAuthData(data: UserAuthData): Promise<UserAuthData> {
-        try {
-            const payload: any = await this._fitbitAuthDataRepo.getTokenPayload(data.fitbit!.access_token!)
-            if (payload.sub) data.fitbit!.user_id = payload.sub
-            if (payload.scopes) data.fitbit!.scope = payload.scopes
-            if (payload.exp) data.fitbit!.expires_in = payload.exp
-            data.fitbit!.token_type = 'Bearer'
-            return Promise.resolve(data)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (!data || !data.fitbit || !data.fitbit.access_token) {
+                    return resolve(data)
+                }
+                const payload: any = await this._fitbitAuthDataRepo.getTokenPayload(data.fitbit!.access_token!)
+                if (payload.sub) data.fitbit!.user_id = payload.sub
+                if (payload.scopes) data.fitbit!.scope = payload.scopes
+                if (payload.exp) data.fitbit!.expires_in = payload.exp
+                data.fitbit!.token_type = 'Bearer'
+                resolve(data)
+            } catch (err) {
+                reject(err)
+            }
+        })
     }
 
     private updateTokenStatus(userId: string, status: string): void {
@@ -301,7 +302,6 @@ export class UserAuthDataService implements IUserAuthDataService {
    * 1401 - Invalid Client Credentials
    * 1429 - Too Many Requests
    * 1500 - Generic Error
-   *
    */
     private publishFitbitAuthError(error: any, userId: string): void {
         const fitbit: any = {

@@ -114,127 +114,132 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     }
 
     public async syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
-        try {
-            const scopes: Array<string> = data.scope!.split(' ')
-            const promises: Array<Promise<any>> = []
-            let syncWeights: Array<any> = []
-            let syncSleep: Array<any> = []
-            let syncActivities: Array<any>
-            let stepsLogs: Array<any>
-            let caloriesLogs: Array<any>
-            let minutesSedentaryLogs: Array<any>
-            let minutesLightlyActiveLogs: Array<any>
-            let minutesFairlyActiveLogs: Array<any>
-            let minutesVeryActiveLogs: Array<any>
+        return new Promise<DataSync>(async (resolve, reject) => {
+            try {
+                if (!data || !data.scope) {
+                    throw new RepositoryException('Invalid scope, cannot be empty.')
+                }
+                const scopes: Array<string> = data.scope!.split(' ')
+                const promises: Array<Promise<any>> = []
+                let syncWeights: Array<any> = []
+                let syncSleep: Array<any> = []
+                let syncActivities: Array<any>
+                let stepsLogs: Array<any>
+                let caloriesLogs: Array<any>
+                let minutesSedentaryLogs: Array<any>
+                let minutesLightlyActiveLogs: Array<any>
+                let minutesFairlyActiveLogs: Array<any>
+                let minutesVeryActiveLogs: Array<any>
 
-            if (scopes.includes('rwei')) syncWeights = await this.syncWeightData(data)
-            if (scopes.includes('rsle')) syncSleep = await this.syncSleepData(data)
-            if (scopes.includes('ract')) {
-                promises.push(this.syncUserActivities(data))
-                promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'steps'))
-                promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'calories'))
-                promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesSedentary'))
-                promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesLightlyActive'))
-                promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesFairlyActive'))
-                promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesVeryActive'))
-            }
-            const result = await Promise.all(promises)
-            syncActivities = result[0] || []
-            stepsLogs = result[1] || []
-            caloriesLogs = result[2] || []
-            minutesSedentaryLogs = result[3] || []
-            minutesLightlyActiveLogs = result[4] || []
-            minutesFairlyActiveLogs = result[5] || []
-            minutesVeryActiveLogs = result[6] || []
+                if (scopes.includes('rwei')) syncWeights = await this.syncWeightData(data)
+                if (scopes.includes('rsle')) syncSleep = await this.syncSleepData(data)
+                if (scopes.includes('ract')) {
+                    promises.push(this.syncUserActivities(data))
+                    promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'steps'))
+                    promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'calories'))
+                    promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesSedentary'))
+                    promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesLightlyActive'))
+                    promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesFairlyActive'))
+                    promises.push(this.syncUserActivitiesLogs(data, data.last_sync!, 'minutesVeryActive'))
+                }
+                const result = await Promise.all(promises)
+                syncActivities = result[0] || []
+                stepsLogs = result[1] || []
+                caloriesLogs = result[2] || []
+                minutesSedentaryLogs = result[3] || []
+                minutesLightlyActiveLogs = result[4] || []
+                minutesFairlyActiveLogs = result[5] || []
+                minutesVeryActiveLogs = result[6] || []
 
-            // Filter list of data for does not sync data that was saved
-            const weights: Array<any> = await this.filterDataAlreadySync(syncWeights, ResourceDataType.BODY)
-            const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep, ResourceDataType.SLEEP)
-            const activities: Array<any> = await this.filterDataAlreadySync(syncActivities, ResourceDataType.ACTIVITIES)
+                // Filter list of data for does not sync data that was saved
+                const weights: Array<any> = await this.filterDataAlreadySync(syncWeights, ResourceDataType.BODY)
+                const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep, ResourceDataType.SLEEP)
+                const activities: Array<any> = await this.filterDataAlreadySync(syncActivities, ResourceDataType.ACTIVITIES)
 
-            const weightList: Array<Weight> = await this.parseWeightList(weights, userId)
-            const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, userId)
-            const sleepList: Array<Sleep> = await this.parseSleepList(sleep, userId)
-            const userLog: UserLog = await this.parseActivityLogs(
-                stepsLogs,
-                caloriesLogs,
-                minutesSedentaryLogs,
-                minutesLightlyActiveLogs,
-                this.mergeLogsValues(minutesFairlyActiveLogs, minutesVeryActiveLogs),
-                userId
-            )
+                const weightList: Array<Weight> = await this.parseWeightList(weights, userId)
+                const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, userId)
+                const sleepList: Array<Sleep> = await this.parseSleepList(sleep, userId)
+                const userLog: UserLog = await this.parseActivityLogs(
+                    stepsLogs,
+                    caloriesLogs,
+                    minutesSedentaryLogs,
+                    minutesLightlyActiveLogs,
+                    this.mergeLogsValues(minutesFairlyActiveLogs, minutesVeryActiveLogs),
+                    userId
+                )
 
-            // The sync data must be published to the message bus.
-            if (activitiesList.length) {
-                this._eventBus.bus
-                    .pubSyncPhysicalActivity(activitiesList.map(item => item.toJSON()))
-                    .then(() => {
-                        this._logger.info(`Physical activities from ${userId} successful published!`)
-                        this.saveResourceList(activities, data.user_id!)
-                            .then(() => this._logger.info(`Physical Activity logs from ${userId} saved successful!`))
-                            .catch(err => this._logger.error(`Error at save physical activities logs: ${err.message}`))
+                // The sync data must be published to the message bus.
+                if (activitiesList.length) {
+                    this._eventBus.bus
+                        .pubSyncPhysicalActivity(activitiesList.map(item => item.toJSON()))
+                        .then(() => {
+                            this._logger.info(`Physical activities from ${userId} successful published!`)
+                            this.saveResourceList(activities, data.user_id!)
+                                .then(() => this._logger.info(`Physical Activity logs from ${userId} saved successful!`))
+                                .catch(err => this._logger.error(`Error at save physical activities logs: ${err.message}`))
+                        })
+                        .catch(err => this._logger.error(`Error publishing physical activities: ${err.message}`))
+                }
+                if (weightList.length) {
+                    this._eventBus.bus
+                        .pubSyncWeight(weightList.map(item => item.toJSON()))
+                        .then(() => {
+                            this._logger.info(`Weight Measurements from ${userId} successful published!`)
+                            this.saveResourceList(weights, data.user_id!)
+                                .then(() => this._logger.info(`Weight logs from ${data.user_id} saved successful!`))
+                                .catch(err => this._logger.error(`Error at save weight logs: ${err.message}`))
+                        })
+                        .catch(err => this._logger.error(`Error publishing weights: ${err.message}`))
+                }
+
+                if (sleepList.length) {
+                    this._eventBus.bus
+                        .pubSyncSleep(sleepList.map(item => item.toJSON()))
+                        .then(() => {
+                            this._logger.info(`Sleep from ${userId} successful published!`)
+                            this.saveResourceList(sleep, data.user_id!)
+                                .then(() => this._logger.info(`Sleep logs from ${userId} saved successful!`))
+                                .catch(err => this._logger.error(`Error at save sleep logs: ${err.message}`))
+                        })
+                        .catch(err => this._logger.error(`Error publishing sleep: ${err.message}`))
+                }
+
+                const logList: Array<any> = userLog.toJSONList()
+                if (logList && logList.length) {
+                    this._eventBus.bus
+                        .pubSyncLog(logList)
+                        .then(() => {
+                            this._logger.info(`Activities logs from ${userId} successful published!`)
+                        })
+                        .catch(err => this._logger.error(`Error publishing logs: ${err.message}`))
+                }
+
+                // Finally, the last sync variable from user needs to be updated
+                const lastSync = moment.utc().format()
+                this.updateLastSync(userId, lastSync)
+                    .then(res => {
+                        if (res) this.publishLastSync(userId, lastSync)
                     })
-                    .catch(err => this._logger.error(`Error publishing physical activities: ${err.message}`))
-            }
-            if (weightList.length) {
-                this._eventBus.bus
-                    .pubSyncWeight(weightList.map(item => item.toJSON()))
-                    .then(() => {
-                        this._logger.info(`Weight Measurements from ${userId} successful published!`)
-                        this.saveResourceList(weights, data.user_id!)
-                            .then(() => this._logger.info(`Weight logs from ${data.user_id} saved successful!`))
-                            .catch(err => this._logger.error(`Error at save weight logs: ${err.message}`))
-                    })
-                    .catch(err => this._logger.error(`Error publishing weights: ${err.message}`))
-            }
+                    .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
 
-            if (sleepList.length) {
-                this._eventBus.bus
-                    .pubSyncSleep(sleepList.map(item => item.toJSON()))
-                    .then(() => {
-                        this._logger.info(`Sleep from ${userId} successful published!`)
-                        this.saveResourceList(sleep, data.user_id!)
-                            .then(() => this._logger.info(`Sleep logs from ${userId} saved successful!`))
-                            .catch(err => this._logger.error(`Error at save sleep logs: ${err.message}`))
-                    })
-                    .catch(err => this._logger.error(`Error publishing sleep: ${err.message}`))
-            }
-
-            const logList: Array<any> = userLog.toJSONList()
-            if (logList && logList.length) {
-                this._eventBus.bus
-                    .pubSyncLog(logList)
-                    .then(() => {
-                        this._logger.info(`Activities logs from ${userId} successful published!`)
-                    })
-                    .catch(err => this._logger.error(`Error publishing logs: ${err.message}`))
-            }
-
-            // Finally, the last sync variable from user needs to be updated
-            const lastSync = moment.utc().format()
-            this.updateLastSync(userId, lastSync)
-                .then(res => {
-                    if (res) this.publishLastSync(userId, lastSync)
+                // Build Object to return
+                const dataSync: DataSync = new DataSync()
+                dataSync.user_id = userId
+                dataSync.activities = activitiesList.length || 0
+                dataSync.weights = weightList.length || 0
+                dataSync.sleep = sleepList.length || 0
+                dataSync.logs = new LogSync().fromJSON({
+                    steps: userLog.steps.length || 0,
+                    calories: userLog.calories.length || 0,
+                    active_minutes: userLog.active_minutes.length || 0,
+                    lightly_active_minutes: userLog.lightly_active_minutes.length || 0,
+                    sedentary_minutes: userLog.sedentary_minutes.length || 0
                 })
-                .catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
-
-            // Build Object to return
-            const dataSync: DataSync = new DataSync()
-            dataSync.user_id = userId
-            dataSync.activities = activitiesList.length || 0
-            dataSync.weights = weightList.length || 0
-            dataSync.sleep = sleepList.length || 0
-            dataSync.logs = new LogSync().fromJSON({
-                steps: userLog.steps.length || 0,
-                calories: userLog.calories.length || 0,
-                active_minutes: userLog.active_minutes.length || 0,
-                lightly_active_minutes: userLog.lightly_active_minutes.length || 0,
-                sedentary_minutes: userLog.sedentary_minutes.length || 0
-            })
-            return Promise.resolve(dataSync)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+                return resolve(dataSync)
+            } catch (err) {
+                return reject(err)
+            }
+        })
     }
 
     public updateLastSync(userId: string, lastSync: string): Promise<boolean> {

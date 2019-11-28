@@ -4,14 +4,17 @@ import { LogSync } from './log.sync'
 import { JsonUtils } from '../utils/json.utils'
 
 export class DataSync implements IJSONSerializable, IJSONDeserializable<DataSync> {
-    private _activities?: number
-    private _sleep?: number
-    private _weights?: number
-    private _logs?: LogSync
+    private _activities: number
+    private _sleep: number
+    private _weights: number
+    private _logs: LogSync
     private _user_id?: string
 
     constructor() {
-        // not implemented!
+        this._activities = 0
+        this._sleep = 0
+        this._weights = 0
+        this._logs = new LogSync()
     }
 
     get user_id(): string | undefined {
@@ -22,35 +25,35 @@ export class DataSync implements IJSONSerializable, IJSONDeserializable<DataSync
         this._user_id = value
     }
 
-    get activities(): number | undefined {
+    get activities(): number {
         return this._activities
     }
 
-    set activities(value: number | undefined) {
+    set activities(value: number) {
         this._activities = value
     }
 
-    get sleep(): number | undefined {
+    get sleep(): number {
         return this._sleep
     }
 
-    set sleep(value: number | undefined) {
+    set sleep(value: number) {
         this._sleep = value
     }
 
-    get weights(): number | undefined {
+    get weights(): number {
         return this._weights
     }
 
-    set weights(value: number | undefined) {
+    set weights(value: number) {
         this._weights = value
     }
 
-    get logs(): LogSync | undefined {
+    get logs(): LogSync {
         return this._logs
     }
 
-    set logs(value: LogSync | undefined) {
+    set logs(value: LogSync) {
         this._logs = value
     }
 
