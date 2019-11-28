@@ -36,15 +36,17 @@ export const userDeleteEventHandler = async (event: any) => {
         const userAuthData: UserAuthData = await userAuthDataRepo.findOne(query)
         if (userAuthData) {
             const payload: any = await fitbitAuthDataRepo.getTokenPayload(userAuthData.fitbit!.access_token!)
-            const scopes: Array<string> = payload.scopes.split(' ')
-            if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
-                await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'body', 'BODY')
-            }
-            if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
-                await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'activities', 'ACTIVITIES')
-            }
-            if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
-                await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'sleep', 'SLEEP')
+            if (payload || payload.scopes) {
+                const scopes: Array<string> = payload.scopes.split(' ')
+                if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
+                    await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'body', 'BODY')
+                }
+                if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
+                    await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'activities', 'ACTIVITIES')
+                }
+                if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
+                    await fitbitAuthDataRepo.unsubscribeUserEvent(userAuthData.fitbit!, 'sleep', 'SLEEP')
+                }
             }
             await userAuthDataRepo.deleteByQuery(query)
 
