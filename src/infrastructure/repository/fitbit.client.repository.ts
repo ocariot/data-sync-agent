@@ -19,7 +19,7 @@ export class FitbitClientRepository implements IFitbitClientRepository {
     }
 
     public revokeToken(accessToken: string): Promise<boolean> {
-        return new Promise<boolean>(async (resolve, reject) => {
+        return new Promise<boolean>((resolve, reject) => {
             this.fitbit_client.revokeAccessToken(accessToken)
                 .then(res => resolve(!!res))
                 .catch(err => reject(this.fitbitClientErrorListener(err)))
