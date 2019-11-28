@@ -31,6 +31,5 @@ export class CreateUserAuthDataValidator {
             throw new ValidationException('Required fields were not provided...',
                 'User Auth Validation: '.concat(fields.join(', ').concat(' required!')))
         }
-        console.log('ok')
     }
 }
