@@ -29,16 +29,18 @@ export class UserAuthDataService implements IUserAuthDataService {
         try {
             const authData: UserAuthData = await this.manageFitbitAuthData(item)
             CreateUserAuthDataValidator.validate(item)
+            let result: UserAuthData = new UserAuthData()
 
             authData.fitbit!.status = 'valid_token'
             await this.subscribeFitbitEvents(item)
 
-            const alreadySaved: UserAuthData =
-                await this._userAuthDataRepo.findOne(new Query().fromJSON({ filters: { user_id: authData.user_id! } }))
+            const alreadySaved: UserAuthData = await this._userAuthDataRepo
+                .findOne(new Query().fromJSON({ filters: { user_id: authData.user_id! } }))
             if (alreadySaved) {
                 authData.id = alreadySaved.id
-                const result: UserAuthData = await this._userAuthDataRepo.update(authData)
-                return Promise.resolve(result)
+                result = await this._userAuthDataRepo.update(authData)
+            } else {
+                result = await this._userAuthDataRepo.create(authData)
             }
 
             if (authData.fitbit && authData.fitbit.last_sync) {
@@ -46,7 +48,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                     .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
                     .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
             }
-            return this._userAuthDataRepo.create(authData)
+            return Promise.resolve(result)
         } catch (err) {
             return Promise.reject(err)
         }
