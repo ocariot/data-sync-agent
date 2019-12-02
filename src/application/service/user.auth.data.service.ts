@@ -332,6 +332,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                 break
         }
 
+        this._logger.error(`Fitbit error: ${JSON.stringify(fitbit)}`)
         this._eventBus.bus.pubFitbitAuthError(fitbit)
             .then(() => this._logger.info(`Error message about ${error.type} from ${userId} successful published!`))
             .catch(err => this._logger.error(`Error at publish error message from ${userId}: ${err.message}`))
