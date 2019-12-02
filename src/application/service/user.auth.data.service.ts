@@ -103,7 +103,6 @@ export class UserAuthDataService implements IUserAuthDataService {
                         .pubFitbitRevoke({ child_id: userId })
                         .then(() => this._logger.info(`Fitbit revoke event for child ${userId} successfully published!`))
                         .catch((err) => this._logger.error(`There was an error publishing Fitbit revoke event for child ${userId}. ${err.message}`))
-
                     return resolve(true)
                 } else {
                     return resolve(false)
@@ -127,12 +126,13 @@ export class UserAuthDataService implements IUserAuthDataService {
         return new Promise<DataSync>((resolve, reject) => {
             try {
                 ObjectIdValidator.validate(userId)
-                this._userAuthDataRepo.getUserAuthDataByUserId(userId)
+                this._userAuthDataRepo
+                    .getUserAuthDataByUserId(userId)
                     .then(async data => {
                         if (!data || !data.fitbit) {
                             throw new ValidationException(
-                                'User does not have authentication data. Please, submit authentication data ' +
-                                'and try again.')
+                                'User does not have authentication data. Please, submit authentication data and try again.'
+                            )
                         }
                         try {
                             const result: DataSync = await this.syncFitbitData(data.fitbit!, userId)

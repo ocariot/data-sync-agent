@@ -152,9 +152,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 minutesVeryActiveLogs = result[6] || []
 
                 // Filter list of data for does not sync data that was saved
-                const weights: Array<any> = await this.filterDataAlreadySync(syncWeights, ResourceDataType.BODY)
-                const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep, ResourceDataType.SLEEP)
-                const activities: Array<any> = await this.filterDataAlreadySync(syncActivities, ResourceDataType.ACTIVITIES)
+                const weights: Array<any> = await this.filterDataAlreadySync(syncWeights, ResourceDataType.BODY, userId)
+                const sleep: Array<any> = await this.filterDataAlreadySync(syncSleep, ResourceDataType.SLEEP, userId)
+                const activities: Array<any> = await this.filterDataAlreadySync(syncActivities,
+                    ResourceDataType.ACTIVITIES, userId)
 
                 const weightList: Array<Weight> = await this.parseWeightList(weights, userId)
                 const activitiesList: Array<PhysicalActivity> = await this.parsePhysicalActivityList(activities, userId)
@@ -174,7 +175,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         .pubSyncPhysicalActivity(activitiesList.map(item => item.toJSON()))
                         .then(() => {
                             this._logger.info(`Physical activities from ${userId} successful published!`)
-                            this.saveResourceList(activities, data.user_id!)
+                            this.saveResourceList(activities, userId)
                                 .then(() => this._logger.info(`Physical Activity logs from ${userId} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save physical activities logs: ${err.message}`))
                         })
@@ -185,7 +186,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         .pubSyncWeight(weightList.map(item => item.toJSON()))
                         .then(() => {
                             this._logger.info(`Weight Measurements from ${userId} successful published!`)
-                            this.saveResourceList(weights, data.user_id!)
+                            this.saveResourceList(weights, userId)
                                 .then(() => this._logger.info(`Weight logs from ${data.user_id} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save weight logs: ${err.message}`))
                         })
@@ -197,7 +198,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         .pubSyncSleep(sleepList.map(item => item.toJSON()))
                         .then(() => {
                             this._logger.info(`Sleep from ${userId} successful published!`)
-                            this.saveResourceList(sleep, data.user_id!)
+                            this.saveResourceList(sleep, userId)
                                 .then(() => this._logger.info(`Sleep logs from ${userId} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save sleep logs: ${err.message}`))
                         })
@@ -300,12 +301,12 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private async filterDataAlreadySync(data: Array<any>, type: string): Promise<Array<any>> {
+    private async filterDataAlreadySync(data: Array<any>, type: string, userId: string): Promise<Array<any>> {
         try {
             const resources: Array<any> = []
             if (!data || !data.length) return resources
             for await(const item of data) {
-                const query: Query = new Query().fromJSON({ filters: { 'resource.logId': item.logId } })
+                const query: Query = new Query().fromJSON({ filters: { 'resource.logId': item.logId, 'user_id': userId } })
                 if (type === ResourceDataType.BODY) query.addFilter({ 'resource.weight': item.weight })
                 const exists: boolean = await this._resourceRepo.checkExists(query)
                 if (!exists) resources.push(item)
@@ -321,7 +322,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this.getUserBodyDataFromInterval(data.access_token!, date, date)
                 .then(async weights => {
                     if (weights && weights.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(weights, ResourceDataType.BODY)
+                        const resources: Array<any> = await this.filterDataAlreadySync(weights, ResourceDataType.BODY, userId)
 
                         // Parse list of weights
                         const weightList: Array<Weight> = this.parseWeightList(resources, userId)
@@ -330,7 +331,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             this._eventBus.bus.pubSyncWeight(weightList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Weight Measurements from ${userId} successful published!`)
-                                    this.saveResourceList(resources, data.user_id!)
+                                    this.saveResourceList(resources, userId)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
                                             this._logger.info(`Weight logs from ${userId} saved successful!`)
@@ -353,7 +354,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 .then(async activities => {
                     if (activities && activities.length) {
                         const resources: Array<any> =
-                            await this.filterDataAlreadySync(activities, ResourceDataType.ACTIVITIES)
+                            await this.filterDataAlreadySync(activities, ResourceDataType.ACTIVITIES, userId)
 
                         // Parse list of activities
                         const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
@@ -362,7 +363,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             this._eventBus.bus.pubSyncPhysicalActivity(activityList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Physical activities from ${userId} successful published!`)
-                                    this.saveResourceList(resources, data.user_id!)
+                                    this.saveResourceList(resources, userId)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
                                             this._logger.info(`Physical activities from ${userId} saved successful!`)
@@ -413,7 +414,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this.getUserSleep(data.access_token!, 1, date)
                 .then(async sleeps => {
                     if (sleeps && sleeps.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(sleeps, ResourceDataType.SLEEP)
+                        const resources: Array<any> = await this.filterDataAlreadySync(sleeps, ResourceDataType.SLEEP, userId)
 
                         // Parse list of sleep
                         const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
@@ -422,7 +423,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                             this._eventBus.bus.pubSyncSleep(sleepList.map(item => item.toJSON()))
                                 .then(() => {
                                     this._logger.info(`Sleep from ${userId} successful published!`)
-                                    this.saveResourceList(resources, data.user_id!)
+                                    this.saveResourceList(resources, userId)
                                         .then(() => {
                                             // If publish is successful, save the sync resources on database
                                             this._logger.info(`Sleep logs from ${userId} saved successful!`)
@@ -460,108 +461,90 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private async syncWeightData(data: FitbitAuthData): Promise<Array<any>> {
-        try {
-            const result: Array<any> = (data.last_sync && moment().diff(moment(data.last_sync), 'days') <= 31) ?
-                await this.getUserBodyDataFromInterval(
-                    data.access_token!,
-                    moment(data.last_sync).format('YYYY-MM-DD'),
-                    moment().format('YYYY-MM-DD'))
-                : [
-                    ...await this.getUserBodyDataFromInterval(
+    private syncWeightData(data: FitbitAuthData): Promise<Array<any>> {
+        return new Promise<Array<any>>(async (resolve, reject) => {
+            try {
+                if ((data.last_sync && moment().diff(moment(data.last_sync), 'days') <= 31)) {
+                    return resolve(await this.getUserBodyDataFromInterval(
+                        data.access_token!,
+                        moment(data.last_sync).format('YYYY-MM-DD'),
+                        moment().format('YYYY-MM-DD')))
+                }
+
+                const result: Array<any> = new Array<any>()
+                result.push(
+                    this.getUserBodyDataFromInterval(
                         data.access_token!,
                         moment().subtract(1, 'month').format('YYYY-MM-DD'),
-                        moment().format('YYYY-MM-DD')),
-                    ...await this.getUserBodyDataFromInterval(
-                        data.access_token!,
-                        moment().subtract(2, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(1, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserBodyDataFromInterval(
-                        data.access_token!,
-                        moment().subtract(3, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(2, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserBodyDataFromInterval(
-                        data.access_token!,
-                        moment().subtract(4, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(3, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserBodyDataFromInterval(
-                        data.access_token!,
-                        moment().subtract(5, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(4, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserBodyDataFromInterval(
-                        data.access_token!,
-                        moment().subtract(6, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(5, 'month').format('YYYY-MM-DD'))
-                ]
-            return Promise.resolve(result)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+                        moment().format('YYYY-MM-DD'))
+                )
+                for (let i = 1; i < 4; i++) {
+                    result.push(
+                        this.getUserBodyDataFromInterval(
+                            data.access_token!,
+                            moment().subtract(i + 1, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(i, 'month').format('YYYY-MM-DD'))
+                    )
+                }
+                return resolve((await Promise.all(result)).reduce((prev, current) => prev.concat(current), []))
+            } catch (err) {
+                return reject(err)
+            }
+        })
     }
 
+    // @ts-ignore
     private async syncSleepData(data: FitbitAuthData): Promise<Array<any>> {
-        try {
-            const result: Array<any> = data.last_sync ?
-                await this.getUserSleep(
-                    data.access_token!,
-                    100,
-                    moment(data.last_sync).format('YYYY-MM-DD')) :
-                [
-                    ...await this.getUserSleepFromInterval(
+        return new Promise<Array<any>>(async (resolve, reject) => {
+            try {
+                if ((data.last_sync && moment().diff(moment(data.last_sync), 'days') <= 31)) {
+                    return resolve(await this.getUserSleep(
+                        data.access_token!,
+                        100,
+                        moment(data.last_sync).format('YYYY-MM-DD'))
+                    )
+                }
+                const result: Array<any> = new Array<any>()
+                result.push(
+                    this.getUserSleepFromInterval(
                         data.access_token!,
                         moment().subtract(1, 'month').format('YYYY-MM-DD'),
-                        moment().format('YYYY-MM-DD')),
-                    ...await this.getUserSleepFromInterval(
-                        data.access_token!,
-                        moment().subtract(2, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(1, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserSleepFromInterval(
-                        data.access_token!,
-                        moment().subtract(3, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(2, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserSleepFromInterval(
-                        data.access_token!,
-                        moment().subtract(4, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(3, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserSleepFromInterval(
-                        data.access_token!,
-                        moment().subtract(5, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(4, 'month').format('YYYY-MM-DD')),
-                    ...await this.getUserSleepFromInterval(
-                        data.access_token!,
-                        moment().subtract(6, 'month').format('YYYY-MM-DD'),
-                        moment().subtract(5, 'month').format('YYYY-MM-DD'))
-                ]
-            return Promise.resolve(result)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+                        moment().format('YYYY-MM-DD'))
+                )
+                for (let i = 1; i < 12; i++) {
+                    result.push(
+                        this.getUserSleepFromInterval(
+                            data.access_token!,
+                            moment().subtract(i + 1, 'month').format('YYYY-MM-DD'),
+                            moment().subtract(i, 'month').format('YYYY-MM-DD'))
+                    )
+                }
+                return resolve((await Promise.all(result)).reduce((prev, current) => prev.concat(current), []))
+            } catch (err) {
+                return reject(err)
+            }
+        })
     }
 
-    private async syncUserActivities(data: FitbitAuthData): Promise<Array<any>> {
-        try {
-            const result: Array<any> = data.last_sync ?
-                await this.getUserActivities(data.access_token!, 100, moment(data.last_sync).format('YYYY-MM-DD')) :
-                await this.getLastUserActivities(data.access_token!)
-            return Promise.resolve(result)
-        } catch (err) {
-            return Promise.reject(err)
+    // @ts-ignore
+    private syncUserActivities(data: FitbitAuthData): Promise<Array<any>> {
+        if (data.last_sync) {
+            return this.getUserActivities(
+                data.access_token!, 100,
+                moment(data.last_sync).format('YYYY-MM-DD')
+            )
         }
+        return this.getLastUserActivities(data.access_token!)
     }
 
     private async syncUserActivitiesLogs(data: FitbitAuthData, lastSync: string, resource: string): Promise<Array<any>> {
-        try {
-            const result: Array<any> = await this.getUserActivityLogs(
-                data.access_token!,
-                resource,
-                lastSync ? moment(lastSync).format('YYYY-MM-DD') :
-                    moment().subtract(6, 'month').format('YYYY-MM-DD'),
-                'today'
-            )
-            return Promise.resolve(result)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+        return this.getUserActivityLogs(
+            data.access_token!,
+            resource,
+            lastSync ? moment(lastSync).format('YYYY-MM-DD') :
+                moment().subtract(12, 'month').format('YYYY-MM-DD'),
+            'today'
+        )
     }
 
     private async getUserActivityLogs(token: string, resource: string, baseDate: string, endDate: string): Promise<any> {
@@ -743,7 +726,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             lightly_active_minutes: this.parseLogs(userId, 'lightly_active_minutes', minutesLightlyActiveLogs),
             sedentary_minutes: this.parseLogs(userId, 'sedentary_minutes', minutesSedentaryLogs)
         })
-
     }
 
     private parseLogs(userId: string, logType: string, logs: Array<any>): Array<Log> {
@@ -824,7 +806,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     }
 
     // MongoDb Error Listener
-    protected mongoDBErrorListener(err: any): ValidationException | ConflictException | RepositoryException | undefined {
+    private mongoDBErrorListener(err: any): ValidationException | ConflictException | RepositoryException | undefined {
         if (err && err.name) {
             if (err.name === 'ValidationError') {
                 return new ValidationException('Required fields were not provided!', err.message)

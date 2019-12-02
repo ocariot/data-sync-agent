@@ -23,7 +23,7 @@ export class FitbitSubscriberController {
     @httpPost('/')
     public async getInfo(@request() req: Request, @response() res: Response): Promise<Response> {
         this._logger.info(`Prepare to sync ${req.body[0].collectionType} from ${req.body[0].ownerId}.`)
-        this._userAuthDataService.syncLastFitbitUserData(req.body[0].ownerId, req.body[0].collectionType, req.body[0].date)
+        this._userAuthDataService.syncLastFitbitUserData(req.body[0].ownerId, req.body[0].collectionType, req.body[0].date).then()
         return res.status(200).send()
     }
 }
