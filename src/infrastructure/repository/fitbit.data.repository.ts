@@ -566,7 +566,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     }
 
     private async getLastUserActivities(token: string): Promise<any> {
-        const now: string = moment().format('YYYY-MM-DD')
+        const now: string = moment().add(1, 'day').format('YYYY-MM-DD')
         const path: string = `/activities/list.json?beforeDate=${now}&sort=desc&offset=0&limit=100`
         return new Promise<any>((resolve, reject) => {
             this._fitbitClientRepo.getDataFromPath(path, token)

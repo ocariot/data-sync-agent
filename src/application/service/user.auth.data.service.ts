@@ -26,32 +26,34 @@ export class UserAuthDataService implements IUserAuthDataService {
     }
 
     public async add(item: UserAuthData): Promise<UserAuthData> {
-        try {
-            const authData: UserAuthData = await this.manageFitbitAuthData(item)
-            CreateUserAuthDataValidator.validate(item)
-            let result: UserAuthData = new UserAuthData()
+        return new Promise<UserAuthData>(async (resolve, reject) => {
+            try {
+                const authData: UserAuthData = await this.manageFitbitAuthData(item)
+                CreateUserAuthDataValidator.validate(item)
+                let result: UserAuthData = new UserAuthData()
 
-            authData.fitbit!.status = 'valid_token'
-            await this.subscribeFitbitEvents(item)
+                authData.fitbit!.status = 'valid_token'
+                await this.subscribeFitbitEvents(item)
 
-            const alreadySaved: UserAuthData = await this._userAuthDataRepo
-                .findOne(new Query().fromJSON({ filters: { user_id: authData.user_id! } }))
-            if (alreadySaved) {
-                authData.id = alreadySaved.id
-                result = await this._userAuthDataRepo.update(authData)
-            } else {
-                result = await this._userAuthDataRepo.create(authData)
+                const alreadySaved: UserAuthData = await this._userAuthDataRepo
+                    .findOne(new Query().fromJSON({ filters: { user_id: authData.user_id! } }))
+                if (alreadySaved) {
+                    authData.id = alreadySaved.id
+                    result = await this._userAuthDataRepo.update(authData)
+                } else {
+                    result = await this._userAuthDataRepo.create(authData)
+                }
+
+                if (authData.fitbit && authData.fitbit.last_sync) {
+                    this._eventBus.bus.pubFitbitLastSync({ child_id: authData.user_id, last_sync: authData.fitbit.last_sync })
+                        .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
+                        .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
+                }
+                return resolve(result)
+            } catch (err) {
+                return reject(err)
             }
-
-            if (authData.fitbit && authData.fitbit.last_sync) {
-                this._eventBus.bus.pubFitbitLastSync({ child_id: authData.user_id, last_sync: authData.fitbit.last_sync })
-                    .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
-                    .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
-            }
-            return Promise.resolve(result)
-        } catch (err) {
-            return Promise.reject(err)
-        }
+        })
     }
 
     public getAll(query: IQuery): Promise<Array<UserAuthData>> {
@@ -231,43 +233,48 @@ export class UserAuthDataService implements IUserAuthDataService {
     }
 
     private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
-        try {
-            if (!data || !data.fitbit || !data.fitbit.scope) return
+        return new Promise<void>(async (resolve, reject) => {
+            try {
+                if (!data || !data.fitbit || !data.fitbit.scope) return
 
-            const scopes: Array<string> = data.fitbit.scope.split(' ')
+                const scopes: Array<string> = data.fitbit.scope.split(' ')
 
-            if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
-                await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
+                if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
+                    await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
+                }
+                if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
+                    await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
+                }
+                if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
+                    await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
+                }
+                return resolve()
+            } catch (err) {
+                return reject(err)
             }
-            if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
-                await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-            }
-            if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
-                await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
-            }
-            return Promise.resolve()
-        } catch (err) {
-            return Promise.reject(err)
-        }
+        })
     }
 
     private async unsubscribeFitbitEvents(data: UserAuthData): Promise<void> {
-        try {
-            if (!data || !data.fitbit || !data.fitbit.scope) return
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (!data || !data.fitbit || !data.fitbit.scope) return
 
-            const scopes: Array<string> = data.fitbit.scope.split(' ')
-            if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
-                await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'body', 'BODY')
+                const scopes: Array<string> = data.fitbit.scope.split(' ')
+                if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
+                    await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'body', 'BODY')
+                }
+                if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
+                    await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
+                }
+                if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
+                    await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
+                }
+                return resolve()
+            } catch (err) {
+                return reject(err)
             }
-            if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
-                await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-            }
-            if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
-                await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
-            }
-        } catch (err) {
-            return Promise.reject(err)
-        }
+        })
     }
 
     private async manageFitbitAuthData(data: UserAuthData): Promise<UserAuthData> {
@@ -281,9 +288,9 @@ export class UserAuthDataService implements IUserAuthDataService {
                 if (payload.scopes) data.fitbit!.scope = payload.scopes
                 if (payload.exp) data.fitbit!.expires_in = payload.exp
                 data.fitbit!.token_type = 'Bearer'
-                resolve(data)
+                return resolve(data)
             } catch (err) {
-                reject(err)
+                return reject(err)
             }
         })
     }
@@ -332,6 +339,7 @@ export class UserAuthDataService implements IUserAuthDataService {
                 break
         }
 
+        this._logger.error(`Fitbit error: ${JSON.stringify(fitbit)}`)
         this._eventBus.bus.pubFitbitAuthError(fitbit)
             .then(() => this._logger.info(`Error message about ${error.type} from ${userId} successful published!`))
             .catch(err => this._logger.error(`Error at publish error message from ${userId}: ${err.message}`))
