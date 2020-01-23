@@ -640,24 +640,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     private parsePhysicalActivity(item: any, userId: string): PhysicalActivity {
         if (!item) return item
 
-        const heartrate: any = { average: undefined, heart_rate_zones: undefined }
-        if (item.averageHeartRate !== undefined && item.heartRateZones !== undefined) {
-            heartrate.average = item.averageHeartRate
-
-            const out_of_range = item.heartRateZones.filter(zone => zone.name = 'Out of Range')[0]
-            const fat_burn = item.heartRateZones.filter(zone => zone.name = 'Fat Burn')[0]
-            const cardio = item.heartRateZones.filter(zone => zone.name = 'Cardio')[0]
-            const peak = item.heartRateZones.filter(zone => zone.name = 'Peak')[0]
-
-            const out_of_range_zone = { min: out_of_range.min, max: out_of_range.max, duration: out_of_range.minutes * 60000 }
-            const fat_burn_zone = { min: fat_burn.min, max: fat_burn.max, duration: fat_burn.minutes * 60000 }
-            const cardio_zone = { min: cardio.min, max: cardio.max, duration: cardio.minutes * 60000 }
-            const peak_zone = { min: peak.min, max: peak.max, duration: peak.minutes * 60000 }
-
-            heartrate.heart_rate_zones = { out_of_range_zone, fat_burn_zone, cardio_zone, peak_zone }
-        }
-
-        return new PhysicalActivity().fromJSON({
+        const activity: any = {
             type: 'physical_activity',
             start_time: moment(item.startTime).utc().format(),
             end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
@@ -669,9 +652,24 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             distance: item.distance ? this.convertDistanceToMetter(item.distance, item.distanceUnit) : undefined,
             levels: item.activityLevel.map(level => {
                 return { duration: level.minutes * 60000, name: level.name }
-            }),
-            heart_rate: heartrate.average && heartrate.heart_rate_zones ? heartrate : undefined
-        })
+            })
+        }
+        if (item.averageHeartRate !== undefined && item.heartRateZones !== undefined) {
+
+            const out_of_range = item.heartRateZones.filter(zone => zone.name = 'Out of Range')[0]
+            const fat_burn = item.heartRateZones.filter(zone => zone.name = 'Fat Burn')[0]
+            const cardio = item.heartRateZones.filter(zone => zone.name = 'Cardio')[0]
+            const peak = item.heartRateZones.filter(zone => zone.name = 'Peak')[0]
+
+            const out_of_range_zone = { min: out_of_range.min, max: out_of_range.max, duration: out_of_range.minutes * 60000 }
+            const fat_burn_zone = { min: fat_burn.min, max: fat_burn.max, duration: fat_burn.minutes * 60000 }
+            const cardio_zone = { min: cardio.min, max: cardio.max, duration: cardio.minutes * 60000 }
+            const peak_zone = { min: peak.min, max: peak.max, duration: peak.minutes * 60000 }
+
+            activity.heart_rate = { average: item.averageHeartRate, out_of_range_zone, fat_burn_zone, cardio_zone, peak_zone }
+
+        }
+        return new PhysicalActivity().fromJSON(activity)
     }
 
     private convertDistanceToMetter(distance: number, unit: string): number {
