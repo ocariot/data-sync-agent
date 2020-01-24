@@ -622,9 +622,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private parseWeight(item: any, userId: string): Weight {
         if (!item) return item
+        const timestamp = this.normalizeDate(item.date.concat('T').concat(item.time))
         return new Weight().fromJSON({
             type: MeasurementType.WEIGHT,
-            timestamp: moment(item.date.concat('T').concat(item.time)).utc().format(),
+            timestamp,
             value: item.weight,
             unit: 'kg',
             body_fat: item.fat,
@@ -640,10 +641,12 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     private parsePhysicalActivity(item: any, userId: string): PhysicalActivity {
         if (!item) return item
 
+        const start_time = this.normalizeDate(item.startTime)
+
         const activity: any = {
             type: 'physical_activity',
-            start_time: moment(item.startTime).utc().format(),
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
+            start_time,
+            end_time: this.normalizeDate(moment(start_time).add(item.duration, 'milliseconds').utcOffset(start_time).format('YYYY-MM-DDThh:mm:ss')),
             duration: item.duration,
             child_id: userId,
             name: item.activityName,
@@ -683,15 +686,16 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private parseSleep(item: any, userId: string): Sleep {
         if (!item) return item
+        const start_time = this.normalizeDate(item.startTime)
         return new Sleep().fromJSON({
-            start_time: moment(item.startTime).utc().format(),
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
+            start_time,
+            end_time: this.normalizeDate(moment(start_time).add(item.duration, 'milliseconds').utcOffset(start_time).format('YYYY-MM-DDThh:mm:ss')),
             duration: item.duration,
             type: item.type,
             pattern: {
                 data_set: item.levels.data.map(value => {
                     return {
-                        start_time: moment(value.dateTime).utc().format(),
+                        start_time: this.normalizeDate(value.dateTime),
                         name: value.level,
                         duration: parseInt(value.seconds, 10) * 1000
                     }
@@ -743,6 +747,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             }
         }
         return result
+    }
+
+    private normalizeDate(date: string): string {
+        return date.substr(0, 19).concat('Z')
     }
 
     public updateTokenStatus(userId: string, status: string): Promise<boolean> {
