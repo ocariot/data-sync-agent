@@ -642,11 +642,11 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         if (!item) return item
 
         const start_time = this.normalizeDate(item.startTime)
-
+        const end_time = moment(start_time).add(item.duration, 'ms').utcOffset(start_time).format()
         const activity: any = {
             type: 'physical_activity',
             start_time,
-            end_time: this.normalizeDate(moment(start_time).add(item.duration, 'milliseconds').utcOffset(start_time).format('YYYY-MM-DDThh:mm:ss')),
+            end_time,
             duration: item.duration,
             child_id: userId,
             name: item.activityName,
@@ -659,10 +659,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
         if (item.averageHeartRate !== undefined && item.heartRateZones !== undefined) {
 
-            const out_of_range = item.heartRateZones.filter(zone => zone.name = 'Out of Range')[0]
-            const fat_burn = item.heartRateZones.filter(zone => zone.name = 'Fat Burn')[0]
-            const cardio = item.heartRateZones.filter(zone => zone.name = 'Cardio')[0]
-            const peak = item.heartRateZones.filter(zone => zone.name = 'Peak')[0]
+            const out_of_range = item.heartRateZones.find(zone => zone.name === 'Out of Range')
+            const fat_burn = item.heartRateZones.find(zone => zone.name === 'Fat Burn')
+            const cardio = item.heartRateZones.find(zone => zone.name === 'Cardio')
+            const peak = item.heartRateZones.find(zone => zone.name === 'Peak')
 
             const out_of_range_zone = { min: out_of_range.min, max: out_of_range.max, duration: out_of_range.minutes * 60000 }
             const fat_burn_zone = { min: fat_burn.min, max: fat_burn.max, duration: fat_burn.minutes * 60000 }
@@ -687,9 +687,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
     private parseSleep(item: any, userId: string): Sleep {
         if (!item) return item
         const start_time = this.normalizeDate(item.startTime)
+        const end_time = moment(start_time).add(item.duration, 'ms').utcOffset(start_time).format()
         return new Sleep().fromJSON({
             start_time,
-            end_time: this.normalizeDate(moment(start_time).add(item.duration, 'milliseconds').utcOffset(start_time).format('YYYY-MM-DDThh:mm:ss')),
+            end_time,
             duration: item.duration,
             type: item.type,
             pattern: {
