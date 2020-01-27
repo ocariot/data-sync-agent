@@ -112,16 +112,18 @@ export class UserAuthDataService implements IUserAuthDataService {
                 }
                 return resolve()
             } catch (err) {
-                if (err.type && err.type === 'expired_token') {
-                    this._fitbitAuthDataRepo
-                        .refreshToken(userId, authData!.fitbit!.access_token!, authData!.fitbit!.refresh_token!)
-                        .then(async newToken => {
-                            await this.revokeFitbitAccessToken(userId)
-                            return resolve()
-                        }).catch(err => {
-                        if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
-                        this.publishFitbitAuthError(err, userId)
-                    })
+                if (err.type) {
+                    if (err.type === 'expired_token') {
+                        this._fitbitAuthDataRepo
+                            .refreshToken(userId, authData!.fitbit!.access_token!, authData!.fitbit!.refresh_token!)
+                            .then(async newToken => {
+                                await this.revokeFitbitAccessToken(userId)
+                                return resolve()
+                            }).catch(err => {
+                            if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
+                        })
+                    }
+                    this.publishFitbitAuthError(err, userId)
                 }
                 return resolve()
             }
