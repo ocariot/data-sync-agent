@@ -498,35 +498,22 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         return new Promise<Array<any>>(async (resolve, reject) => {
             try {
                 if ((data.last_sync && moment().diff(moment(data.last_sync), 'days') <= 31)) {
-                    return resolve(await this.getUserSleep(
+                    return resolve(await this.getUserSleepAfter(
                         data.access_token!,
                         100,
                         moment(data.last_sync).format('YYYY-MM-DD'))
                     )
                 }
-                const result: Array<any> = new Array<any>()
-                result.push(
-                    this.getUserSleepFromInterval(
-                        data.access_token!,
-                        moment().subtract(1, 'month').format('YYYY-MM-DD'),
-                        moment().format('YYYY-MM-DD'))
-                )
-                for (let i = 1; i < 12; i++) {
-                    result.push(
-                        this.getUserSleepFromInterval(
-                            data.access_token!,
-                            moment().subtract(i + 1, 'month').format('YYYY-MM-DD'),
-                            moment().subtract(i, 'month').format('YYYY-MM-DD'))
-                    )
-                }
-                return resolve((await Promise.all(result)).reduce((prev, current) => prev.concat(current), []))
+                return resolve(await this.getUserSleepBefore(
+                    data.access_token!,
+                    100,
+                    moment().add(1, 'day').format('YYYY-MM-DD')))
             } catch (err) {
                 return reject(err)
             }
         })
     }
 
-    // @ts-ignore
     private syncUserActivities(data: FitbitAuthData): Promise<Array<any>> {
         if (data.last_sync) {
             return this.getUserActivities(
@@ -545,6 +532,24 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 moment().subtract(12, 'month').format('YYYY-MM-DD'),
             'today'
         )
+    }
+
+    private async getUserSleepAfter(token: string, limit: number, afterDate: string): Promise<any> {
+        const path: string = `/sleep/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
+        return new Promise<any>((resolve, reject) => {
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.sleep))
+                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
+        })
+    }
+
+    private async getUserSleepBefore(token: string, limit: number, beforeDate: string): Promise<any> {
+        const path: string = `/sleep/list.json?beforeDate=${beforeDate}&sort=desc&offset=0&limit=${limit}`
+        return new Promise<any>((resolve, reject) => {
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.sleep))
+                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
+        })
     }
 
     private async getUserActivityLogs(token: string, resource: string, baseDate: string, endDate: string): Promise<any> {
@@ -584,15 +589,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private getUserSleepFromInterval(token: string, baseDate: string, endDate: string): Promise<any> {
-        const path: string = `/sleep/date/${baseDate}/${endDate}.json`
-        return new Promise<any>((resolve, reject) => {
-            this._fitbitClientRepo.getDataFromPath(path, token)
-                .then(result => resolve(result.sleep))
-                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
-        })
-    }
-
     private async getUserSleep(token: string, limit: number, afterDate: string): Promise<any> {
         const path: string = `/sleep/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
         return new Promise<any>((resolve, reject) => {
@@ -626,9 +622,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private parseWeight(item: any, userId: string): Weight {
         if (!item) return item
+        const timestamp = this.normalizeDate(item.date.concat('T').concat(item.time))
         return new Weight().fromJSON({
             type: MeasurementType.WEIGHT,
-            timestamp: moment(item.date.concat('T').concat(item.time)).utc().format(),
+            timestamp,
             value: item.weight,
             unit: 'kg',
             body_fat: item.fat,
@@ -643,10 +640,13 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private parsePhysicalActivity(item: any, userId: string): PhysicalActivity {
         if (!item) return item
-        return new PhysicalActivity().fromJSON({
+
+        const start_time = this.normalizeDate(item.startTime)
+        const end_time = moment(start_time).add(item.duration, 'ms').utcOffset(start_time).format()
+        const activity: any = {
             type: 'physical_activity',
-            start_time: moment(item.startTime).utc().format(),
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
+            start_time,
+            end_time,
             duration: item.duration,
             child_id: userId,
             name: item.activityName,
@@ -655,31 +655,24 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             distance: item.distance ? this.convertDistanceToMetter(item.distance, item.distanceUnit) : undefined,
             levels: item.activityLevel.map(level => {
                 return { duration: level.minutes * 60000, name: level.name }
-            }),
-            heart_rate: item.averageHeartRate && item.heartRateZones ? {
-                average: item.averageHeartRate,
-                out_of_range_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Out of Range') return {
-                        min: zone.min,
-                        max: zone.max,
-                        duration: zone.minutes * 60000
-                    }
-                })[0],
-                fat_burn_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Fat Burn') return {
-                        min: zone.min,
-                        max: zone.max,
-                        duration: zone.minutes * 60000
-                    }
-                })[0],
-                cardio_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Cardio') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
-                })[0],
-                peak_zone: item.heartRateZones.filter(zone => {
-                    if (zone.name === 'Peak') return { min: zone.min, max: zone.max, duration: zone.minutes * 60000 }
-                })[0]
-            } : undefined
-        })
+            })
+        }
+        if (item.averageHeartRate !== undefined && item.heartRateZones !== undefined) {
+
+            const out_of_range = item.heartRateZones.find(zone => zone.name === 'Out of Range')
+            const fat_burn = item.heartRateZones.find(zone => zone.name === 'Fat Burn')
+            const cardio = item.heartRateZones.find(zone => zone.name === 'Cardio')
+            const peak = item.heartRateZones.find(zone => zone.name === 'Peak')
+
+            const out_of_range_zone = { min: out_of_range.min, max: out_of_range.max, duration: out_of_range.minutes * 60000 }
+            const fat_burn_zone = { min: fat_burn.min, max: fat_burn.max, duration: fat_burn.minutes * 60000 }
+            const cardio_zone = { min: cardio.min, max: cardio.max, duration: cardio.minutes * 60000 }
+            const peak_zone = { min: peak.min, max: peak.max, duration: peak.minutes * 60000 }
+
+            activity.heart_rate = { average: item.averageHeartRate, out_of_range_zone, fat_burn_zone, cardio_zone, peak_zone }
+
+        }
+        return new PhysicalActivity().fromJSON(activity)
     }
 
     private convertDistanceToMetter(distance: number, unit: string): number {
@@ -693,17 +686,19 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private parseSleep(item: any, userId: string): Sleep {
         if (!item) return item
+        const start_time = this.normalizeDate(item.startTime)
+        const end_time = moment(start_time).add(item.duration, 'ms').utcOffset(start_time).format()
         return new Sleep().fromJSON({
-            start_time: moment(item.startTime).utc().format(),
-            end_time: moment(item.startTime).add(item.duration, 'milliseconds').utc().format(),
+            start_time,
+            end_time,
             duration: item.duration,
             type: item.type,
             pattern: {
                 data_set: item.levels.data.map(value => {
                     return {
-                        start_time: moment(value.dateTime).utc().format(),
+                        start_time: this.normalizeDate(value.dateTime),
                         name: value.level,
-                        duration: `${parseInt(value.seconds, 10) * 1000}`
+                        duration: parseInt(value.seconds, 10) * 1000
                     }
                 }),
                 summary: this.getSleepSummary(item.levels.summary)
@@ -753,6 +748,10 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             }
         }
         return result
+    }
+
+    private normalizeDate(date: string): string {
+        return date.substr(0, 19).concat('Z')
     }
 
     public updateTokenStatus(userId: string, status: string): Promise<boolean> {

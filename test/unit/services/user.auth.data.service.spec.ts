@@ -127,18 +127,18 @@ describe('Services: UserAuthDataService', () => {
     })
     describe('revokeFitbitAccessToken()', () => {
         context('when revoke the fitbit access token by user id', () => {
-            it('should return true', () => {
+            it('should return undefined', () => {
                 return service.revokeFitbitAccessToken(data.user_id!)
                     .then(res => {
-                        assert.isTrue(res)
+                        assert.isUndefined(res)
                     })
             })
         })
         context('when the user does not exists', () => {
-            it('should return false', () => {
+            it('should return undefined', () => {
                 return service.revokeFitbitAccessToken(DefaultEntityMock.USER_IDS.does_not_saved)
                     .then(res => {
-                        assert.isFalse(res)
+                        assert.isUndefined(res)
                     })
             })
         })

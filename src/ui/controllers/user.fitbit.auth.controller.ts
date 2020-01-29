@@ -44,7 +44,7 @@ export class UserFitbitAuthController {
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
-            return res.status(handlerError.code).send(handlerError.toJson())
+            return res.status(handlerError.code).send(handlerError.toJSON())
         }
     }
 
@@ -63,13 +63,13 @@ export class UserFitbitAuthController {
                         HttpStatus.NOT_FOUND,
                         Strings.FITBIT.AUTH_NOT_FOUND,
                         Strings.FITBIT.AUTH_NOT_FOUND_DESCRIPTION
-                    ).toJson()
+                    ).toJSON()
                 )
             }
             return res.status(HttpStatus.OK).send(this.toJsonView(result))
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
-            return res.status(handlerError.code).send(handlerError.toJson())
+            return res.status(handlerError.code).send(handlerError.toJSON())
         }
     }
 
@@ -85,7 +85,7 @@ export class UserFitbitAuthController {
             return res.status(HttpStatus.NO_CONTENT).send()
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
-            return res.status(handlerError.code).send(handlerError.toJson())
+            return res.status(handlerError.code).send(handlerError.toJSON())
         }
     }
 

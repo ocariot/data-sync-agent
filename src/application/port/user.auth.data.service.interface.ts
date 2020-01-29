@@ -5,7 +5,7 @@ import { DataSync } from '../domain/model/data.sync'
 export interface IUserAuthDataService extends IService<UserAuthData> {
     getByUserId(userId: string): Promise<UserAuthData>
 
-    revokeFitbitAccessToken(userId: string): Promise<boolean>
+    revokeFitbitAccessToken(userId: string): Promise<void>
 
     syncFitbitDataFromUser(userId: string): Promise<DataSync>
 
