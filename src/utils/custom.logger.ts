@@ -6,27 +6,49 @@ import DailyRotateFile from 'winston-daily-rotate-file'
 
 @injectable()
 export class CustomLogger implements ILogger {
-    private readonly _logger: Logger
+    public readonly _logger: Logger
     private readonly _logDir = process.env.LOG_DIR || Default.LOG_DIR
-    private readonly _moduleName: string
+    private _moduleName: string = Default.APP_ID
     private _options: any = {}
 
     constructor() {
         if (!fs.existsSync(this._logDir)) fs.mkdirSync(this._logDir) // create directory if it does not exist
         this.initOptions() // initialize options logger
         this._logger = this.internalCreateLogger()
-        this._moduleName = 'ds.app'
+    }
+
+    set moduleName(value: string) {
+        this._moduleName = value
+    }
+
+    get moduleName(): string {
+        return this._moduleName
     }
 
     private internalCreateLogger(): Logger {
+        const errorFormat = format((info: any) => {
+            if (info instanceof Error) {
+                info = info as Error
+                return Object.assign({
+                    message: info.message.concat(info.description ? ` | ${info.description}` : ''),
+                    stack: info.stack
+                }, info)
+            }
+            return info
+        })
+
         return createLogger({
             level: 'silly', // Used by transports that do not have this configuration defined
             silent: false,
             format: format.combine(
+                errorFormat(),
                 format.timestamp(),
                 format.json()
             ),
             transports: [new transports.Console(this._options), this.createTransportDailyRotateFile()],
+            exceptionHandlers: [
+                new transports.File({ filename: 'exceptions.log' })
+            ],
             exitOnError: false
         })
     }
@@ -38,7 +60,7 @@ export class CustomLogger implements ILogger {
                 format.colorize(),
                 format.splat(),
                 format.timestamp(),
-                format.printf(log => `${log.module} @ ${log.timestamp} ${log.level}: ${log.message}`)
+                format.printf(log => `${this._moduleName} @ ${log.timestamp} ${log.level}: ${log.message}`)
             )
         }
 
@@ -65,28 +87,36 @@ export class CustomLogger implements ILogger {
         return this._logger.add(transport)
     }
 
-    public error(message: string): void {
-        this._logger.error(message, { module: this._moduleName })
+    public error(message: string | object): void {
+        if (typeof message === 'string') {
+            this._logger.error(message)
+            return
+        }
+        this._logger.error(message)
     }
 
-    public warn(message: string): void {
-        this._logger.warn(message, { module: this._moduleName })
+    public warn(message: string | object): void {
+        if (typeof message === 'string') {
+            this._logger.warn(message)
+            return
+        }
+        this._logger.warn(message)
     }
 
-    public info(message: string): void {
-        this._logger.info(message, { module: this._moduleName })
+    public info(message: string | object): void {
+        if (typeof message === 'string') {
+            this._logger.info(message)
+            return
+        }
+        this._logger.info(message)
     }
 
-    public verbose(message: string): void {
-        this._logger.verbose(message, { module: this._moduleName })
-    }
-
-    public debug(message: string): void {
-        this._logger.debug(message, { module: this._moduleName })
-    }
-
-    public silly(message: string): void {
-        this._logger.silly(message, { module: this._moduleName })
+    public debug(message: string | object): void {
+        if (typeof message === 'string') {
+            this._logger.debug(message)
+            return
+        }
+        this._logger.debug(message)
     }
 }
 
@@ -103,17 +133,13 @@ export class CustomLogger implements ILogger {
  * @see {@link https://github.com/winstonjs/winston#using-logging-levels} for further information.
  */
 export interface ILogger {
-    error(message: string): void
+    error(message: string | object): void
 
-    warn(message: string): void
+    warn(message: string | object): void
 
-    info(message: string): void
+    info(message: string | object): void
 
-    verbose(message: string): void
-
-    debug(message: string): void
-
-    silly(message: string): void
+    debug(message: string | object): void
 
     addTransport(transport: any): Logger
 }

@@ -1,23 +1,21 @@
-import { Identifier } from '../../../src/di/identifiers'
-import { App } from '../../../src/app'
 import { expect } from 'chai'
+import { App } from '../../../src/app'
 import { DIContainer } from '../../../src/di/di'
+import { Identifier } from '../../../src/di/identifiers'
 
 const app: App = DIContainer.get(Identifier.APP)
 const request = require('supertest')(app.getExpress())
 
-describe('Routes: Home', () => {
-    describe('GET /', () => {
-        context('when want access the home page', () => {
-            it('should redirect the user from the reference page', () => {
-                return request
-                    .get('/')
-                    .set('Content-Type', 'application/json')
-                    .expect(302)
-                    .then(res => {
-                        expect(res.body).to.eql({})
-                    })
-            })
+describe('Rotes: HomeController', () => {
+    describe('/', () => {
+        it('should return status code 301 with redirection to /v1/reference', () => {
+            return request
+                .get(`/`)
+                .set('Accept', 'application/json')
+                .expect(301)
+                .then(res => {
+                    expect(res.headers.location).to.equal('/v1/reference')
+                })
         })
     })
 })

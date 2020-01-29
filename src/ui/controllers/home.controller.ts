@@ -17,6 +17,6 @@ export class HomeController {
      */
     @httpGet('/')
     public getReference(@request() req: Request, @response() res: Response): void {
-        return res.redirect('/v1/reference')
+        return res.redirect(301, '/v1/reference')
     }
 }
