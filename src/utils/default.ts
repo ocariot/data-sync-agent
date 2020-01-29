@@ -8,6 +8,7 @@
  * @abstract
  */
 export abstract class Default {
+    public static readonly APP_ID: string = 'ds.app'
     public static readonly APP_TITLE: string = 'OCARIoT Data Sync Agent Service'
     public static readonly APP_DESCRIPTION: string = 'Microservice responsible for data synchronization of FitBit ' +
         'and CVE platform with OCARIoT platform.'

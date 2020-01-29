@@ -26,4 +26,13 @@ export class ResourceRepository extends BaseRepository<Resource, ResourceEntity>
                 .catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }
+
+    public deleteByQuery(query: IQuery): Promise<boolean> {
+        const q: any = query.toJSON()
+        return new Promise<boolean>((resolve, reject) => {
+            this.Model.deleteMany(q.filters)
+                .then(res => resolve(!!res))
+                .catch(err => reject(this.mongoDBErrorListener(err)))
+        })
+    }
 }

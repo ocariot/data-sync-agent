@@ -11,6 +11,11 @@ export class ResourceRepositoryMock implements IResourceRepository {
         return Promise.resolve(q.filters.resource_id === DefaultEntityMock.RESOURCE.resource_id)
     }
 
+    public deleteByQuery(query: IQuery): Promise<boolean> {
+        const q: any = query.toJSON()
+        return Promise.resolve(q.filters.resource_id === DefaultEntityMock.RESOURCE.resource_id)
+    }
+
     public count(query: IQuery): Promise<number> {
         return Promise.resolve(1)
     }

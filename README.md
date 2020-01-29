@@ -37,7 +37,7 @@ Application settings are defined by environment variables. To define the setting
 | `RABBITMQ_CA_PATH` | RabbitMQ CA file location. Must always be provided when using `amqps` protocol. | `.certs/rabbitmqca.crt` |
 | `FITBIT_CLIENT_ID` | Client Id for Fitbit Application resposible to manage user data. | `CIENT_ID_HERE` |
 | `FITBIT_CLIENT_SECRET` | Client Secret for Fitbit Application resposible to manage user data. | `CIENT_SECRET_HERE` |
-| `FITBIT_CLIENT_SUBSCRIBER` | Client Subscriber code for automatically get notification from new sync data. | `CLIENT_SUBSCRIBER_HERE` |
+| `FITBIT_CLIENT_SUBSCRIBER` | Code used by Fitbit to verify the subscriber. | `CLIENT_SUBSCRIBER_HERE` |
 | `FITBIT_SUBSCRIBER_ID` | Customer Subscriber ID, used to manage the subscriber who will receive notification of a user resource. | `FITBIT_SUBSCRIBER_ID` |
 | `EXPRESSION_AUTO_SYNC` | Defines how often the application will automatically sync user data in the background according to the crontab expression. | `0 0 * * 0` |
 

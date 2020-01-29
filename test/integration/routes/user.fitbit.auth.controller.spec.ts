@@ -94,11 +94,9 @@ describe('Routes: UserFitbitAuthController', () => {
                 return request
                     .post('/v1/users/123/fitbit/auth/revoke')
                     .set('Content-Type', 'application/json')
-                    .expect(400)
+                    .expect(204)
                     .then(res => {
-                        expect(res.body).to.have.property('message', 'Some ID provided does not have a valid format!')
-                        expect(res.body).to.have.property('description',
-                            'A 24-byte hex ID similar to this: 507f191e810c19729de860ea is expected.')
+                        expect(res.body).is.empty
                     })
             })
         })
