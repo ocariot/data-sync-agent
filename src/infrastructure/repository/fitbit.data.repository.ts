@@ -411,7 +411,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
 
     private syncLastFitbitUserSleep(data: FitbitAuthData, userId: string, date: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.getUserSleep(data.access_token!, 1, date)
+            this.getUserSleepFromInterval(data.access_token!, date, date)
                 .then(async sleeps => {
                     if (sleeps && sleeps.length) {
                         const resources: Array<any> = await this.filterDataAlreadySync(sleeps, ResourceDataType.SLEEP, userId)
@@ -552,6 +552,15 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
+    private async getUserSleepFromInterval(token: string, baseDate: string, endDate: string): Promise<any> {
+        const path: string = `/sleep/date/${baseDate}/${endDate}.json`
+        return new Promise<any>((resolve, reject) => {
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.sleep))
+                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
+        })
+    }
+
     private async getUserActivityLogs(token: string, resource: string, baseDate: string, endDate: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             return this._fitbitClientRepo
@@ -585,15 +594,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         return new Promise<any>((resolve, reject) => {
             this._fitbitClientRepo.getDataFromPath(path, token)
                 .then(result => resolve(result.activities))
-                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
-        })
-    }
-
-    private async getUserSleep(token: string, limit: number, afterDate: string): Promise<any> {
-        const path: string = `/sleep/list.json?afterDate=${afterDate}&sort=desc&offset=0&limit=${limit}`
-        return new Promise<any>((resolve, reject) => {
-            this._fitbitClientRepo.getDataFromPath(path, token)
-                .then(result => resolve(result.sleep))
                 .catch(err => reject(this.fitbitClientErrorListener(err, token)))
         })
     }
