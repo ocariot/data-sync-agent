@@ -8,7 +8,6 @@ export abstract class Identifier {
 
     // Controllers
     public static readonly HOME_CONTROLLER: any = Symbol.for('HomeController')
-    public static readonly FITBIT_SUBSCRIBER_CONTROLLER: any = Symbol.for('FitbitSubscriberController')
     public static readonly FITBIT_CONTROLLER: any = Symbol.for('FitbitController')
     public static readonly USER_FITBIT_AUTH_CONTROLLER: any = Symbol.for('UserFitbitAuthController')
     public static readonly USER_FITBIT_SYNC_CONTROLLER: any = Symbol.for('UserFitbitSyncController')

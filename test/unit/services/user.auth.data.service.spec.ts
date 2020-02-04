@@ -7,7 +7,6 @@ import { IUserAuthDataService } from '../../../src/application/port/user.auth.da
 import { assert } from 'chai'
 import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.auth.data'
 import { Query } from '../../../src/infrastructure/repository/query/query'
-import moment = require('moment')
 import { CustomLoggerMock } from '../../mocks/custom.logger.mock'
 import { EventBusRabbitMQMock } from '../../mocks/eventbus/eventbus.rabbitmq.mock'
 import { DataSync } from '../../../src/application/domain/model/data.sync'
@@ -204,17 +203,6 @@ describe('Services: UserAuthDataService', () => {
                 return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.any_fitbit_error)
                     .catch(err => {
                         assert.propertyVal(err, 'message', 'Any error occurs')
-                    })
-            })
-        })
-    })
-    describe('syncLastFitbitUserData()', () => {
-        context('when user does not exists', () => {
-            it('should return undefined', () => {
-                return service
-                    .syncLastFitbitUserData('XXYYXX', 'weight', moment().format('YYYY-MM-DD'))
-                    .then(res => {
-                        assert.isUndefined(res)
                     })
             })
         })

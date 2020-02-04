@@ -8,6 +8,4 @@ export interface IUserAuthDataService extends IService<UserAuthData> {
     revokeFitbitAccessToken(userId: string): Promise<void>
 
     syncFitbitDataFromUser(userId: string): Promise<DataSync>
-
-    syncLastFitbitUserData(fitbitUserId: string, type: string, date: string): Promise<void>
 }

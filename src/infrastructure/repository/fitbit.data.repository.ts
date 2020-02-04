@@ -93,26 +93,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
     }
 
-    public async subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        try {
-            await this._fitbitClientRepo.subscribeUserEvent(data, resource, subscriptionId)
-            this._logger.info(`Successful subscribe on ${resource} resource from user ${data.user_id}.`)
-            return Promise.resolve()
-        } catch (err) {
-            return Promise.reject(this.fitbitClientErrorListener(err, data.access_token!, data.refresh_token!))
-        }
-    }
-
-    public async unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        try {
-            await this._fitbitClientRepo.unsubscribeUserEvent(data, resource, subscriptionId)
-            this._logger.info(`Successful unsubscribe on ${resource} resource from user ${data.user_id}.`)
-            return Promise.resolve()
-        } catch (err) {
-            return Promise.reject(this.fitbitClientErrorListener(err, data.access_token!, data.refresh_token!))
-        }
-    }
-
     public async syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync> {
         return new Promise<DataSync>(async (resolve, reject) => {
             try {
@@ -254,24 +234,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    public async syncLastFitbitData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
-        try {
-            if (type === ResourceDataType.BODY) await this.syncLastFitbitUserWeight(data, userId, date)
-            else if (type === ResourceDataType.ACTIVITIES) {
-                await this.syncLastFitbitUserActivity(data, userId, date)
-                await this.syncLastFitbitUserActivityLogs(data, userId, date)
-            } else if (type === ResourceDataType.SLEEP) await this.syncLastFitbitUserSleep(data, userId, date)
-            const lastSync: string = moment.utc().format()
-            this.updateLastSync(userId, lastSync)
-                .then(res => {
-                    if (res) this.publishLastSync(userId, lastSync)
-                }).catch(err => this._logger.info(`Error at update the last sync: ${err.message}`))
-            return Promise.resolve()
-        } catch (err) {
-            return Promise.reject(err)
-        }
-    }
-
     public getTokenPayload(token: string): Promise<any> {
         try {
             return Promise.resolve(jwt.decode(token))
@@ -315,129 +277,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         } catch (err) {
             return await Promise.reject(err)
         }
-    }
-
-    private syncLastFitbitUserWeight(data: FitbitAuthData, userId: string, date: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.getUserBodyDataFromInterval(data.access_token!, date, date)
-                .then(async weights => {
-                    if (weights && weights.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(weights, ResourceDataType.BODY, userId)
-
-                        // Parse list of weights
-                        const weightList: Array<Weight> = this.parseWeightList(resources, userId)
-                        if (weightList.length) {
-                            // Publish list of weights
-                            this._eventBus.bus.pubSyncWeight(weightList.map(item => item.toJSON()))
-                                .then(() => {
-                                    this._logger.info(`Weight Measurements from ${userId} successful published!`)
-                                    this.saveResourceList(resources, userId)
-                                        .then(() => {
-                                            // If publish is successful, save the sync resources on database
-                                            this._logger.info(`Weight logs from ${userId} saved successful!`)
-                                        })
-                                        .catch(err => {
-                                            this._logger.error(`Error at save weight: ${err.message}`)
-                                        })
-                                })
-                                .catch(err => this._logger.error(`Error at publish weight: ${err.message}`))
-                        }
-                    }
-                    return resolve()
-                }).catch(err => reject(err))
-        })
-    }
-
-    private syncLastFitbitUserActivity(data: FitbitAuthData, userId: string, date: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.getUserActivities(data.access_token!, 100, date)
-                .then(async activities => {
-                    if (activities && activities.length) {
-                        const resources: Array<any> =
-                            await this.filterDataAlreadySync(activities, ResourceDataType.ACTIVITIES, userId)
-
-                        // Parse list of activities
-                        const activityList: Array<PhysicalActivity> = this.parsePhysicalActivityList(resources, userId)
-                        if (activityList.length) {
-                            // Publish list of activities
-                            this._eventBus.bus.pubSyncPhysicalActivity(activityList.map(item => item.toJSON()))
-                                .then(() => {
-                                    this._logger.info(`Physical activities from ${userId} successful published!`)
-                                    this.saveResourceList(resources, userId)
-                                        .then(() => {
-                                            // If publish is successful, save the sync resources on database
-                                            this._logger.info(`Physical activities from ${userId} saved successful!`)
-                                        })
-                                        .catch(err => {
-                                            this._logger.error(`Error at save physical activities: ${err.message}`)
-                                        })
-                                })
-                                .catch(err => this._logger.error(`Error at publish physical activities: ${err.message}`))
-                        }
-                    }
-                    return resolve()
-                }).catch(err => reject(err))
-        })
-    }
-
-    private async syncLastFitbitUserActivityLogs(data: FitbitAuthData, userId: string, date: string): Promise<void> {
-        try {
-            const stepsLogs: Array<any> = await this.syncUserActivitiesLogs(data, date, 'steps')
-            const caloriesLogs: Array<any> = await this.syncUserActivitiesLogs(data, date, 'calories')
-            const minutesSedentaryLogs: Array<any> = await this.syncUserActivitiesLogs(data, date, 'minutesSedentary')
-            const minutesLightlyActiveLogs: Array<any> = await this.syncUserActivitiesLogs(data, date, 'minutesLightlyActive')
-            const minutesFairlyActiveLogs: Array<any> = await this.syncUserActivitiesLogs(data, date, 'minutesFairlyActive')
-            const minutesVeryActiveLogs: Array<any> = await this.syncUserActivitiesLogs(data, date, 'minutesVeryActive')
-
-            const userLog: UserLog = await this.parseActivityLogs(
-                stepsLogs,
-                caloriesLogs,
-                minutesSedentaryLogs,
-                minutesLightlyActiveLogs,
-                this.mergeLogsValues(minutesFairlyActiveLogs, minutesVeryActiveLogs),
-                userId
-            )
-
-            this._eventBus.bus.pubSyncLog(userLog.toJSONList())
-                .then(() => {
-                    this._logger.info(`Activities logs from ${userId} successful published!`)
-                })
-                .catch(err => this._logger.error(`Error at publish activities logs: ${err.message}`))
-            return Promise.resolve()
-        } catch (err) {
-            return Promise.reject(err)
-        }
-    }
-
-    private syncLastFitbitUserSleep(data: FitbitAuthData, userId: string, date: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.getUserSleepFromInterval(data.access_token!, date, date)
-                .then(async sleeps => {
-                    if (sleeps && sleeps.length) {
-                        const resources: Array<any> = await this.filterDataAlreadySync(sleeps, ResourceDataType.SLEEP, userId)
-
-                        // Parse list of sleep
-                        const sleepList: Array<Sleep> = this.parseSleepList(resources, userId)
-                        if (sleepList.length) {
-                            // Publish list of sleep.
-                            this._eventBus.bus.pubSyncSleep(sleepList.map(item => item.toJSON()))
-                                .then(() => {
-                                    this._logger.info(`Sleep from ${userId} successful published!`)
-                                    this.saveResourceList(resources, userId)
-                                        .then(() => {
-                                            // If publish is successful, save the sync resources on database
-                                            this._logger.info(`Sleep logs from ${userId} saved successful!`)
-                                        })
-                                        .catch(err => {
-                                            this._logger.error(`Error at save sleep: ${err.message}`)
-                                        })
-                                })
-                                .catch(err => this._logger.error(`Error at publish sleep: ${err.message}`))
-                        }
-                    }
-                    return resolve()
-                }).catch(err => reject(err))
-        })
     }
 
     private saveResourceList(resources: Array<any>, userId: string): Promise<Array<Resource>> {
@@ -521,7 +360,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 moment(data.last_sync).format('YYYY-MM-DD')
             )
         }
-        return this.getLastUserActivities(data.access_token!)
+        return this.getUserActivities(data.access_token!, 100, moment().format('YYYY-MM-DD'))
     }
 
     private async syncUserActivitiesLogs(data: FitbitAuthData, lastSync: string, resource: string): Promise<Array<any>> {
@@ -552,15 +391,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private async getUserSleepFromInterval(token: string, baseDate: string, endDate: string): Promise<any> {
-        const path: string = `/sleep/date/${baseDate}/${endDate}.json`
-        return new Promise<any>((resolve, reject) => {
-            this._fitbitClientRepo.getDataFromPath(path, token)
-                .then(result => resolve(result.sleep))
-                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
-        })
-    }
-
     private async getUserActivityLogs(token: string, resource: string, baseDate: string, endDate: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             return this._fitbitClientRepo
@@ -575,16 +405,6 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this._fitbitClientRepo
                 .getDataFromPath(`/body/log/weight/date/${baseDate}/${endDate}.json`, token)
                 .then(result => resolve(result.weight))
-                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
-        })
-    }
-
-    private async getLastUserActivities(token: string): Promise<any> {
-        const now: string = moment().add(1, 'day').format('YYYY-MM-DD')
-        const path: string = `/activities/list.json?beforeDate=${now}&sort=desc&offset=0&limit=100`
-        return new Promise<any>((resolve, reject) => {
-            this._fitbitClientRepo.getDataFromPath(path, token)
-                .then(result => resolve(result.activities))
                 .catch(err => reject(this.fitbitClientErrorListener(err, token)))
         })
     }
