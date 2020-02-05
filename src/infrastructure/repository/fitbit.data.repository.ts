@@ -256,12 +256,8 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             if (!data || !data.length) return resources
             for await(const item of data) {
                 const query: Query = new Query().fromJSON({
-                    filters: {
-                        'resource.logId': item.logId,
-                        'user_id': userId
-                    }
+                    filters: { 'resource.logId': item.logId, user_id: userId, type }
                 })
-                if (type === ResourceDataType.BODY) query.addFilter({ 'resource.weight': item.weight })
                 const exists: boolean = await this._resourceRepo.checkExists(query)
                 if (!exists) resources.push(item)
             }
@@ -271,17 +267,17 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         }
     }
 
-    private cleanResourceList(type): Promise<boolean> {
+    private cleanResourceList(userId, type): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
             this._resourceRepo
-                .deleteByQuery(new Query().fromJSON({ filters: { type } }))
+                .deleteByQuery(new Query().fromJSON({ filters: { user_id: userId, type } }))
                 .then(res => resolve(!!res))
                 .catch(err => reject(this.mongoDBErrorListener(err)))
         })
     }
 
     private manageResources(resources: Array<any>, userId: string, type: string): void {
-        this.cleanResourceList(type)
+        this.cleanResourceList(userId, type)
             .then(() => {
                 this.saveResourceList(resources, userId, type)
                     .catch(err => this._logger.error(`Error at save physical activities logs: ${err.message}`))
