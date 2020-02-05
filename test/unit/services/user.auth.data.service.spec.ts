@@ -174,7 +174,6 @@ describe('Services: UserAuthDataService', () => {
             it('should reject an error', () => {
                 return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.expired_token)
                     .catch(err => {
-                        assert.propertyVal(err, 'type', 'expired_token')
                         assert.propertyVal(err, 'message', 'The token has expired')
                     })
             })
@@ -183,7 +182,6 @@ describe('Services: UserAuthDataService', () => {
             it('should reject an error', () => {
                 return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.invalid_token)
                     .catch(err => {
-                        assert.propertyVal(err, 'type', 'invalid_token')
                         assert.property(err, 'message')
                         assert.propertyVal(err, 'description', 'Please make a new Fitbit Auth data and try again.')
                     })
@@ -193,7 +191,6 @@ describe('Services: UserAuthDataService', () => {
             it('should reject an error', () => {
                 return service.syncFitbitDataFromUser(DefaultEntityMock.USER_IDS.client_error)
                     .catch(err => {
-                        assert.propertyVal(err, 'type', 'client_error')
                         assert.propertyVal(err, 'message', 'The Fitbit Client is unavailable')
                     })
             })

@@ -164,19 +164,20 @@ export class UserAuthDataService implements IUserAuthDataService {
                                         }).catch(err => {
                                         if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                                         this.publishFitbitAuthError(err, userId)
-                                        return reject(err)
+                                        return reject(this.manageFitbitAuthError(err))
                                     })
                                 } else if (err.type === 'client_error') {
                                     try {
                                         const result: DataSync = await this.syncFitbitData(data.fitbit, userId)
                                         return resolve(result)
                                     } catch (err) {
+                                        if (err.type) return reject(this.manageFitbitAuthError(err))
                                         return reject(err)
                                     }
                                 } else {
                                     if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                                     this.publishFitbitAuthError(err, userId)
-                                    return reject(err)
+                                    return reject(this.manageFitbitAuthError(err))
                                 }
                             } else {
                                 return reject(err)
@@ -228,33 +229,36 @@ export class UserAuthDataService implements IUserAuthDataService {
     private publishFitbitAuthError(error: any, userId: string): void {
         const fitbit: any = {
             child_id: userId,
-            error: { code: 0, message: error.message, description: error.description }
+            error: this.manageFitbitAuthError(error)
         }
-
-        switch (error.type) {
-            case 'expired_token':
-                fitbit.error.code = 1011
-                break
-            case 'invalid_token':
-                fitbit.error.code = 1012
-                break
-            case 'invalid_grant':
-                fitbit.error.code = 1021
-                break
-            case 'invalid_client':
-                fitbit.error.code = 1401
-                break
-            case 'system':
-                fitbit.error.code = 1429
-                break
-            default:
-                fitbit.error.code = 1500
-                break
-        }
-
         this._logger.error(`Fitbit error: ${JSON.stringify(fitbit)}`)
         this._eventBus.bus.pubFitbitAuthError(fitbit)
             .then(() => this._logger.info(`Error message about ${error.type} from ${userId} successful published!`))
             .catch(err => this._logger.error(`Error at publish error message from ${userId}: ${err.message}`))
+    }
+
+    private manageFitbitAuthError(error: any): any {
+        const result: any = { code: 0, message: error.message, description: error.description }
+        switch (error.type) {
+            case 'expired_token':
+                result.code = 1011 // 400
+                break
+            case 'invalid_token':
+                result.code = 1012 // 400
+                break
+            case 'invalid_grant':
+                result.code = 1021 // 400
+                break
+            case 'invalid_client': // 403
+                result.code = 1401
+                break
+            case 'system':
+                result.code = 1429 // 429
+                break
+            default:
+                result.code = 1500 // 500
+                break
+        }
+        return result
     }
 }

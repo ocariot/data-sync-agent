@@ -3,7 +3,6 @@ import { Identifier } from '../../di/identifiers'
 import { ILogger } from '../../utils/custom.logger'
 import { IEntityMapper } from '../port/entity.mapper.interface'
 import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
-import { OAuthException } from '../../application/domain/exception/oauth.exception'
 import moment from 'moment'
 import jwt from 'jsonwebtoken'
 import { PhysicalActivity } from '../../application/domain/model/physical.activity'
@@ -577,8 +576,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
         })
     }
 
-    private fitbitClientErrorListener(err: any, accessToken?: string, refreshToken?: string, userId?: string):
-        OAuthException | FitbitClientException | undefined {
+    private fitbitClientErrorListener(err: any, accessToken?: string, refreshToken?: string): FitbitClientException | undefined {
         if (err.type === 'client_error') {
             return new FitbitClientException(
                 'client_error',
@@ -586,34 +584,34 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 'Please try again later.')
         }
         if (err.type === 'expired_token') {
-            return new OAuthException(
+            return new FitbitClientException(
                 'expired_token',
                 'Access token expired.',
                 `The access token ${accessToken} has been expired and needs to be refreshed.`)
         } else if (err.type === 'invalid_token') {
-            return new OAuthException(
+            return new FitbitClientException(
                 'invalid_token',
                 'Access token invalid.',
                 `The access token ${accessToken} is invalid. Please make a new Fitbit Auth Data request and try again.`)
         } else if (err.type === 'invalid_grant') {
-            return new OAuthException(
+            return new FitbitClientException(
                 'invalid_grant',
                 'Refresh token invalid.',
                 `The refresh token ${refreshToken} is invalid. Please make a new Fitbit Auth Data request and try again.`)
         } else if (err.type === 'system') {
-            return new OAuthException(
+            return new FitbitClientException(
                 'system',
                 `Data request limit for access token ${accessToken} has expired.`,
                 'Please wait a minimum of one hour and try make the operation again.')
         } else if (err.type === 'invalid_client') {
-            return new OAuthException(
+            return new FitbitClientException(
                 'invalid_client',
                 'Invalid Fitbit Client data.',
                 'The Fitbit Client credentials are invalid. The operation cannot be performed.')
         } else if (err.type === 'internal_error') {
-            return new OAuthException('internal_error', 'A internal error occurs. Please, try again later.')
+            return new FitbitClientException('internal_error', 'internal_fitbit_error', err.message)
         }
-        return new OAuthException(err.type, err.message)
+        return new FitbitClientException(err.type, err.message)
     }
 
     // MongoDb Error Listener
