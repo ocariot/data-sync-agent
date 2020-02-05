@@ -167,7 +167,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                         .then(() => {
                             this._logger.info(`Weight Measurements from ${userId} successful published!`)
                             this.saveResourceList(weights, userId)
-                                .then(() => this._logger.info(`Weight logs from ${data.user_id} saved successful!`))
+                                .then(() => this._logger.info(`Weight logs from ${userId} saved successful!`))
                                 .catch(err => this._logger.error(`Error at save weight logs: ${err.message}`))
                         })
                         .catch(err => this._logger.error(`Error publishing weights: ${err.message}`))
@@ -360,7 +360,7 @@ export class FitbitDataRepository implements IFitbitDataRepository {
                 moment(data.last_sync).format('YYYY-MM-DD')
             )
         }
-        return this.getUserActivities(data.access_token!, 100, moment().format('YYYY-MM-DD'))
+        return this.getLastUserActivities(data.access_token!)
     }
 
     private async syncUserActivitiesLogs(data: FitbitAuthData, lastSync: string, resource: string): Promise<Array<any>> {
@@ -405,6 +405,16 @@ export class FitbitDataRepository implements IFitbitDataRepository {
             this._fitbitClientRepo
                 .getDataFromPath(`/body/log/weight/date/${baseDate}/${endDate}.json`, token)
                 .then(result => resolve(result.weight))
+                .catch(err => reject(this.fitbitClientErrorListener(err, token)))
+        })
+    }
+
+    private async getLastUserActivities(token: string): Promise<any> {
+        const now: string = moment().add(1, 'day').format('YYYY-MM-DD')
+        const path: string = `/activities/list.json?beforeDate=${now}&sort=desc&offset=0&limit=100`
+        return new Promise<any>((resolve, reject) => {
+            this._fitbitClientRepo.getDataFromPath(path, token)
+                .then(result => resolve(result.activities))
                 .catch(err => reject(this.fitbitClientErrorListener(err, token)))
         })
     }

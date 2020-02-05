@@ -44,7 +44,10 @@ export class UserAuthDataService implements IUserAuthDataService {
                 }
 
                 if (authData.fitbit && authData.fitbit.last_sync) {
-                    this._eventBus.bus.pubFitbitLastSync({ child_id: authData.user_id, last_sync: authData.fitbit.last_sync })
+                    this._eventBus.bus.pubFitbitLastSync({
+                        child_id: authData.user_id,
+                        last_sync: authData.fitbit.last_sync
+                    })
                         .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
                         .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
                 }
@@ -94,8 +97,8 @@ export class UserAuthDataService implements IUserAuthDataService {
                 }
 
                 // 2. Revokes Fitbit access token.
-
                 const isRevoked: boolean = await this._fitbitAuthDataRepo.revokeToken(authData.fitbit.access_token)
+
                 // 3. Remove Fitbit authorization data from local database.
                 const isRemoved: boolean = await this._fitbitAuthDataRepo.removeFitbitAuthData(userId)
 
