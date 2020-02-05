@@ -4,6 +4,7 @@ import { IJSONDeserializable } from '../utils/json.deserializable.interface'
 import { JsonUtils } from '../utils/json.utils'
 
 export class Resource extends Entity implements IJSONSerializable, IJSONDeserializable<Resource> {
+    private _type?: string
     private _resource?: any
     private _date_sync?: string
     private _user_id?: string
@@ -11,6 +12,14 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
 
     constructor() {
         super()
+    }
+
+    get type(): string | undefined {
+        return this._type
+    }
+
+    set type(value: string | undefined) {
+        this._type = value
     }
 
     get resource(): any | undefined {
@@ -51,7 +60,8 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
             json = JSON.parse(json)
         }
 
-        if (json.id) super.id = json.id
+        if (json.id !== undefined) super.id = json.id
+        if (json.type !== undefined) this.type = json.type
         if (json.resource !== undefined) this.resource = json.resource
         if (json.user_id !== undefined) this.user_id = json.user_id
         if (json.date_sync !== undefined) this.date_sync = json.date_sync
@@ -63,6 +73,7 @@ export class Resource extends Entity implements IJSONSerializable, IJSONDeserial
     public toJSON(): any {
         return {
             id: super.id,
+            type: this.type,
             resource: this.resource,
             user_id: this.user_id,
             date_sync: this.date_sync,
