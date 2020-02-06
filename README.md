@@ -152,14 +152,14 @@ This microservice has a particular way of managing errors from the Fitbit Client
 ```
 The `code` parameter is an internal implementation of the API, which serves to map the generated errors. The following table illustrates the mapping of these errors as implemented in the API:
 
-| code | type | reference | message  | description |
-|-----|-----|-----|-----|-----|
-|1011| expired_token | Expired Access Token | Access token expired. | The access token has been expired and needs to be refreshed. | 
-|1012| invalid_token | Invalid Access Token | Access token invalid. | The access token is invalid. Please make a new Fitbit Auth Data request and try again. | 
-|1021| invalid_grant | Invalid Refresh Token | Refresh token invalid. | The refresh token is invalid. Please make a new Fitbit Auth Data request and try again. | 
-|1401| invalid_client | Invalid Client Credentials | Invalid Fitbit Client data.| The Fitbit Client credentials are invalid. The operation cannot be performed. | 
-|1429| system | Too Many Requests | Data request limit for user has expired.  | Please wait a minimum of one hour and try make the operation again. | 
-|1500| any | Generic Error | The message from error. | The description from error. | 
+| code | reference | message  | description |
+|-----|-----|-----|-----|
+|1011| Expired Access Token | Access token expired. | The access token has been expired and needs to be refreshed. | 
+|1012| Invalid Access Token | Access token invalid. | The access token is invalid. Please make a new Fitbit Auth Data request and try again. | 
+|1021| Invalid Refresh Token | Refresh token invalid. | The refresh token is invalid. Please make a new Fitbit Auth Data request and try again. | 
+|1401| Invalid Client Credentials | Invalid Fitbit Client data.| The Fitbit Client credentials are invalid. The operation cannot be performed. | 
+|1429| Too Many Requests | Data request limit for user has expired.  | Please wait a minimum of one hour and try make the operation again. | 
+|1500| Generic Error | The message from error. | The description from error. | 
 
 [//]: # (These are reference links used in the body of this note.)
 [license-image]: https://img.shields.io/badge/license-Apache%202-blue.svg
