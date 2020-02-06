@@ -17,7 +17,6 @@ import { IEntityMapper } from '../infrastructure/port/entity.mapper.interface'
 import { UserAuthDataService } from '../application/service/user.auth.data.service'
 import { IBackgroundTask } from '../application/port/background.task.interface'
 import { SyncFitbitDataTask } from '../background/task/sync.fitbit.data.task'
-import { FitbitSubscriberController } from '../ui/controllers/fitbit.subscriber.controller'
 import { FitbitAuthDataEntityMapper } from '../infrastructure/entity/mapper/fitbit.auth.data.entity.mapper'
 import { UserAuthData } from '../application/domain/model/user.auth.data'
 import { UserAuthDataEntity } from '../infrastructure/entity/user.auth.data.entity'
@@ -76,8 +75,6 @@ class IoC {
         // Controllers
         this._container.bind<HomeController>(Identifier.HOME_CONTROLLER).to(HomeController).inSingletonScope()
         this._container.bind<FitbitController>(Identifier.FITBIT_CONTROLLER).to(FitbitController).inSingletonScope()
-        this._container.bind<FitbitSubscriberController>(Identifier.FITBIT_SUBSCRIBER_CONTROLLER)
-            .to(FitbitSubscriberController).inSingletonScope()
         this._container.bind<UserFitbitAuthController>(Identifier.USER_FITBIT_AUTH_CONTROLLER)
             .to(UserFitbitAuthController).inSingletonScope()
         this._container.bind<UserFitbitSyncController>(Identifier.USER_FITBIT_SYNC_CONTROLLER)

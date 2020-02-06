@@ -33,7 +33,26 @@ export class UserFitbitSyncController {
             return res.status(HttpStatus.ACCEPTED).send(result.toJSON())
         } catch (err) {
             const handlerError = ApiExceptionManager.build(err)
+            if (err.code) {
+                if ([1011, 1012, 1021].includes(err.code)) return res.status(HttpStatus.BAD_REQUEST).send(err)
+                else if (err.code === 1401) return res.status(HttpStatus.UNAUTHORIZED).send(err)
+                else if (err.code === 1429) return res.status(HttpStatus.TOO_MANY_REQUESTS).send(err)
+                return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err)
+            }
             return res.status(handlerError.code).send(handlerError.toJSON())
         }
     }
+
 }
+
+// 1011 -> 1021 = 400
+// 1401 = 401
+// 1429 = 429
+// 1500 = 500
+
+// * 1011 - Expired Token
+// * 1012 - Invalid Token
+// * 1021 - Invalid Refresh Token
+// * 1401 - Invalid Client Credentials
+// * 1429 - Too Many Requests
+// * 1500 - Generic Error

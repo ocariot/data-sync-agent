@@ -105,44 +105,6 @@ describe('Repositories: FitbitDataRepository', () => {
         })
     })
 
-    describe('subscribeUserEvent()', () => {
-        context('when subscribe in a specific event', () => {
-            it('should return undefined', () => {
-                return repo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-                    .then(res => {
-                        assert.isUndefined(res)
-                    })
-            })
-        })
-        context('when a error occurs', () => {
-            it('should reject an error', () => {
-                return repo.subscribeUserEvent(data.fitbit!, 'error', 'ACTIVITIES')
-                    .catch(err => {
-                        assert.propertyVal(err, 'message', 'An error occurs!')
-                    })
-            })
-        })
-    })
-
-    describe('unsubscribeUserEvent()', () => {
-        context('when unsubscribe in a specific event', () => {
-            it('should return undefined', () => {
-                return repo.unsubscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-                    .then(res => {
-                        assert.isUndefined(res)
-                    })
-            })
-        })
-        context('when a error occurs', () => {
-            it('should reject an error', () => {
-                return repo.unsubscribeUserEvent(data.fitbit!, 'error', 'ACTIVITIES')
-                    .catch(err => {
-                        assert.propertyVal(err, 'message', 'An error occurs!')
-                    })
-            })
-        })
-    })
-
     describe('updateLastSync()', () => {
         context('when update the last data sync', () => {
             it('should return true', () => {

@@ -8,8 +8,7 @@ Microservice responsible for data synchronization of FitBit and CVE platform wit
 - Fitbit access token management;
 - Automatically sync Fitbit data;
 - Publish sync data to a message channel;
-- Fitbit access token revocation;
-- Subscriber to resources provided by Fitbit.
+- Fitbit access token revocation.
  
 ## Prerequisites
 - [Node 8.0.0+](https://nodejs.org/en/download/)
@@ -27,7 +26,6 @@ Application settings are defined by environment variables. To define the setting
 | `NODE_ENV` | Defines the environment in which the application runs. You can set: `test` _(in this environment, the database defined in `MONGODB_URI_TEST` is used and the logs are disabled for better visualization of the test output)_, `development` _(in this environment, all log levels are enabled)_ and `production` _(in this environment, only the warning and error logs are enabled)_. | `development` |
 | `PORT_HTTP` | Port used to listen for HTTP requests. Any request received on this port is redirected to the HTTPS port. | `5000` |
 | `PORT_HTTPS` | Port used to listen for HTTPS requests. Do not forget to provide the private key and the SSL/TLS certificate. See the topic [generate certificates](#generate-certificates). | `5001` |
-| `HOST_WHITELIST` | Access control based on IP addresses. Only allow IP requests in the unlock list. You can define IP or host, for example: `[127.0.0.1, api.ocariot.com]`. To accept requests from any customer, use the character `*`. | `[*]` |
 | `SSL_KEY_PATH` | SSL/TLS certificate private key. | `.certs/server.key` |
 | `SSL_CERT_PATH` | SSL/TLS certificate. | `.certs/server.crt` |
 | `MONGODB_URI` | Database connection URI used if the application is running in development or production environment. The [URI specifications ](https://docs.mongodb.com/manual/reference/connection-string) defined by MongoDB are accepted. For example: `mongodb://user:pass@host:port/database?options` | `mongodb://127.0.0.1:27017`<br/>`/ocariot-ds-agent` |
@@ -37,8 +35,6 @@ Application settings are defined by environment variables. To define the setting
 | `RABBITMQ_CA_PATH` | RabbitMQ CA file location. Must always be provided when using `amqps` protocol. | `.certs/rabbitmqca.crt` |
 | `FITBIT_CLIENT_ID` | Client Id for Fitbit Application resposible to manage user data. | `CIENT_ID_HERE` |
 | `FITBIT_CLIENT_SECRET` | Client Secret for Fitbit Application resposible to manage user data. | `CIENT_SECRET_HERE` |
-| `FITBIT_CLIENT_SUBSCRIBER` | Code used by Fitbit to verify the subscriber. | `CLIENT_SUBSCRIBER_HERE` |
-| `FITBIT_SUBSCRIBER_ID` | Customer Subscriber ID, used to manage the subscriber who will receive notification of a user resource. | `FITBIT_SUBSCRIBER_ID` |
 | `EXPRESSION_AUTO_SYNC` | Defines how often the application will automatically sync user data in the background according to the crontab expression. | `0 0 * * 0` |
 
 ## Generate Certificates
@@ -114,7 +110,6 @@ You can also create the container by passing the settings that are desired by th
 docker run --rm \
   -e PORT_HTTP=8080 \
   -e PORT_HTTPS=8081 \
-  -e HOST_WHITELIST="[localhost]" \
   -e SSL_KEY_PATH=.certs/server.key \
   -e SSL_CERT_PATH=.certs/server.crt \
   -e RABBITMQ_URI="amqp://guest:guest@192.168.0.1:5672" \
@@ -122,8 +117,6 @@ docker run --rm \
   -e REDIS_URI="redis://127.0.0.1:6379" \
   -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
-  -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
-  -e FITBIT_SUBSCRIBER_ID="SUBSCRIBER_ID_HERE" \
   -e EXPRESSION_AUTO_SYNC="0 0 * * 0" \
   ocariot/ds-agent
 ```
@@ -136,8 +129,6 @@ docker run --rm \
   -e REDIS_URI="redis://127.0.0.1:6379" \
   -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
-  -e FITBIT_CLIENT_SUBSCRIBER="YOUR_FITBIT_CLIENT_SUBSCRIBER" \
-  -e FITBIT_SUBSCRIBER_ID="SUBSCRIBER_ID_HERE" \
   -e EXPRESSION_AUTO_SYNC="0 0 * * 0" \
   ocariot/ds-agent
 ```
@@ -161,14 +152,14 @@ This microservice has a particular way of managing errors from the Fitbit Client
 ```
 The `code` parameter is an internal implementation of the API, which serves to map the generated errors. The following table illustrates the mapping of these errors as implemented in the API:
 
-| code | type | reference | message  | description |
-|-----|-----|-----|-----|-----|
-|1011| expired_token | Expired Access Token | Access token expired. | The access token has been expired and needs to be refreshed. | 
-|1012| invalid_token | Invalid Access Token | Access token invalid. | The access token is invalid. Please make a new Fitbit Auth Data request and try again. | 
-|1021| invalid_grant | Invalid Refresh Token | Refresh token invalid. | The refresh token is invalid. Please make a new Fitbit Auth Data request and try again. | 
-|1401| invalid_client | Invalid Client Credentials | Invalid Fitbit Client data.| The Fitbit Client credentials are invalid. The operation cannot be performed. | 
-|1429| system | Too Many Requests | Data request limit for user has expired.  | Please wait a minimum of one hour and try make the operation again. | 
-|1500| any | Generic Error | The message from error. | The description from error. | 
+| code | reference | message  | description |
+|-----|-----|-----|-----|
+|1011| Expired Access Token | Access token expired. | The access token has been expired and needs to be refreshed. | 
+|1012| Invalid Access Token | Access token invalid. | The access token is invalid. Please make a new Fitbit Auth Data request and try again. | 
+|1021| Invalid Refresh Token | Refresh token invalid. | The refresh token is invalid. Please make a new Fitbit Auth Data request and try again. | 
+|1401| Invalid Client Credentials | Invalid Fitbit Client data.| The Fitbit Client credentials are invalid. The operation cannot be performed. | 
+|1429| Too Many Requests | Data request limit for user has expired.  | Please wait a minimum of one hour and try make the operation again. | 
+|1500| Generic Error | The message from error. | The description from error. | 
 
 [//]: # (These are reference links used in the body of this note.)
 [license-image]: https://img.shields.io/badge/license-Apache%202-blue.svg
