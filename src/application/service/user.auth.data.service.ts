@@ -30,10 +30,9 @@ export class UserAuthDataService implements IUserAuthDataService {
             try {
                 const authData: UserAuthData = await this.manageFitbitAuthData(item)
                 CreateUserAuthDataValidator.validate(item)
-                let result: UserAuthData = new UserAuthData()
+                let result: UserAuthData
 
                 authData.fitbit!.status = 'valid_token'
-                await this.subscribeFitbitEvents(item)
 
                 const alreadySaved: UserAuthData = await this._userAuthDataRepo
                     .findOne(new Query().fromJSON({ filters: { user_id: authData.user_id! } }))
@@ -45,7 +44,10 @@ export class UserAuthDataService implements IUserAuthDataService {
                 }
 
                 if (authData.fitbit && authData.fitbit.last_sync) {
-                    this._eventBus.bus.pubFitbitLastSync({ child_id: authData.user_id, last_sync: authData.fitbit.last_sync })
+                    this._eventBus.bus.pubFitbitLastSync({
+                        child_id: authData.user_id,
+                        last_sync: authData.fitbit.last_sync
+                    })
                         .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
                         .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
                 }
@@ -94,16 +96,13 @@ export class UserAuthDataService implements IUserAuthDataService {
                     return resolve()
                 }
 
-                // 2. Unsubscribe from Fitbit events.
-                await this.unsubscribeFitbitEvents(authData)
-
-                // 3. Revokes Fitbit access token.
-
+                // 2. Revokes Fitbit access token.
                 const isRevoked: boolean = await this._fitbitAuthDataRepo.revokeToken(authData.fitbit.access_token)
-                // 4. Remove Fitbit authorization data from local database.
+
+                // 3. Remove Fitbit authorization data from local database.
                 const isRemoved: boolean = await this._fitbitAuthDataRepo.removeFitbitAuthData(userId)
 
-                // 5. Publish the Fitbit revoke event on the bus.
+                // 4. Publish the Fitbit revoke event on the bus.
                 if (isRevoked && isRemoved) {
                     this._eventBus.bus
                         .pubFitbitRevoke({ child_id: userId })
@@ -165,19 +164,20 @@ export class UserAuthDataService implements IUserAuthDataService {
                                         }).catch(err => {
                                         if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                                         this.publishFitbitAuthError(err, userId)
-                                        return reject(err)
+                                        return reject(this.manageFitbitAuthError(err))
                                     })
                                 } else if (err.type === 'client_error') {
                                     try {
                                         const result: DataSync = await this.syncFitbitData(data.fitbit, userId)
                                         return resolve(result)
                                     } catch (err) {
+                                        if (err.type) return reject(this.manageFitbitAuthError(err))
                                         return reject(err)
                                     }
                                 } else {
                                     if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
                                     this.publishFitbitAuthError(err, userId)
-                                    return reject(err)
+                                    return reject(this.manageFitbitAuthError(err))
                                 }
                             } else {
                                 return reject(err)
@@ -185,107 +185,6 @@ export class UserAuthDataService implements IUserAuthDataService {
                         }
                     })
                     .catch(reject)
-            } catch (err) {
-                return reject(err)
-            }
-        })
-    }
-
-    public async syncLastFitbitUserData(fitbitUserId: string, type: string, date: string): Promise<void> {
-        try {
-            const authData: UserAuthData =
-                await this._userAuthDataRepo
-                    .findOne(new Query().fromJSON({ filters: { 'fitbit.user_id': fitbitUserId } }))
-            if (!authData) return await Promise.resolve()
-            this.syncLastFitbitData(authData.fitbit!, authData.user_id!, type, date)
-                .then()
-                .catch(err => this._logger.error(`The resource ${type} from ${authData.user_id} could note be sync: ` +
-                    err.message))
-            return await Promise.resolve()
-        } catch (err) {
-            return await Promise.reject(err)
-        }
-    }
-
-    private async syncLastFitbitData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void> {
-        try {
-            VerifyFitbitAuthValidator.validate(data)
-            await this._fitbitAuthDataRepo.syncLastFitbitData(data, userId, type, date)
-            return Promise.resolve()
-        } catch (err) {
-            if (err.type) {
-                if (err.type === 'expired_token') {
-                    try {
-                        const newToken: FitbitAuthData =
-                            await this._fitbitAuthDataRepo.refreshToken(userId, data.access_token!, data.refresh_token!)
-                        this.syncLastFitbitData(newToken, userId, type, date)
-                            .then()
-                            .catch(err => {
-                                this.updateTokenStatus(userId, err.type)
-                                this.publishFitbitAuthError(err, userId)
-                                return Promise.reject(err)
-                            })
-                    } catch (err) {
-                        if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
-                        this.publishFitbitAuthError(err, userId)
-                        return Promise.reject(err)
-                    }
-                } else if (err.type === 'client_error') {
-                    try {
-                        await this.syncFitbitData(data, userId)
-                    } catch (err) {
-                        return Promise.reject(err)
-                    }
-                } else {
-                    if (err.type !== 'system') this.updateTokenStatus(userId, err.type)
-                    this.publishFitbitAuthError(err, userId)
-                    return Promise.reject(err)
-                }
-            } else {
-                return await Promise.reject(err)
-            }
-        }
-    }
-
-    private async subscribeFitbitEvents(data: UserAuthData): Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
-            try {
-                if (!data || !data.fitbit || !data.fitbit.scope) return
-
-                const scopes: Array<string> = data.fitbit.scope.split(' ')
-
-                if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
-                    await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'body', 'BODY')
-                }
-                if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
-                    await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-                }
-                if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
-                    await this._fitbitAuthDataRepo.subscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
-                }
-                return resolve()
-            } catch (err) {
-                return reject(err)
-            }
-        })
-    }
-
-    private async unsubscribeFitbitEvents(data: UserAuthData): Promise<void> {
-        return new Promise(async (resolve, reject) => {
-            try {
-                if (!data || !data.fitbit || !data.fitbit.scope) return
-
-                const scopes: Array<string> = data.fitbit.scope.split(' ')
-                if (scopes.includes('rwei')) { // Scope reference from fitbit to weight data is rwei
-                    await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'body', 'BODY')
-                }
-                if (scopes.includes('ract')) { // Scope reference from fitbit to activity data is ract
-                    await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'activities', 'ACTIVITIES')
-                }
-                if (scopes.includes('rsle')) { // Scope reference from fitbit to sleep data is rsle
-                    await this._fitbitAuthDataRepo.unsubscribeUserEvent(data.fitbit!, 'sleep', 'SLEEP')
-                }
-                return resolve()
             } catch (err) {
                 return reject(err)
             }
@@ -330,33 +229,36 @@ export class UserAuthDataService implements IUserAuthDataService {
     private publishFitbitAuthError(error: any, userId: string): void {
         const fitbit: any = {
             child_id: userId,
-            error: { code: 0, message: error.message, description: error.description }
+            error: this.manageFitbitAuthError(error)
         }
-
-        switch (error.type) {
-            case 'expired_token':
-                fitbit.error.code = 1011
-                break
-            case 'invalid_token':
-                fitbit.error.code = 1012
-                break
-            case 'invalid_grant':
-                fitbit.error.code = 1021
-                break
-            case 'invalid_client':
-                fitbit.error.code = 1401
-                break
-            case 'system':
-                fitbit.error.code = 1429
-                break
-            default:
-                fitbit.error.code = 1500
-                break
-        }
-
         this._logger.error(`Fitbit error: ${JSON.stringify(fitbit)}`)
         this._eventBus.bus.pubFitbitAuthError(fitbit)
             .then(() => this._logger.info(`Error message about ${error.type} from ${userId} successful published!`))
             .catch(err => this._logger.error(`Error at publish error message from ${userId}: ${err.message}`))
+    }
+
+    private manageFitbitAuthError(error: any): any {
+        const result: any = { code: 0, message: error.message, description: error.description }
+        switch (error.type) {
+            case 'expired_token':
+                result.code = 1011 // 400
+                break
+            case 'invalid_token':
+                result.code = 1012 // 400
+                break
+            case 'invalid_grant':
+                result.code = 1021 // 400
+                break
+            case 'invalid_client': // 403
+                result.code = 1401
+                break
+            case 'system':
+                result.code = 1429 // 429
+                break
+            default:
+                result.code = 1500 // 500
+                break
+        }
+        return result
     }
 }

@@ -14,6 +14,7 @@ export class ResourceEntityMapper implements IEntityMapper<Resource, ResourceEnt
         const result: ResourceEntity = new ResourceEntity()
 
         if (item.id !== undefined) result.id = item.id
+        if (item.type !== undefined) result.type = item.type
         if (item.user_id !== undefined) result.user_id = item.user_id
         if (item.resource !== undefined) result.resource = item.resource
         if (item.date_sync !== undefined) result.date_sync = item.date_sync
@@ -32,6 +33,7 @@ export class ResourceEntityMapper implements IEntityMapper<Resource, ResourceEnt
         if (!json) return result
 
         if (json.id !== undefined) result.id = json.id
+        if (json.type !== undefined) result.type = json.type
         if (json.user_id !== undefined) result.user_id = json.user_id
         if (json.resource !== undefined) result.resource = json.resource
         if (json.date_sync !== undefined) result.date_sync = json.date_sync

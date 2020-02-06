@@ -16,11 +16,5 @@ export interface IFitbitDataRepository {
 
     syncFitbitData(data: FitbitAuthData, userId: string): Promise<DataSync>
 
-    syncLastFitbitData(data: FitbitAuthData, userId: string, type: string, date: string): Promise<void>
-
-    subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
-
-    unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void>
-
     getTokenPayload(token: string): Promise<any>
 }

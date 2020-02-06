@@ -1,5 +1,4 @@
 import FitbitApiClient from 'fitbit-node'
-import { OAuthException } from '../../application/domain/exception/oauth.exception'
 import { FitbitAuthData } from '../../application/domain/model/fitbit.auth.data'
 import { injectable } from 'inversify'
 import { IFitbitClientRepository } from '../../application/port/fitbit.client.repository.interface'
@@ -47,46 +46,9 @@ export class FitbitClientRepository implements IFitbitClientRepository {
         })
     }
 
-    public async subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.fitbit_client
-                .post(
-                    `/${resource}/apiSubscriptions/${subscriptionId}-${data.user_id}.json`, // Path
-                    data.access_token, // Access Token
-                    null, // Form Data
-                    null, // User Id
-                    { 'X-Fitbit-Subscriber-Id': process.env.FITBIT_SUBSCRIBER_ID } // Extra Header
-                )
-                .then(res => {
-                    if (res[0].errors) {
-                        return reject(this.fitbitClientErrorListener(res[0].errors[0]))
-                    }
-                    return resolve()
-                }).catch(err => reject(this.fitbitClientErrorListener(err)))
-        })
-    }
-
-    public async unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.fitbit_client
-                .delete(
-                    `/${resource}/apiSubscriptions/${subscriptionId}-${data.user_id}.json`, // Path
-                    data.access_token, // Access Token
-                    null, // User Id
-                    { 'X-Fitbit-Subscriber-Id': process.env.FITBIT_SUBSCRIBER_ID } // Extra Header
-                )
-                .then(res => {
-                    if (res[0] && res[0].errors) {
-                        return reject(this.fitbitClientErrorListener(res[0].errors[0]))
-                    }
-                    return resolve()
-                }).catch(err => reject(this.fitbitClientErrorListener(err)))
-        })
-    }
-
-    private fitbitClientErrorListener(err: any): OAuthException | FitbitClientException | undefined {
-        if (err.context) return new OAuthException(err.context.errors[0].errorType, err.context.errors[0].message)
+    private fitbitClientErrorListener(err: any): FitbitClientException | undefined {
+        if (err.context) return new FitbitClientException(err.context.errors[0].errorType, err.context.errors[0].message)
         else if (err.code === 'EAI_AGAIN') return new FitbitClientException('client_error', err.message)
-        return new OAuthException(err.errorType, err.message)
+        return new FitbitClientException(err.errorType, err.message)
     }
 }
