@@ -10,7 +10,7 @@
 export abstract class Strings {
     public static readonly APP: any = {
         TITLE: 'Data Sync Agent Service',
-        APP_DESCRIPTION: 'Microservice responsible for data synchronization of FitBit and CVE platform with OCARIoT platform.'
+        APP_DESCRIPTION: 'Microservice responsible for data synchronization of FitBit platform with OCARIoT platform.'
     }
 
     public static readonly PARAMETERS: any = {
