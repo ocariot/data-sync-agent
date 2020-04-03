@@ -2,7 +2,7 @@
 # Data Sync Agent Service
 [![License][license-image]][license-url] [![Node][node-image]][node-url] [![Travis][travis-image]][travis-url] [![Coverage][coverage-image]][coverage-url] [![Dependencies][dependencies-image]][dependencies-url] [![DependenciesDev][dependencies-dev-image]][dependencies-dev-url] [![Vulnerabilities][known-vulnerabilities-image]][known-vulnerabilities-url] [![Commit][last-commit-image]][last-commit-url] [![Releases][releases-image]][releases-url] [![Contributors][contributors-image]][contributors-url]  [![Swagger][swagger-image]][swagger-url] 
 
-Microservice responsible for data synchronization of FitBit and CVE platform with OCARIoT platform.
+Microservice responsible for data synchronization of FitBit platform with OCARIoT platform.
 
 **Main features:**
 - Fitbit access token management;
