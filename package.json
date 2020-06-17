@@ -1,6 +1,6 @@
 {
   "name": "data-sync-agent",
-  "version": "1.5.9",
+  "version": "1.6.0",
   "description": "Service responsible for data synchronization of FitBit platform with OCARIoT platform.",
   "main": "dist/server.js",
   "scripts": {
