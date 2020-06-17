@@ -43,14 +43,6 @@ export class UserAuthDataService implements IUserAuthDataService {
                     result = await this._userAuthDataRepo.create(authData)
                 }
 
-                if (authData.fitbit && authData.fitbit.last_sync) {
-                    this._eventBus.bus.pubFitbitLastSync({
-                        child_id: authData.user_id,
-                        last_sync: authData.fitbit.last_sync
-                    })
-                        .then(() => this._logger.info(`Last sync from ${authData.user_id} successful published!`))
-                        .catch(err => this._logger.error(`Error at publish last sync: ${err.message}`))
-                }
                 return resolve(result)
             } catch (err) {
                 return reject(err)

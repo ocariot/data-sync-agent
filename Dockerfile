@@ -1,4 +1,4 @@
-FROM node:12.13.1
+FROM node:12.18.0-alpine
 
 # Create app directory
 RUN mkdir -p /usr/src/ds
