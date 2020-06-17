@@ -10,7 +10,7 @@ const request = require('supertest')(app.getExpress())
 describe('App', () => {
     context('general error handler', () => {
         it('should return status code 404 and an info message about the lack of the route.', async () => {
-            const endPoint = '/v1/users/5a62be07d6f33400146c9b61/sync/fitbit'
+            const endPoint = '/v1/test/5a62be07d6f33400146c9b61/'
             const resultExpect = {
                 code: 404,
                 message: Strings.ERROR_MESSAGE.ENDPOINT_NOT_FOUND.replace('{0}', endPoint)

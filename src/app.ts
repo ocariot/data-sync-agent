@@ -85,8 +85,7 @@ export class App {
             app.use(qs({
                 use_page: true,
                 default: {
-                    pagination: { limit: 100 },
-                    sort: { created_at: 'desc' }
+                    pagination: { page: 1, limit: 100 }
                 }
             }))
 
@@ -116,7 +115,6 @@ export class App {
      * @return Promise<void>
      */
     private setupSwaggerUI(): void {
-        // Middleware swagger. It should not run in the test environment.
         const options = {
             swaggerUrl: Default.SWAGGER_URI,
             customCss: '.swagger-ui .topbar { display: none }',

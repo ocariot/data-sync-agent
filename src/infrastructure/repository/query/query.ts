@@ -7,7 +7,7 @@ import { Pagination } from './pagination'
  * @example
  * ```typescript
  * const fields: Array<string> = new Array('name', 'email')
- * const ordination: Map<string, string> = new Map().set('created_at', 'desc') // descending order
+ * const ordination: Map<string, string> = new Map().set('created_at', '-1') // descending order
  * const pagination: Pagination = new Pagination(1, 10)
  * const filters: object = {
  *      created_at: { $gte: '2018-07-30T00:00:00.000Z' },
@@ -36,7 +36,7 @@ export class Query implements IQuery {
     constructor(fields?: Array<string>, ordination?: Map<string, string>,
                 pagination?: IPagination, filters?: object) {
         this.fields = fields ? fields : []
-        this.ordination = ordination ? ordination : new Map().set('created_at', 'desc')
+        this.ordination = ordination ? ordination : new Map()
         this.pagination = pagination ? pagination : new Pagination()
         this.filters = filters ? filters : {}
     }
@@ -95,7 +95,7 @@ export class Query implements IQuery {
         if (json.sort || json.ordination) {
             const __ordination: Map<string, string> = new Map()
             Object.keys((json.sort || json.ordination))
-                .reduce((prev, elem) => __ordination.set(elem, (json.sort[elem] || json.ordination[elem])), {})
+                .reduce((prev, elem) => __ordination.set(elem, (json.sort ? json.sort[elem] : json.ordination[elem])), {})
             this.ordination = __ordination
         }
 
@@ -108,9 +108,9 @@ export class Query implements IQuery {
     public toJSON(): any {
         return {
             fields: this.fields ? [...this.fields].reduce((obj, value, key) => (obj[value] = 1, obj), {}) : [],
-            ordination: this.fields ?
-                [...this.ordination.entries()].reduce((obj, [key, value]) => (obj[key] = value, obj), {}) :
-                new Map(),
+            ordination: this.ordination.size > 0 ?
+                [...this.ordination.entries()]
+                    .reduce((obj, [key, value]) => (obj[key] = value, obj), {}) : { created_at: -1 },
             pagination: this.pagination.toJSON(),
             filters: this.filters
         }

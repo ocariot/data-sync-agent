@@ -107,30 +107,28 @@ This command will download the latest image and create a container with the defa
 
 You can also create the container by passing the settings that are desired by the environment variables. The supported settings are the same as those defined in ["Set the environment variables"](#set-the-environment-variables). See the following example:
 ```sh
-docker run --rm \
-  -e PORT_HTTP=8080 \
-  -e PORT_HTTPS=8081 \
-  -e SSL_KEY_PATH=.certs/server.key \
-  -e SSL_CERT_PATH=.certs/server.crt \
-  -e RABBITMQ_URI="amqp://guest:guest@192.168.0.1:5672" \
-  -e MONGODB_URI="mongodb://192.168.0.2:27017/ocariot-ds-agent" \
+docker run -d --rm \
+  --net=host \
+  -e NODE_ENV=development \
+  -e PORT_HTTP=5000 \
+  -e PORT_HTTPS=5001 \
+  -v $(pwd)/.certs:/etc \
+  -e SSL_KEY_PATH=/etc/server.key \
+  -e SSL_CERT_PATH=/etc/server.crt \
+  -e RABBITMQ_URI="amqp://guest:guest@127.0.0.1:5672" \
+  -e MONGODB_URI="mongodb://127.0.0.1:27017/ocariot-ds-agent" \
   -e REDIS_URI="redis://127.0.0.1:6379" \
   -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
   -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
   -e EXPRESSION_AUTO_SYNC="0 0 * * 0" \
-  ocariot/ds-agent
+  --name ocariot-ds-agent \
+  ocariot/ocariot-ds-agent
 ```
 If the MongoDB or RabbitMQ instance is in the host local, add the `--net=host` statement when creating the container, this will cause the docker container to communicate with its local host.
 ```sh
-docker run --rm \
+docker run -d --rm \
   --net=host \
-  -e RABBITMQ_URI="amqp://guest:guest@localhost:5672" \
-  -e MONGODB_URI="mongodb://localhost:27017/ocariot-ds-agent" \
-  -e REDIS_URI="redis://127.0.0.1:6379" \
-  -e FITBIT_CLIENT_ID="YOUR_FITBIT_CLIENT_ID" \
-  -e FITBIT_CLIENT_SECRET="YOUR_FITBIT_CLIENT_SECRET" \
-  -e EXPRESSION_AUTO_SYNC="0 0 * * 0" \
-  ocariot/ds-agent
+  ...
 ```
 To generate your own docker image, run the following command:
 ```sh
