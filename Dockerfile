@@ -1,4 +1,5 @@
-FROM node:12.18.0-alpine
+FROM node:12-alpine
+RUN apk --no-cache add bash curl grep
 
 # Create app directory
 RUN mkdir -p /usr/src/ds
