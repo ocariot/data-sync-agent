@@ -164,8 +164,8 @@ The `code` parameter is an internal implementation of the API, which serves to m
 [license-url]: https://github.com/ocariot/data-sync-agent/blob/master/LICENSE
 [node-image]: https://img.shields.io/badge/node-%3E%3D%208.0.0-brightgreen.svg
 [node-url]: https://nodejs.org
-[travis-image]: https://travis-ci.org/ocariot/data-sync-agent.svg?branch=master
-[travis-url]: https://travis-ci.org/ocariot/data-sync-agent
+[travis-image]: https://travis-ci.com/ocariot/data-sync-agent.svg?branch=master
+[travis-url]: https://travis-ci.com/ocariot/data-sync-agent
 [coverage-image]: https://coveralls.io/repos/github/ocariot/data-sync-agent/badge.svg
 [coverage-url]: https://coveralls.io/github/ocariot/data-sync-agent?branch=master
 [known-vulnerabilities-image]: https://snyk.io/test/github/ocariot/data-sync-agent/badge.svg

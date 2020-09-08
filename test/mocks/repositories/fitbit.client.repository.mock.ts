@@ -1,5 +1,4 @@
 import { IFitbitClientRepository } from '../../../src/application/port/fitbit.client.repository.interface'
-import { FitbitAuthData } from '../../../src/application/domain/model/fitbit.auth.data'
 import { DefaultEntityMock } from '../models/default.entity.mock'
 
 export class FitbitClientRepositoryMock implements IFitbitClientRepository {
@@ -25,13 +24,7 @@ export class FitbitClientRepositoryMock implements IFitbitClientRepository {
         return Promise.resolve(true)
     }
 
-    public subscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        if (resource === 'error') return Promise.reject({ message: 'An error occurs!' })
-        return Promise.resolve()
-    }
-
-    public unsubscribeUserEvent(data: FitbitAuthData, resource: string, subscriptionId: string): Promise<void> {
-        if (resource === 'error') return Promise.reject({ message: 'An error occurs!' })
-        return Promise.resolve()
+    public getTokenIntrospect(token: string): Promise<boolean> {
+        return Promise.resolve(true)
     }
 }

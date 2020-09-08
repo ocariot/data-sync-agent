@@ -6,6 +6,8 @@ export interface IFitbitDataRepository {
 
     updateLastSync(userId: string, lastSync: string): Promise<boolean>
 
+    getTokenIntrospect(token: string): Promise<boolean>
+
     updateTokenStatus(userId: string, status: string): Promise<boolean>
 
     publishLastSync(userId: string, lastSync: string): void
