@@ -67,4 +67,8 @@ export class FitbitDataRepositoryMock implements IFitbitDataRepository {
         return Promise.resolve(true)
     }
 
+    public getTokenIntrospect(token: string): Promise<boolean> {
+        return Promise.resolve(true)
+    }
+
 }

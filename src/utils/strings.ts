@@ -36,6 +36,11 @@ export abstract class Strings {
 
     public static readonly FITBIT: any = {
         AUTH_NOT_FOUND: 'Unable to find Fitbit authentication data!',
-        AUTH_NOT_FOUND_DESCRIPTION: 'You must enter new data before you can refer to it.'
+        AUTH_NOT_FOUND_DESCRIPTION: 'You must enter new data before you can refer to it.',
+        INVALID_ACCESS_TOKEN: 'Access token invalid: {0}. Please submit a new access token and try again.',
+        INVALID_REFRESH_TOKEN: 'Access refresh invalid: {0}. Please submit a new refresh token and try again.',
+        REQUEST_LIMIT_EXCEED: 'The request limit has been exceeded. Please allow an hour to make new requests.',
+        INVALID_CLIENT_DATA: 'The Fitbit client credentials are invalid. The operation cannot be performed.',
+        INTERNAL_ERROR: 'A internal error occurs. Please try again later.'
     }
 }
